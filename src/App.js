@@ -1,277 +1,218 @@
-import { useContext, useEffect, useState, useCallback } from "react";
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { useContext, useState, useEffect } from "react";
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  Navigate,
+} from "react-router-dom";
 import { Box } from "@mui/material";
 import { AuthContext } from "./context/AuthContext";
 import Header from "./components/Header";
-import Sidebar from "./components/Sidebar";
-import BottomNavigator from "./components/BottomNavigator";
-import Home from "./Pages/Home";
-import AddAppointment from "./Pages/AddAppointment";
-import PatientDetails from "./Pages/PatientDetails";
+import BottomNavigator from "./patient-demo/BottomNavigator";
+import PatientHome from "./patient-demo/PatientHome";
+import SearchDoctors from "./patient-demo/SearchDoctors";
+import DoctorPage from "./patient-demo/DoctorPage";
+import AppointmentsList from "./patient-demo/AppointmentsList";
+import AppointmentBooking from "./patient-demo/AppointmentBooking";
+import ProfilePage from "./patient-demo/ProfilePage";
 import Login from "./Pages/Login";
 import PrivateRoute from "./components/PrivateRoute";
-import Help from "./Pages/Help";
-import RoleBasedRoute from "./components/RolebasedRoute";
-import AppointmentTable from "./Pages/AppointmentTable";
-import { EventSource } from "eventsource";
-import AddAppointmentMobile from "./Pages/AddAppointmentMobile";
-import MobileAppointmentTable from "./Pages/MobileAppointmentTable";
-import { Navigate } from "react-router-dom";
-
-import {
-  fetchPatients,
-  fetchCurrentPosition,
-  markPatientAsDone,
-  markPatientAsLate,
-  shufflePatientPosition,
-  addAppointment,
-} from "./services/api";
-
-const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
 
 const App = () => {
   const { user } = useContext(AuthContext);
   const isMobile = window.innerWidth <= 768;
-  const [currentPosition, setCurrentPosition] = useState(null);
-  const [patients, setPatients] = useState([]);
-  const [currentPatient, setCurrentPatient] = useState(null);
-  const [loading, setLoading] = useState(false);
 
+  // Mock data - replace with real data management
+  const [appointments, setAppointments] = useState([]);
+  const [doctors] = useState([
+    {
+      id: 1,
+      name: "Dr. Rajesh Sharma",
+      specialty: "General Physician",
+      clinic: "Alwar City Clinic",
+      address: "Station Road, Alwar, Rajasthan",
+      rating: 4.7,
+      experience: "15 years",
+      education: "MBBS, MD (General Medicine)",
+      timings: {
+        mon: "9:00 AM - 1:00 PM",
+        tue: "9:00 AM - 1:00 PM",
+        wed: "9:00 AM - 1:00 PM",
+        thu: "4:00 PM - 8:00 PM",
+        fri: "4:00 PM - 8:00 PM",
+        sat: "9:00 AM - 1:00 PM",
+      },
+      fees: "₹500 Consultation",
+      currentToken: 15,
+      phone: "+91 12345 67890",
+    },
+    {
+      id: 2,
+      name: "Dr. Priya Singh",
+      specialty: "Pediatrics",
+      clinic: "Sardar Hospital",
+      address: "Bhiwadi Road, Alwar",
+      rating: 4.9,
+      experience: "12 years",
+      education: "MBBS, DCH",
+      timings: {
+        mon: "10:00 AM - 4:00 PM",
+        tue: "10:00 AM - 4:00 PM",
+        wed: "10:00 AM - 4:00 PM",
+        thu: "10:00 AM - 4:00 PM",
+        fri: "10:00 AM - 4:00 PM",
+        sat: "10:00 AM - 1:00 PM",
+      },
+      fees: "₹700 Consultation",
+      currentToken: 22,
+      phone: "+91 98765 43210",
+    },
+    {
+      id: 3,
+      name: "Dr. R.K. Gupta",
+      specialty: "Cardiology",
+      clinic: "Alwar Heart Center",
+      address: "Near Bus Stand, Alwar",
+      rating: 4.8,
+      experience: "18 years",
+      education: "MBBS, DM Cardiology",
+      timings: {
+        mon: "8:00 AM - 12:00 PM",
+        tue: "8:00 AM - 12:00 PM",
+        wed: "4:00 PM - 8:00 PM",
+        thu: "4:00 PM - 8:00 PM",
+        fri: "8:00 AM - 12:00 PM",
+        sat: "9:00 AM - 1:00 PM",
+      },
+      fees: "₹800 Consultation",
+      currentToken: 9,
+      phone: "+91 78965 41230",
+    },
+    {
+      id: 4,
+      name: "Dr. Neha Jain",
+      specialty: "Dermatology",
+      clinic: "Skin Care Clinic",
+      address: "MIA Road, Alwar",
+      rating: 4.6,
+      experience: "10 years",
+      education: "MBBS, MD Dermatology",
+      timings: {
+        mon: "10:00 AM - 2:00 PM",
+        tue: "10:00 AM - 2:00 PM",
+        wed: "3:00 PM - 7:00 PM",
+        thu: "3:00 PM - 7:00 PM",
+        fri: "10:00 AM - 2:00 PM",
+        sat: "Closed",
+      },
+      fees: "₹600 Consultation",
+      currentToken: 5,
+      phone: "+91 88754 63210",
+    },
+    {
+      id: 5,
+      name: "Dr. Sanjay Verma",
+      specialty: "Orthopedics",
+      clinic: "Bone & Joint Care",
+      address: "Bhiwadi Road, Alwar",
+      rating: 4.5,
+      experience: "14 years",
+      education: "MBBS, MS Orthopedics",
+      timings: {
+        mon: "9:00 AM - 1:00 PM",
+        tue: "4:00 PM - 8:00 PM",
+        wed: "9:00 AM - 1:00 PM",
+        thu: "4:00 PM - 8:00 PM",
+        fri: "9:00 AM - 1:00 PM",
+        sat: "10:00 AM - 2:00 PM",
+      },
+      fees: "₹700 Consultation",
+      currentToken: 12,
+      phone: "+91 99887 44556",
+    },
+    {
+      id: 6,
+      name: "Dr. Anjali Mehta",
+      specialty: "Gynecology",
+      clinic: "Women's Wellness Center",
+      address: "Rajiv Gandhi Marg, Alwar",
+      rating: 4.8,
+      experience: "16 years",
+      education: "MBBS, DGO",
+      timings: {
+        mon: "10:00 AM - 2:00 PM",
+        tue: "10:00 AM - 2:00 PM",
+        wed: "3:00 PM - 7:00 PM",
+        thu: "3:00 PM - 7:00 PM",
+        fri: "10:00 AM - 2:00 PM",
+        sat: "9:00 AM - 1:00 PM",
+      },
+      fees: "₹750 Consultation",
+      currentToken: 7,
+      phone: "+91 91234 56789",
+    },
+    {
+      id: 7,
+      name: "Dr. Vikram Singh",
+      specialty: "Dentistry",
+      clinic: "Alwar Dental Care",
+      address: "Near Gandhi Circle, Alwar",
+      rating: 4.4,
+      experience: "8 years",
+      education: "BDS, MDS",
+      timings: {
+        mon: "9:00 AM - 7:00 PM",
+        tue: "9:00 AM - 7:00 PM",
+        wed: "9:00 AM - 7:00 PM",
+        thu: "9:00 AM - 7:00 PM",
+        fri: "9:00 AM - 7:00 PM",
+        sat: "9:00 AM - 3:00 PM",
+      },
+      fees: "₹400 Consultation",
+      currentToken: 3,
+      phone: "+91 77665 44332",
+    },
+    {
+      id: 8,
+      name: "Dr. Arvind Yadav",
+      specialty: "Ayurveda",
+      clinic: "Prakriti Ayurvedic Center",
+      address: "Neemrana Road, Alwar",
+      rating: 4.6,
+      experience: "20 years",
+      education: "BAMS, MD Ayurveda",
+      timings: {
+        mon: "7:00 AM - 11:00 AM",
+        tue: "7:00 AM - 11:00 AM",
+        wed: "4:00 PM - 8:00 PM",
+        thu: "4:00 PM - 8:00 PM",
+        fri: "7:00 AM - 11:00 AM",
+        sat: "7:00 AM - 11:00 AM",
+      },
+      fees: "₹300 Consultation",
+      currentToken: 18,
+      phone: "+91 92345 67890",
+    },
+  ]);
   useEffect(() => {
-    const fetchInitialData = async () => {
-      // Only fetch if user exists and has required data
-      if (user?.checkupcabindata?.[0]?.id) {
-        setLoading(true);
-        try {
-          setPatients([]);
-          setCurrentPosition(null);
-
-          await fetchPatientsData();
-          await fetchCurrentPositionData();
-        } catch (error) {
-          console.error("Initial data fetch error:", error);
-        } finally {
-          setLoading(false);
-        }
-      }
-    };
-
-    // Use a timeout to ensure localStorage is populated
-    const timeoutId = setTimeout(fetchInitialData, 100);
-
-    return () => clearTimeout(timeoutId);
-  }, [user?.checkupcabindata?.[0]?.id]);
-
-  let eventSource;
-
-  useEffect(() => {
-    if (!user?.checkupcabindata?.[0]?.id || loading) return;
-
-    const doctorId = user.checkupcabindata[0].id;
-    const slotTime = user.checkupcabindata[0].cabin_slots[0];
-    const date = new Date(slotTime);
-    const formattedDate = date
-      .toISOString()
-      .replace(".000", "")
-      .replace("T", " ")
-      .replace("Z", "+00:00");
-    const encodedDate = encodeURIComponent(formattedDate);
-    const sseUrl = `${API_BASE_URL}/doctorinfo/queue_updates/${doctorId}/${encodedDate}`;
-
-    eventSource = new EventSource(sseUrl, { withCredentials: true });
-
-    eventSource.onmessage = (event) => {
-      try {
-        const parsedData = JSON.parse(event.data);
-
-        // console.log("SSE Data:", parsedData);
-
-        if (parsedData.queue) {
-          // Assuming the update is the whole patients array
-          setPatients((prevPatients) => {
-            // Find if the patient already exists
-            const existingIndex = prevPatients.findIndex(
-              (p) =>
-                p.appointment.appointment_id ===
-                parsedData.queue.appointment.appointment_id
-            );
-
-            // Create updated patient object with defaults
-            const updatedPatient = {
-              ...parsedData.queue,
-              paid: parsedData.queue.paid || false,
-              checkin: parsedData.queue.checkin || false,
-              status: parsedData.queue.status || "pending",
-              position: parsedData.queue.position,
-            };
-
-            const newPatients = [...prevPatients];
-            if (existingIndex !== -1) {
-              newPatients[existingIndex] = updatedPatient;
-            } else {
-              newPatients.push(updatedPatient);
-            }
-            return newPatients.sort((a, b) => a.position - b.position);
-          });
-        } else if (parsedData.cabinslot) {
-          setCurrentPosition(parsedData.cabinslot.current_number);
-        }
-      } catch (error) {
-        // console.error("Error parsing SSE data:", error);
-      }
-    };
-
-    eventSource.onerror = (error) => {
-      // console.error("EventSource failed:", error);
-      eventSource.close();
-    };
-
-    return () => {
-      if (eventSource) {
-        eventSource.close();
-        // console.log("SSE connection cleaned up");
-      }
-    };
-  }, [user?.checkupcabindata, loading]);
-
-  useEffect(() => {
-    if (patients.length > 0 && currentPosition !== null) {
-      const current = patients.find((p) => p.position === currentPosition);
-      setCurrentPatient(current || null);
-    }
-  }, [patients, currentPosition]);
-
-  const fetchPatientsData = useCallback(async () => {
-    try {
-      setLoading(true);
-      const data = await fetchPatients(
-        user.checkupcabindata[0].id,
-        user.checkupcabindata[0].cabin_slots[0]
-      );
-
-      const processedData = data.map((patient) => ({
-        ...patient,
-        paid: patient.paid || false, // Default to false if not provided
-        checkin: patient.checkin || false, // Default to false if not provided
-        status: patient.status || "pending",
-      }));
-
-      processedData.sort((a, b) => a.position - b.position);
-      // console.log(processedData);
-      setPatients(processedData);
-    } catch (error) {
-      console.error("Error fetching patients:", error);
-    } finally {
-      setTimeout(() => {
-        setLoading(false);
-      }, 300);
-    }
-  }, [user]);
-
-  const fetchCurrentPositionData = useCallback(async () => {
-    try {
-      setLoading(true);
-      const { current_number } = await fetchCurrentPosition(
-        user.checkupcabindata[0].id,
-        user.checkupcabindata[0].cabin_slots[0]
-      );
-
-      setCurrentPosition(current_number);
-      return current_number;
-    } catch (error) {
-      console.error("Error fetching current position:", error);
-    } finally {
-      setTimeout(() => {
-        setLoading(false);
-      }, 200);
-    }
-  }, [user, setCurrentPosition, setLoading]);
-
-  const fetchPatientsDataWithoutLoader = async () => {
-    try {
-      const data = await fetchPatients(
-        user.checkupcabindata[0].id,
-        user.checkupcabindata[0].cabin_slots[0]
-      );
-
-      const processedData = data.map((patient) => ({
-        ...patient,
-        paid: patient.paid || false, // Default to false if not provided
-        checkin: patient.checkin || false, // Default to false if not provided
-        status: patient.status || "pending", // Default status
-      }));
-
-      processedData.sort((a, b) => a.position - b.position);
-      setPatients(processedData);
-    } catch (error) {
-      console.error("Error fetching patients:", error);
-    }
-  };
-
-  const fetchCurrentPositionDataWithoutLoader = async () => {
-    try {
-      const { current_number } = await fetchCurrentPosition(
-        user.checkupcabindata[0].id,
-        user.checkupcabindata[0].cabin_slots[0]
-      );
-
-      setCurrentPosition(current_number);
-      return current_number;
-    } catch (error) {
-      console.error("Error fetching current position:", error);
-    }
-  };
-
-  const markCurrentPatientAsDone = () => {
-    const newpatients = patients.map((p) => {
-      if (p.position === currentPosition) {
-        const newp = { ...p, done_checkup: true };
-        return newp;
-      } else {
-        return p;
-      }
-    });
-    fetchPatientsData();
-  };
-
-  const handleNextPatient = async (id) => {
-    const result = await markPatientAsDone(id);
-    return result;
-  };
-
-  const handleLatePatient = async (id, pos) => {
-    const result = await markPatientAsLate(id);
-    // await fetchPatientsDataWithoutLoader();
-    // await fetchCurrentPositionDataWithoutLoader();
-    return result;
-  };
-
-  const shufflePosition = async (payload) => {
-    await shufflePatientPosition(payload);
-  };
-
-  const addNewAppointment = async (pid, disease, appointmentType) => {
-    const payload = {
-      cabinId: user.checkupcabindata[0].id,
-      patientId: pid,
-      paid: "False",
-      disease: disease,
-      slot: user.checkupcabindata[0].cabin_slots[0],
-      username: user.username,
-      appointment_type: appointmentType,
-    };
-    const result = await addAppointment(payload);
-    await fetchPatientsData();
-    await fetchCurrentPositionData();
-    return result;
-  };
+    // Initialize mock appointments
+    setAppointments([
+      {
+        id: 1,
+        doctor: "Dr. Sarah Smith",
+        date: "2024-03-20 09:00",
+        status: "upcoming",
+        clinic: "City Health Clinic",
+        specialty: "Cardiology",
+      },
+    ]);
+  }, []);
 
   return (
     <Router>
       <div className="App" style={{ height: "100vh", overflow: "hidden" }}>
         {user !== null && <Header />}
         <Box sx={{ display: "flex", height: "100%" }}>
-          {!isMobile && user !== null && <Sidebar />}
           <Box
             component="main"
             sx={{ flexGrow: 1, padding: "6px", height: "100%", width: "100%" }}
@@ -279,91 +220,66 @@ const App = () => {
             <Routes>
               <Route
                 path="/login"
-                element={user ? <Navigate to="/" replace /> : <Login />}
+                element={user ? <Navigate to="/patient" replace /> : <Login />}
               />
+
+              {/* Patient Routes */}
               <Route
-                path="/"
+                path="/patient"
                 element={
                   <PrivateRoute>
-                    <Home
-                      currentPosition={currentPosition}
-                      setCurrentPosition={setCurrentPosition}
-                      patients={patients}
-                      setPatients={(patients) => setPatients(patients)}
-                      handleNextPatient={handleNextPatient}
-                      handleLatePatient={(id, pos) =>
-                        handleLatePatient(id, pos)
-                      }
-                      shufflePosition={(payload) => shufflePosition(payload)}
-                      loading={loading}
-                      fetchPatientsData={fetchPatientsData}
-                      fetchPatientsDataWithoutLoader={
-                        fetchPatientsDataWithoutLoader
-                      }
-                      fetchCurrentPositionDataWithoutLoader={
-                        fetchCurrentPositionDataWithoutLoader
-                      }
+                    <PatientHome appointments={appointments} />
+                  </PrivateRoute>
+                }
+              />
+
+              <Route
+                path="/search"
+                element={
+                  <PrivateRoute>
+                    <SearchDoctors doctors={doctors} />
+                  </PrivateRoute>
+                }
+              />
+
+              <Route
+                path="/doctor/:doctorId"
+                element={
+                  <PrivateRoute>
+                    <DoctorPage doctors={doctors} />
+                  </PrivateRoute>
+                }
+              />
+
+              <Route
+                path="/book-appointment/:doctorId"
+                element={
+                  <PrivateRoute>
+                    <AppointmentBooking
+                      appointments={appointments}
+                      setAppointments={setAppointments}
                     />
                   </PrivateRoute>
                 }
               />
-              {/* <Route
-                path="/add-appointment"
-                element={
-                  <PrivateRoute>
-                    <AddAppointment
-                      addNewAppointment={(pid, disease, appointmentType) =>
-                        addNewAppointment(pid, disease, appointmentType)
-                      }
-                    />
-                  </PrivateRoute>
-                }
-              /> */}
-              {/* <Route
-                path="/patient-details"
-                element={
-                  <PrivateRoute>
-                    <RoleBasedRoute allowedRoles={["doctor"]}>
-                    <PatientDetails
-                      currentPatient={currentPatient}
-                      handleNextPatient={handleNextPatient}
-                    />
-                    </RoleBasedRoute>
-                  </PrivateRoute>
-                }
-              /> */}
+
               <Route
                 path="/appointments"
                 element={
                   <PrivateRoute>
-                    {<AppointmentTable fetchPatientsData={fetchPatientsData} />}
+                    <AppointmentsList appointments={appointments} />
                   </PrivateRoute>
                 }
               />
               <Route
-                path="/help"
+                path="/profile"
                 element={
                   <PrivateRoute>
-                    <Help />
+                    <ProfilePage />
                   </PrivateRoute>
                 }
               />
-              <Route
-                path="/add-appointment"
-                element={
-                  <PrivateRoute>
-                    <AddAppointmentMobile patients={patients} />
-                  </PrivateRoute>
-                }
-              />
-              <Route
-                path="/mobile-appointments"
-                element={
-                  <PrivateRoute>
-                    <MobileAppointmentTable />
-                  </PrivateRoute>
-                }
-              />
+
               <Route path="*" element={<Navigate to="/login" replace />} />
             </Routes>
           </Box>
