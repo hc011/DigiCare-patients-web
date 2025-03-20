@@ -568,9 +568,6 @@ const SearchDoctors = () => {
                           <Typography variant="caption" color="text.secondary">
                             Current Queue
                           </Typography>
-                          <Typography variant="caption" color="text.secondary">
-                            Token #{doctor.currentToken}
-                          </Typography>
                         </Box>
                         <LinearProgress 
                           variant="determinate" 

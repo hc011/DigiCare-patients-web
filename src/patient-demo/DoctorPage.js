@@ -225,7 +225,7 @@ const DoctorPage = () => {
   }
 
   return (
-    <Box sx={{ p: 2, pb: 10, bgcolor: "#f9fafc", height: "calc(100vh - 130px)", overflowY: "auto" }}>
+    <Box sx={{ p: 2, pb: 10, bgcolor: "#f9fafc", height: "calc(100vh - 180px)", overflowY: "auto" }}>
       {/* Doctor Information Card */}
       <Card 
         elevation={0}
