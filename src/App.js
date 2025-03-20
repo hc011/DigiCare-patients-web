@@ -17,6 +17,7 @@ import AppointmentBooking from "./patient-demo/AppointmentBooking";
 import ProfilePage from "./patient-demo/ProfilePage";
 import Login from "./Pages/Login";
 import PrivateRoute from "./components/PrivateRoute";
+import { fetchAppointments } from "./services/api";
 
 const App = () => {
   const { user } = useContext(AuthContext);
@@ -24,12 +25,16 @@ const App = () => {
 
   // Mock data - replace with real data management
   const [appointments, setAppointments] = useState([]);
+
+  const [maxToken, setMaxToken] = useState(0);
+  const [refreshToken, setRefreshToken] = useState(0);
+
   const [doctors] = useState([
     {
       id: 1,
-      name: "Dr. Rajesh Sharma",
-      specialty: "General Physician",
-      clinic: "Alwar City Clinic",
+      name: "Dr. Rahul Gupta",
+      specialty: "Skin Specialist",
+      clinic: "Gupta Skin and dental clinic",
       address: "Station Road, Alwar, Rajasthan",
       rating: 4.7,
       experience: "15 years",
@@ -199,14 +204,25 @@ const App = () => {
     setAppointments([
       {
         id: 1,
-        doctor: "Dr. Sarah Smith",
+        doctor: "Dr. Rahul Gupta",
         date: "2024-03-20 09:00",
         status: "upcoming",
-        clinic: "City Health Clinic",
+        clinic: "Gupta Skin and dental clinic",
         specialty: "Cardiology",
       },
     ]);
   }, []);
+
+
+  useEffect(() => {
+    const getAppointments = async () => {
+      const response = await fetchAppointments(1, "2025-03-18T12:01:00Z");
+      let maxtoken = 0;
+      maxtoken = Math.max(0, ...response.map(item => item.token || 0));
+      setMaxToken(maxtoken+1);
+    };
+    getAppointments();
+  }, [refreshToken]);
 
   return (
     <Router>
@@ -246,7 +262,7 @@ const App = () => {
                 path="/doctor/:doctorId"
                 element={
                   <PrivateRoute>
-                    <DoctorPage doctors={doctors} />
+                    <DoctorPage doctors={doctors} maxToken={maxToken} refreshTokenFn={setRefreshToken} />
                   </PrivateRoute>
                 }
               />

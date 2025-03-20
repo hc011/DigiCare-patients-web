@@ -11,6 +11,7 @@ import {
 } from "@mui/material";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { DateTimePicker } from "@mui/x-date-pickers";
+import { addAppointment } from "../services/api";
 
 const steps = ["Select Time", "Details", "Confirmation"];
 
@@ -33,9 +34,13 @@ const AppointmentBooking = () => {
     setActiveStep((prevStep) => prevStep - 1);
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async() => {
     // Handle form submission
     console.log("Appointment booked:", formData);
+
+    debugger;
+    const response = addAppointment(formData);
+
     navigate("/patient", { state: { bookingSuccess: true } });
   };
 
