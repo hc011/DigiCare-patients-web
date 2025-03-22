@@ -1,7 +1,4 @@
-import React, { useContext, useState } from "react";
-import { logout } from "../services/authService";
-import { AuthContext } from "../context/AuthContext";
-import { useNavigate } from "react-router-dom";
+import LogoutIcon from "@mui/icons-material/Logout"; // Import logout icon
 import {
   Button,
   Dialog,
@@ -11,8 +8,11 @@ import {
   DialogTitle,
   IconButton,
 } from "@mui/material";
+import React, { useContext, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import logo from "../assets/DigiCare__logo.png";
-import LogoutIcon from "@mui/icons-material/Logout"; // Import logout icon
+import { AuthContext } from "../context/AuthContext";
+import { logout } from "../services/authService";
 import "./Header.module.css";
 
 function Header({ closeEventSource }) {
@@ -21,6 +21,9 @@ function Header({ closeEventSource }) {
   const { setUser } = useContext(AuthContext);
   const navigate = useNavigate();
 
+  const handleLogoClick = () => {
+    navigate("/patient");
+  };
   const handleClickOpen = () => {
     setOpen(true);
   };
@@ -41,6 +44,7 @@ function Header({ closeEventSource }) {
         src={logo}
         alt="DigiCare"
         style={{ width: "150px", height: "40px" }}
+        onClick={handleLogoClick}
       />
 
       {/* Mobile Logout Button */}
