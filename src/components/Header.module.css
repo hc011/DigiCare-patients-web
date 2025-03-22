@@ -1,0 +1,38 @@
+header {
+  background-color: rgba(255, 255, 255, 0.6);
+  padding-left: 16px;
+  height: 70px;
+  display: flex;
+  align-items: center;
+  box-shadow: 0 2px 4px rgba(19, 46, 155, 0.15);
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  backdrop-filter: blur(12px);
+  justify-content: space-between;
+  align-items: center;
+  padding: 0px 20px;
+}
+
+.logout-button {
+  width: 100%;
+  display: flex;
+  justify-content: flex-end;
+  padding-right: 40px;
+}
+
+@media (max-width: 768px) {
+  header {
+    display: flex;
+    justify-content: space-between; /* Ensure space between logo and logout button */
+    padding: 0 10px; /* Reduce padding for mobile */
+  }
+
+  .logout-button {
+    padding-right: 10px;
+    width: fit-content;
+    position: absolute;
+    z-index: 10;
+    right: 10px;
+  }
+}

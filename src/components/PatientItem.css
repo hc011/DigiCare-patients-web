@@ -1,0 +1,163 @@
+.patient-item {
+  background: white;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s, box-shadow 0.2s;
+  padding: 1rem;
+}
+
+.patient-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+}
+
+.patient-info {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-grow: 1;
+}
+
+.token-badge {
+  background: #4a5568;
+  color: white;
+  padding: 8px 12px;
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 100px;
+}
+
+.token-badge svg {
+  font-size: 16px;
+}
+
+.patient-details {
+  flex-grow: 1;
+  min-width: 0;
+}
+
+.patient-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+.patient-header h3 {
+  margin: 0;
+  font-size: 1.1rem;
+  color: #2d3748;
+}
+
+.status-tags {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.appointment-meta {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.meta-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #4a5568;
+  font-size: 0.9rem;
+}
+
+.meta-item svg {
+  color: #718096;
+  font-size: 16px;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 1rem;
+  flex-shrink: 0;
+}
+
+.drag-handle {
+  cursor: grab;
+  padding: 0.5rem;
+  opacity: 0.6;
+  transition: opacity 0.2s;
+  flex-shrink: 0;
+}
+
+.drag-handle:hover {
+  opacity: 1;
+}
+
+/* Status colors */
+.current {
+  border-left: 4px solid #3182ce;
+  background: #ebf8ff;
+}
+
+.late {
+  border-left: 4px solid #dd6b20;
+}
+
+.done {
+  opacity: 0.6;
+  background: #f7fafc;
+}
+
+.MuiChip-root {
+  height: 24px;
+}
+
+.MuiChip-icon {
+  margin-left: 4px;
+  margin-right: -4px;
+}
+
+/* PatientItem.css updates */
+.token-details {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.appointment-id {
+  font-size: 0.7rem;
+  opacity: 0.8;
+}
+
+.patient-header {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.status-tags {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.appointment-meta {
+  display: flex;
+  gap: 1rem;
+  margin-top: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.meta-item {
+  background: #f8f9fa;
+  padding: 4px 8px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
