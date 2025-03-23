@@ -84,11 +84,16 @@ const Login = () => {
     setLoading(true);
     try {
       const data = await loginService(credential.mobileNumber, credential.password);
+      console.log('Full login response:', JSON.stringify(data, null, 2));
+      console.log('created_user value:', data.user?.created_user);
+      console.log('created_user type:', typeof data.user?.created_user);
       
-      if (data.created_user) {
+      if (data.user?.created_user === true) {
+        console.log('Condition met: showing user detail form');
         setUserData(data);
         setShowUserDetailForm(true);
       } else {
+        console.log('Condition not met: proceeding with normal login');
         localStorage.setItem("user", JSON.stringify(data));
         setUser(data);
         await new Promise((resolve) => setTimeout(resolve, 50));
@@ -138,7 +143,7 @@ const Login = () => {
       localStorage.setItem("user", JSON.stringify(updatedUserData));
       setUser(updatedUserData);
       setShowUserDetailForm(false);
-      navigate("/patient-home", { state: { freshLogin: true } }, { replace: true });
+      navigate("/patient", { state: { freshLogin: true } }, { replace: true });
     } catch (error) {
       setSnackbar({
         open: true,
