@@ -1,23 +1,22 @@
-import { useContext, useState, useEffect } from "react";
+import { Box } from "@mui/material";
+import { useContext, useEffect, useState } from "react";
 import {
+  Navigate,
+  Route,
   BrowserRouter as Router,
   Routes,
-  Route,
-  Navigate,
 } from "react-router-dom";
-import { Box } from "@mui/material";
-import { AuthContext } from "./context/AuthContext";
-import Header from "./components/Header";
-import BottomNavigator from "./patient-demo/BottomNavigator";
-import PatientHome from "./patient-demo/PatientHome";
-import SearchDoctors from "./patient-demo/SearchDoctors";
-import DoctorPage from "./patient-demo/DoctorPage";
-import AppointmentsList from "./patient-demo/AppointmentsList";
-import AppointmentBooking from "./patient-demo/AppointmentBooking";
-import ProfilePage from "./patient-demo/ProfilePage";
 import Login from "./Pages/Login";
+import Header from "./components/Header";
 import PrivateRoute from "./components/PrivateRoute";
-import { fetchAppointments } from "./services/api";
+import { AuthContext } from "./context/AuthContext";
+import AppointmentBooking from "./patient-demo/AppointmentBooking";
+import AppointmentsList from "./patient-demo/AppointmentsList";
+import BottomNavigator from "./patient-demo/BottomNavigator";
+import DoctorPage from "./patient-demo/DoctorPage";
+import PatientHome from "./patient-demo/PatientHome";
+import ProfilePage from "./patient-demo/ProfilePage";
+import SearchDoctors from "./patient-demo/SearchDoctors";
 
 const App = () => {
   const { user } = useContext(AuthContext);
@@ -214,15 +213,15 @@ const App = () => {
   }, []);
 
 
-  useEffect(() => {
-    const getAppointments = async () => {
-      const response = await fetchAppointments(1, "2025-03-18T12:01:00Z");
-      let maxtoken = 0;
-      maxtoken = Math.max(0, ...response.map(item => item.token || 0));
-      setMaxToken(maxtoken+1);
-    };
-    getAppointments();
-  }, [refreshToken]);
+  // useEffect(() => {
+  //   const getAppointments = async () => {
+  //     const response = await fetchAppointments(1, "2025-03-18T12:01:00Z");
+  //     let maxtoken = 0;
+  //     maxtoken = Math.max(0, ...response.map(item => item.token || 0));
+  //     setMaxToken(maxtoken+1);
+  //   };
+  //   getAppointments();
+  // }, [refreshToken]);
 
   return (
     <Router>

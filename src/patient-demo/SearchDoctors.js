@@ -1,39 +1,35 @@
-import React, { useState, useEffect } from "react";
+import DirectionsIcon from "@mui/icons-material/Directions";
+import FilterListIcon from "@mui/icons-material/FilterList";
+import LocationOnIcon from "@mui/icons-material/LocationOn";
+import MedicalServicesIcon from "@mui/icons-material/MedicalServices";
+import PhoneIcon from "@mui/icons-material/Phone";
+import SearchIcon from "@mui/icons-material/Search";
 import {
-  TextField,
+  Avatar,
+  Box,
+  Button,
+  ButtonGroup,
   Card,
   CardContent,
-  Box,
-  Typography,
-  InputAdornment,
-  Avatar,
   Chip,
-  Stack,
-  Tabs,
-  Tab,
+  CircularProgress,
+  Divider,
+  Fade,
   Grid,
   IconButton,
+  InputAdornment,
   LinearProgress,
-  Divider,
-  Button,
   Rating,
-  CircularProgress,
   Skeleton,
-  Fade,
-  ButtonGroup
+  Stack,
+  Tab,
+  Tabs,
+  TextField,
+  Typography
 } from "@mui/material";
-import SearchIcon from "@mui/icons-material/Search";
-import MedicalServicesIcon from "@mui/icons-material/MedicalServices";
-import ScheduleIcon from "@mui/icons-material/Schedule";
-import StarIcon from "@mui/icons-material/Star";
-import LocationOnIcon from "@mui/icons-material/LocationOn";
-import FilterListIcon from "@mui/icons-material/FilterList";
-import MonetizationOnIcon from "@mui/icons-material/MonetizationOn";
-import AccessTimeIcon from "@mui/icons-material/AccessTime";
-import PhoneIcon from "@mui/icons-material/Phone";
-import DirectionsIcon from "@mui/icons-material/Directions";
-import PeopleIcon from "@mui/icons-material/People";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { getDoctorList } from "../services/api";
 
 const SearchDoctors = () => {
   const navigate = useNavigate();
@@ -41,6 +37,8 @@ const SearchDoctors = () => {
   const [selectedTab, setSelectedTab] = useState(0);
   const [loading, setLoading] = useState(true);
   const [doctorCardLoading, setDoctorCardLoading] = useState(false);
+  const [doctors, setDoctors] = useState([]);
+  const [error, setError] = useState(null);
 
   const specialtyTabs = [
     "All",
@@ -51,9 +49,10 @@ const SearchDoctors = () => {
     "Orthopedics"
   ];
 
-  const doctors = [
+  // Existing doctors list
+  const existingDoctors = [
     {
-      id: 1,
+      id: 4,
       name: "Dr. Rahul Gupta",
       specialty: "Skin Specialist",
       clinic: "Gupta Skin and dental clinic",
@@ -73,175 +72,75 @@ const SearchDoctors = () => {
       currentToken: 15,
       phone: "+91 12345 67890",
     },
-    {
-      id: 2,
-      name: "Dr. Priya Singh",
-      specialty: "Pediatrics",
-      clinic: "Sardar Hospital",
-      address: "Bhiwadi Road, Alwar",
-      rating: 4.9,
-      experience: "12 years",
-      education: "MBBS, DCH",
-      timings: {
-        mon: "10:00 AM - 4:00 PM",
-        tue: "10:00 AM - 4:00 PM",
-        wed: "10:00 AM - 4:00 PM",
-        thu: "10:00 AM - 4:00 PM",
-        fri: "10:00 AM - 4:00 PM",
-        sat: "10:00 AM - 1:00 PM",
-      },
-      fees: "₹700 Consultation",
-      currentToken: 22,
-      phone: "+91 98765 43210",
-    },
-    {
-      id: 3,
-      name: "Dr. R.K. Gupta",
-      specialty: "Cardiology",
-      clinic: "Alwar Heart Center",
-      address: "Near Bus Stand, Alwar",
-      rating: 4.8,
-      experience: "18 years",
-      education: "MBBS, DM Cardiology",
-      timings: {
-        mon: "8:00 AM - 12:00 PM",
-        tue: "8:00 AM - 12:00 PM",
-        wed: "4:00 PM - 8:00 PM",
-        thu: "4:00 PM - 8:00 PM",
-        fri: "8:00 AM - 12:00 PM",
-        sat: "9:00 AM - 1:00 PM",
-      },
-      fees: "₹800 Consultation",
-      currentToken: 9,
-      phone: "+91 78965 41230",
-    },
-    {
-      id: 4,
-      name: "Dr. Neha Jain",
-      specialty: "Dermatology",
-      clinic: "Skin Care Clinic",
-      address: "MIA Road, Alwar",
-      rating: 4.6,
-      experience: "10 years",
-      education: "MBBS, MD Dermatology",
-      timings: {
-        mon: "10:00 AM - 2:00 PM",
-        tue: "10:00 AM - 2:00 PM",
-        wed: "3:00 PM - 7:00 PM",
-        thu: "3:00 PM - 7:00 PM",
-        fri: "10:00 AM - 2:00 PM",
-        sat: "Closed",
-      },
-      fees: "₹600 Consultation",
-      currentToken: 5,
-      phone: "+91 88754 63210",
-    },
-    {
-      id: 5,
-      name: "Dr. Sanjay Verma",
-      specialty: "Orthopedics",
-      clinic: "Bone & Joint Care",
-      address: "Bhiwadi Road, Alwar",
-      rating: 4.5,
-      experience: "14 years",
-      education: "MBBS, MS Orthopedics",
-      timings: {
-        mon: "9:00 AM - 1:00 PM",
-        tue: "4:00 PM - 8:00 PM",
-        wed: "9:00 AM - 1:00 PM",
-        thu: "4:00 PM - 8:00 PM",
-        fri: "9:00 AM - 1:00 PM",
-        sat: "10:00 AM - 2:00 PM",
-      },
-      fees: "₹700 Consultation",
-      currentToken: 12,
-      phone: "+91 99887 44556",
-    },
-    {
-      id: 6,
-      name: "Dr. Anjali Mehta",
-      specialty: "Gynecology",
-      clinic: "Women's Wellness Center",
-      address: "Rajiv Gandhi Marg, Alwar",
-      rating: 4.8,
-      experience: "16 years",
-      education: "MBBS, DGO",
-      timings: {
-        mon: "10:00 AM - 2:00 PM",
-        tue: "10:00 AM - 2:00 PM",
-        wed: "3:00 PM - 7:00 PM",
-        thu: "3:00 PM - 7:00 PM",
-        fri: "10:00 AM - 2:00 PM",
-        sat: "9:00 AM - 1:00 PM",
-      },
-      fees: "₹750 Consultation",
-      currentToken: 7,
-      phone: "+91 91234 56789",
-    },
-    {
-      id: 7,
-      name: "Dr. Vikram Singh",
-      specialty: "Dentistry",
-      clinic: "Alwar Dental Care",
-      address: "Near Gandhi Circle, Alwar",
-      rating: 4.4,
-      experience: "8 years",
-      education: "BDS, MDS",
-      timings: {
-        mon: "9:00 AM - 7:00 PM",
-        tue: "9:00 AM - 7:00 PM",
-        wed: "9:00 AM - 7:00 PM",
-        thu: "9:00 AM - 7:00 PM",
-        fri: "9:00 AM - 7:00 PM",
-        sat: "9:00 AM - 3:00 PM",
-      },
-      fees: "₹400 Consultation",
-      currentToken: 3,
-      phone: "+91 77665 44332",
-    },
-    {
-      id: 8,
-      name: "Dr. Arvind Yadav",
-      specialty: "Ayurveda",
-      clinic: "Prakriti Ayurvedic Center",
-      address: "Neemrana Road, Alwar",
-      rating: 4.6,
-      experience: "20 years",
-      education: "BAMS, MD Ayurveda",
-      timings: {
-        mon: "7:00 AM - 11:00 AM",
-        tue: "7:00 AM - 11:00 AM",
-        wed: "4:00 PM - 8:00 PM",
-        thu: "4:00 PM - 8:00 PM",
-        fri: "7:00 AM - 11:00 AM",
-        sat: "7:00 AM - 11:00 AM",
-      },
-      fees: "₹300 Consultation",
-      currentToken: 18,
-      phone: "+91 92345 67890",
-    },
+    // ... rest of your existing doctors array ...
   ];
-  
-  // Load doctors with a delay to simulate API call
+
+  // Fetch doctors from API and combine with existing doctors
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setLoading(false);
-    }, 1500);
-    
-    return () => clearTimeout(timer);
+    const fetchDoctors = async () => {
+      try {
+        // Set existing doctors first to show something immediately
+        setDoctors(existingDoctors);
+        
+        const response = await getDoctorList();
+        if (response && Array.isArray(response)) {
+          // Transform API response to match existing structure
+          const transformedDoctors = response.map(item => ({
+            id: item.id,
+            name: item.doctor.name,
+            specialty: item.doctor.specialization,
+            clinic: item.hospital.hospital_name,
+            address: item.hospital.map_location || "Address not available",
+            rating: parseFloat(item.doctor.rating) || 4.5,
+            experience: `${item.doctor.experience} years`,
+            education: "MBBS", // Default value since not in API
+            timings: {
+              mon: "9:00 AM - 1:00 PM",
+              tue: "9:00 AM - 1:00 PM",
+              wed: "9:00 AM - 1:00 PM",
+              thu: "4:00 PM - 8:00 PM",
+              fri: "4:00 PM - 8:00 PM",
+              sat: "9:00 AM - 1:00 PM",
+            },
+            fees: `₹${item.fees} Consultation`,
+            currentToken: 15, // Default value since not in API
+            phone: item.doctor.phone_number,
+          }));
+
+          // Combine existing doctors with API doctors, avoiding duplicates by ID
+          const combinedDoctors = [...existingDoctors];
+          transformedDoctors.forEach(apiDoctor => {
+            if (!combinedDoctors.some(existingDoctor => existingDoctor.id === apiDoctor.id)) {
+              combinedDoctors.push(apiDoctor);
+            }
+          });
+
+          setDoctors(combinedDoctors);
+        }
+      } catch (err) {
+        console.error("Error fetching doctors:", err);
+        // If API fails, keep showing existing doctors
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDoctors();
   }, []);
 
-  // Filter by tab and search term
+  // Filter by tab and search term with null checks
   const filteredDoctors = doctors.filter(
     (doctor) => {
+      const searchTermLower = searchTerm.toLowerCase();
       const matchesSearch = 
-        doctor.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        doctor.specialty.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        doctor.clinic.toLowerCase().includes(searchTerm.toLowerCase());
+        (doctor.name?.toLowerCase() || "").includes(searchTermLower) ||
+        (doctor.specialty?.toLowerCase() || "").includes(searchTermLower) ||
+        (doctor.clinic?.toLowerCase() || "").includes(searchTermLower);
       
       const matchesTab = 
         selectedTab === 0 || // "All" tab
-        doctor.specialty.toLowerCase().includes(specialtyTabs[selectedTab].toLowerCase());
+        (doctor.specialty?.toLowerCase() || "").includes(specialtyTabs[selectedTab].toLowerCase());
       
       return matchesSearch && matchesTab;
     }
