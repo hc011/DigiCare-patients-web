@@ -22,6 +22,7 @@ import {
 } from '@mui/material';
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import logo from "../assets/DigiCare__logo.png";
 
 const UserDetailForm = ({ open, onClose, onSubmit }) => {
     const theme = useTheme();
@@ -111,7 +112,7 @@ const UserDetailForm = ({ open, onClose, onSubmit }) => {
             <Box sx={{ bgcolor: 'primary.main', color: 'white', py: 2, px: 3 }}>
                 <DialogTitle sx={{ p: 0, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 2 }}>
                     <img
-                        src="/digicare-logo.png"
+                        src={logo}
                         alt="Digicare Logo"
                         style={{ height: 40, width: 'auto' }}
                     />
