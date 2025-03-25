@@ -14,6 +14,7 @@ import PhoneIcon from "@mui/icons-material/Phone";
 import QueueIcon from "@mui/icons-material/Queue";
 import SearchIcon from "@mui/icons-material/Search";
 import CloseIcon from "@mui/icons-material/Close";
+import AddIcon from '@mui/icons-material/Add';
 import {
     Avatar,
     Box,
@@ -228,10 +229,10 @@ const PatientHome = () => {
                     }} onClick={() => navigate("/search")}>
                         <CardContent sx={{ textAlign: 'center', p: 2 }}>
                             <Avatar sx={{ bgcolor: '#4f46e5', mx: 'auto', mb: 1 }}>
-                                <SearchIcon />
+                                <AddIcon />
                             </Avatar>
                             <Typography variant="body1" fontWeight="medium">
-                                Find Doctors
+                                Book Appointment
                             </Typography>
                         </CardContent>
                     </Card>
@@ -280,20 +281,14 @@ const PatientHome = () => {
                             modules={[Navigation, Pagination]}
                             spaceBetween={30}
                             slidesPerView={1}
-                            navigation={{
-                                nextEl: '.swiper-button-next',
-                                prevEl: '.swiper-button-prev'
-                            }}
+                            navigation={false}
                             pagination={{ 
-                                clickable: true,
-                                el: '.swiper-pagination'
+                                clickable: true
                             }}
                             onSlideChange={(swiper) => handleStepChange(swiper.activeIndex)}
                             style={{ 
                                 borderRadius: 12, 
-                                overflow: 'hidden',
-                                '--swiper-navigation-size': '20px',
-                                '--swiper-navigation-color': '#1976d2',
+                                overflow: 'visible',
                                 '--swiper-pagination-color': '#1976d2'
                             }}
                         >
@@ -363,7 +358,7 @@ const PatientHome = () => {
                                                         </Box>
                                                     </Grid>
                                                     
-                                                    <Grid item xs={12} sx={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', mt: 1 }}>
+                                                    <Grid item xs={12} sx={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', mt: 0 }}>
                                                         <Button
                                                             variant="outlined"
                                                             size="small"
@@ -412,18 +407,18 @@ const PatientHome = () => {
 
                         <style>
                             {`
-                            .swiper-button-next, .swiper-button-prev {
-                                width: 30px !important;
-                                height: 30px !important;
-                                background-color: white;
-                                border-radius: 50%;
-                                box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-                                z-index: 10 !important;
-                            }
                             .swiper-pagination {
                                 position: relative !important;
-                                margin-top: 16px !important;
-                                z-index: 10 !important;
+                                margin-top: 8px !important;
+                                bottom: 0 !important;
+                            }
+                            .swiper-pagination-bullet {
+                                width: 8px;
+                                height: 8px;
+                                margin: 0 4px;
+                            }
+                            .swiper-pagination-bullet-active {
+                                background: #1976d2;
                             }
                             `}
                         </style>
@@ -497,7 +492,7 @@ const PatientHome = () => {
                 ))}
             </Grid>
 
-            <Button variant="contained" fullWidth startIcon={<SearchIcon />} onClick={() => navigate("/search")} sx={{
+            {/* <Button variant="contained" fullWidth startIcon={<SearchIcon />} onClick={() => navigate("/search")} sx={{
                 mt: 2,
                 py: 1.5,
                 borderRadius: 2,
@@ -519,7 +514,7 @@ const PatientHome = () => {
                 }
             }}>
                 Book New Appointment
-            </Button>
+            </Button> */}
 
             {/* Appointment Details Dialog */}
             <Dialog open={showAppointmentDetails} onClose={() => setShowAppointmentDetails(false)} fullWidth maxWidth="sm" PaperProps={{
