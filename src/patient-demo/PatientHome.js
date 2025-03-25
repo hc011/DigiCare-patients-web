@@ -6,12 +6,14 @@ import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
 import DirectionsIcon from "@mui/icons-material/Directions";
 import EventBusyIcon from '@mui/icons-material/EventBusy';
 import LocationOnIcon from "@mui/icons-material/LocationOn";
+import ReceiptIcon from '@mui/icons-material/Receipt';
 import MedicalServicesIcon from "@mui/icons-material/MedicalServices";
 import PeopleIcon from "@mui/icons-material/People";
 import PersonIcon from "@mui/icons-material/Person";
 import PhoneIcon from "@mui/icons-material/Phone";
 import QueueIcon from "@mui/icons-material/Queue";
 import SearchIcon from "@mui/icons-material/Search";
+import CloseIcon from "@mui/icons-material/Close";
 import {
     Avatar,
     Box,
@@ -32,7 +34,11 @@ import {
     Typography
 } from "@mui/material";
 import React, { useContext, useEffect, useState } from "react";
-import SwipeableViews from 'react-swipeable-views';
+import { Swiper, SwiperSlide } from 'swiper/react';
+import { Navigation, Pagination } from 'swiper/modules';
+import 'swiper/css';
+import 'swiper/css/navigation';
+import 'swiper/css/pagination';
 import { useLocation, useNavigate } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 
@@ -65,8 +71,8 @@ const PatientHome = () => {
         disease: appointment.disease || "Not specified",
         patientFor: appointment.name || "Self",
         phone: appointment.cabinslot?.cabin?.doctor?.phone_number || "+91 12345 67890",
-        age: appointment.patient?.age || "N/A",
-        gender: appointment.patient?.gender || "N/A",
+        age: appointment.patient?.age,
+        gender: appointment.patient?.gender,
         doctorPhone: appointment.cabinslot?.cabin?.doctor?.phone_number,
         hospitalPhone: appointment.cabinslot?.cabin?.hospital?.phone_number,
         fees: appointment.cabinslot?.cabin?.fees || 0,
@@ -194,14 +200,14 @@ const PatientHome = () => {
             )}
 
             {/* Header with greeting */}
-            <Box sx={{ mb: 4 }}>
+            {/* <Box sx={{ mb: 4 }}>
                 <Typography variant="h5" fontWeight="600" gutterBottom>
                     Welcome back, {user?.username || 'Patient'}
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
                     {new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
                 </Typography>
-            </Box>
+            </Box> */}
 
             {/* Quick Actions */}
             <Grid container spacing={2} sx={{ mb: 4 }}>
@@ -263,165 +269,164 @@ const PatientHome = () => {
                     <Typography variant="h6" fontWeight="600">
                         Current Appointments
                     </Typography>
-                    {appointmentsList.length > 1 && (
-                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                            <IconButton size="small" onClick={handleBack} sx={{ mr: 0.5 }}>
-                                <ArrowBackIosIcon fontSize="small" />
-                            </IconButton>
-                            <Typography variant="body2" color="text.secondary" sx={{ mr: 1 }}>
-                                {activeStep + 1}/{appointmentsList.length}
-                            </Typography>
-                            <IconButton size="small" onClick={handleNext}>
-                                <ArrowForwardIosIcon fontSize="small" />
-                            </IconButton>
-                        </Box>
-                    )}
+                    <Typography variant="body2" color="text.secondary">
+                        {appointmentsList.length > 0 ? `${activeStep + 1}/${appointmentsList.length}` : ''}
+                    </Typography>
                 </Box>
 
                 {hasAppointment && appointmentsList.length > 0 ? (
                     <Box sx={{ position: 'relative' }}>
-                        <SwipeableViews
-                            axis="x"
-                            index={activeStep}
-                            onChangeIndex={handleStepChange}
-                            enableMouseEvents
-                            disableAutoPlay
-                            style={{ borderRadius: 12, overflow: 'hidden' }}
+                        <Swiper
+                            modules={[Navigation, Pagination]}
+                            spaceBetween={30}
+                            slidesPerView={1}
+                            navigation={{
+                                nextEl: '.swiper-button-next',
+                                prevEl: '.swiper-button-prev'
+                            }}
+                            pagination={{ 
+                                clickable: true,
+                                el: '.swiper-pagination'
+                            }}
+                            onSlideChange={(swiper) => handleStepChange(swiper.activeIndex)}
+                            style={{ 
+                                borderRadius: 12, 
+                                overflow: 'hidden',
+                                '--swiper-navigation-size': '20px',
+                                '--swiper-navigation-color': '#1976d2',
+                                '--swiper-pagination-color': '#1976d2'
+                            }}
                         >
                             {appointmentsList.map((appointment, index) => (
-                                <Box key={appointment.id} sx={{ px: 0.5, pb: 1 }}>
-                                    <Card elevation={1} sx={{
-                                        borderRadius: 3,
-                                        overflow: 'hidden',
-                                        transition: 'transform 0.3s, box-shadow 0.3s',
-                                        '&:hover': {
-                                            boxShadow: '0 8px 24px rgba(0,0,0,0.12)'
-                                        }
-                                    }}>
-                                        <Box sx={{ bgcolor: '#1976d2', color: 'white', p: 2 }}>
-                                            <Typography variant="subtitle1" fontWeight="600">Dr. {appointment.doctor}</Typography>
-                                            <Typography variant="body2" sx={{ opacity: 0.9 }}>
-                                                {appointment.specialty} • {appointment.clinic}
-                                            </Typography>
-                                        </Box>
+                                <SwiperSlide key={appointment.id}>
+                                    <Box sx={{ px: 0.5, pb: 1 }}>
+                                        <Card elevation={1} sx={{
+                                            borderRadius: 3,
+                                            overflow: 'hidden',
+                                            transition: 'transform 0.3s, box-shadow 0.3s',
+                                            '&:hover': {
+                                                boxShadow: '0 8px 24px rgba(0,0,0,0.12)'
+                                            }
+                                        }}>
+                                            <Box sx={{ bgcolor: '#1976d2', color: 'white', p: 2 }}>
+                                                <Typography variant="subtitle1" fontWeight="600">Dr. {appointment.doctor}</Typography>
+                                                <Typography variant="body2" sx={{ opacity: 0.9 }}>
+                                                    {appointment.specialty} • {appointment.clinic}
+                                                </Typography>
+                                            </Box>
 
-                                        <CardContent>
-                                            <Grid container spacing={1}>
-                                                <Grid item xs={12}>
-                                                    <Box sx={{ display: "flex", alignItems: "center", mb: 0 }}>
-                                                        <CalendarTodayIcon sx={{ mr: 1, color: "primary.main" }} />
-                                                        <Typography variant="body2">
-                                                            <strong>Appointment Date:</strong> {formatDate(appointment.date)}
-                                                        </Typography>
-                                                    </Box>
-                                                </Grid>
-                                                
-                                                <Grid item xs={12}>
-                                                    <Box sx={{ display: "flex", alignItems: "center", mb: 1 }}>
-                                                        <PersonIcon sx={{ mr: 1, color: "primary.main" }} />
-                                                        <Typography variant="body2">
-                                                            <strong>Patient Name:</strong> {appointment.patientFor}
-                                                        </Typography>
-                                                    </Box>
-                                                    <Box sx={{ display: "flex", alignItems: "center", mb: 1 }}>
-                                                        <PersonIcon sx={{ mr: 1, color: "primary.main" }} />
-                                                        <Typography variant="body2">
-                                                           <strong>PID:</strong> {appointment.patientId}
-                                                        </Typography>
-                                                    </Box>
-                                                </Grid>
-                                                
-                                                <Grid item xs={6}>
-                                                    <Box sx={{ textAlign: 'center', mb: 2 }}>
-                                                        <QueueIcon color="primary" />
-                                                        <Typography variant="body2" color="text.secondary" gutterBottom>
-                                                            Your Token
-                                                        </Typography>
-                                                        <Typography variant="h5" color="primary" fontWeight="bold">#{appointment.token}</Typography>
-                                                    </Box>
-                                                </Grid>
-                                                
-                                                <Grid item xs={6}>
-                                                    <Box sx={{ textAlign: 'center', mb: 2 }}>
-                                                        <AccessTimeIcon color="primary" />
-                                                        <Typography variant="body2" color="text.secondary" gutterBottom>
-                                                            Expected Time
-                                                        </Typography>
-                                                        <Typography variant="h5" color="primary" fontWeight="bold">
-                                                            {appointment.estimatedWaitTime}
-                                                        </Typography>
-                                                    </Box>
-                                                </Grid>
-                                                
-                                                <Grid item xs={12} sx={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', mt: 1 }}>
-                                                    <Button
-                                                        variant="outlined"
-                                                        size="small"
-                                                        startIcon={<PhoneIcon />}
-                                                        sx={{ borderRadius: 2, mr: 1 }}
-                                                        onClick={() => window.open(`tel:${appointment.doctorPhone}`)}
-                                                    >
-                                                        Call
-                                                    </Button>
-                                                    <Button
-                                                        variant="outlined"
-                                                        size="small"
-                                                        startIcon={<DirectionsIcon />}
-                                                        sx={{ borderRadius: 2 }}
-                                                        onClick={() => window.open(`https://maps.google.com/?q=${appointment.clinic}`)}
-                                                    >
-                                                        Directions
-                                                    </Button>
-                                                </Grid>
+                                            <CardContent>
+                                                <Grid container spacing={1}>
+                                                    <Grid item xs={12}>
+                                                        <Box sx={{ display: "flex", alignItems: "center", mb: 0 }}>
+                                                            <CalendarTodayIcon sx={{ mr: 1, color: "primary.main" }} />
+                                                            <Typography variant="body2">
+                                                                <strong>Appointment Date:</strong> {formatDate(appointment.date)}
+                                                            </Typography>
+                                                        </Box>
+                                                    </Grid>
+                                                    
+                                                    <Grid item xs={12}>
+                                                        <Box sx={{ display: "flex", alignItems: "center", mb: 1 }}>
+                                                            <PersonIcon sx={{ mr: 1, color: "primary.main" }} />
+                                                            <Typography variant="body2">
+                                                                <strong>Patient Name:</strong> {appointment.patientFor}
+                                                            </Typography>
+                                                        </Box>
+                                                        <Box sx={{ display: "flex", alignItems: "center", mb: 1 }}>
+                                                            <PersonIcon sx={{ mr: 1, color: "primary.main" }} />
+                                                            <Typography variant="body2">
+                                                               <strong>PID:</strong> {appointment.patientId}
+                                                            </Typography>
+                                                        </Box>
+                                                    </Grid>
+                                                    
+                                                    <Grid item xs={6}>
+                                                        <Box sx={{ textAlign: 'center', mb: 2 }}>
+                                                            <QueueIcon color="primary" />
+                                                            <Typography variant="body2" color="text.secondary" gutterBottom>
+                                                                Your Token
+                                                            </Typography>
+                                                            <Typography variant="h5" color="primary" fontWeight="bold">#{appointment.token}</Typography>
+                                                        </Box>
+                                                    </Grid>
+                                                    
+                                                    <Grid item xs={6}>
+                                                        <Box sx={{ textAlign: 'center', mb: 2 }}>
+                                                            <AccessTimeIcon color="primary" />
+                                                            <Typography variant="body2" color="text.secondary" gutterBottom>
+                                                                Expected Time
+                                                            </Typography>
+                                                            <Typography variant="h5" color="primary" fontWeight="bold">
+                                                                {appointment.estimatedWaitTime}
+                                                            </Typography>
+                                                        </Box>
+                                                    </Grid>
+                                                    
+                                                    <Grid item xs={12} sx={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', mt: 1 }}>
+                                                        <Button
+                                                            variant="outlined"
+                                                            size="small"
+                                                            startIcon={<PhoneIcon />}
+                                                            sx={{ borderRadius: 2, mr: 1 }}
+                                                            onClick={() => window.open(`tel:${appointment.doctorPhone}`)}
+                                                        >
+                                                            Call
+                                                        </Button>
+                                                        <Button
+                                                            variant="outlined"
+                                                            size="small"
+                                                            startIcon={<DirectionsIcon />}
+                                                            sx={{ borderRadius: 2 }}
+                                                            onClick={() => window.open(`https://maps.google.com/?q=${appointment.clinic}`)}
+                                                        >
+                                                            Directions
+                                                        </Button>
+                                                    </Grid>
 
-                                                <Grid item xs={12}>
-                                                    <Button 
-                                                        variant="contained" 
-                                                        fullWidth 
-                                                        endIcon={<ArrowForwardIcon />} 
-                                                        sx={{
-                                                            mt: 2,
-                                                            borderRadius: 2,
-                                                            transition: 'all 0.2s',
-                                                            '&:hover': {
-                                                                transform: 'translateX(4px)'
-                                                            }
-                                                        }} 
-                                                        onClick={() => handleViewDetails(appointment)}
-                                                    >
-                                                        View Details
-                                                    </Button>
+                                                    <Grid item xs={12}>
+                                                        <Button 
+                                                            variant="contained" 
+                                                            fullWidth 
+                                                            endIcon={<ArrowForwardIcon />} 
+                                                            sx={{
+                                                                mt: 2,
+                                                                borderRadius: 2,
+                                                                transition: 'all 0.2s',
+                                                                '&:hover': {
+                                                                    transform: 'translateX(4px)'
+                                                                }
+                                                            }} 
+                                                            onClick={() => handleViewDetails(appointment)}
+                                                        >
+                                                            View Details
+                                                        </Button>
+                                                    </Grid>
                                                 </Grid>
-                                            </Grid>
-                                        </CardContent>
-                                    </Card>
-                                </Box>
+                                            </CardContent>
+                                        </Card>
+                                    </Box>
+                                </SwiperSlide>
                             ))}
-                        </SwipeableViews>
+                        </Swiper>
 
-                        {/* Dots Indicator */}
-                        {appointmentsList.length > 1 && (
-                            <Box sx={{ 
-                                display: 'flex', 
-                                justifyContent: 'center', 
-                                mt: 2 
-                            }}>
-                                {appointmentsList.map((_, index) => (
-                                    <Box
-                                        key={index}
-                                        sx={{
-                                            width: 8,
-                                            height: 8,
-                                            borderRadius: '50%',
-                                            mx: 0.5,
-                                            bgcolor: index === activeStep ? 'primary.main' : 'grey.300',
-                                            cursor: 'pointer'
-                                        }}
-                                        onClick={() => handleStepChange(index)}
-                                    />
-                                ))}
-                            </Box>
-                        )}
+                        <style>
+                            {`
+                            .swiper-button-next, .swiper-button-prev {
+                                width: 30px !important;
+                                height: 30px !important;
+                                background-color: white;
+                                border-radius: 50%;
+                                box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+                                z-index: 10 !important;
+                            }
+                            .swiper-pagination {
+                                position: relative !important;
+                                margin-top: 16px !important;
+                                z-index: 10 !important;
+                            }
+                            `}
+                        </style>
                     </Box>
                 ) : (
                     <Card elevation={1} sx={{
@@ -504,6 +509,7 @@ const PatientHome = () => {
                 maxWidth: 600,
                 boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
                 transition: 'transform 0.2s, box-shadow 0.2s',
+                zIndex: 20,
                 '&:hover': {
                     boxShadow: '0 8px 20px rgba(0,0,0,0.2)',
                     transform: 'translate(-50%, -2px)'
@@ -522,148 +528,129 @@ const PatientHome = () => {
                     overflow: 'hidden'
                 }
             }}>
-                <Box sx={{ bgcolor: 'primary.main', color: 'white', py: 2, px: 3 }}>
+                <Box sx={{ bgcolor: 'primary.main', color: 'white', py: 1.5, px: 3, position: 'relative' }}>
                     <DialogTitle sx={{ p: 0, fontWeight: 600 }}>
                         Appointment Details
                     </DialogTitle>
-                    <Typography variant="body2" sx={{ opacity: 0.9 }}>{selectedAppointment?.doctor} • {selectedAppointment?.specialty}</Typography>
+                    <IconButton 
+                        aria-label="close" 
+                        onClick={() => setShowAppointmentDetails(false)}
+                        sx={{ 
+                            position: 'absolute', 
+                            right: 8, 
+                            top: 8, 
+                            color: 'white'
+                        }}
+                    >
+                        <CloseIcon />
+                    </IconButton>
                 </Box>
-                <DialogContent>
-                    <Grid container spacing={3} sx={{ mt: 1 }}>
+                <DialogContent sx={{ py: 1 }}>
+                    <Grid container spacing={2} sx={{ mt: 0 }}>
                         <Grid item xs={12}>
-                            <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                                <CalendarTodayIcon color="primary" sx={{ mr: 2 }} />
+                            <Box sx={{ display: 'flex', alignItems: 'flex-start', mb: 1 }}>
+                                <PersonIcon color="primary" sx={{ mr: 1.5, mt: 0.5 }} />
                                 <Box>
-                                    <Typography variant="subtitle2">Date</Typography>
-                                    <Typography variant="body2" color="text.secondary">{selectedAppointment && formatDate(selectedAppointment.date)}</Typography>
+                                    <Typography variant="subtitle2">Patient Information</Typography>
+                                    <Typography variant="body2" color="text.secondary">
+                                        Name: {selectedAppointment?.patientFor}
+                                    </Typography>
+                                    <Typography variant="body2" color="text.secondary">
+                                        Patient ID: {selectedAppointment?.patientId}
+                                    </Typography>
+                                    <Typography variant="body2" color="text.secondary">
+                                        {selectedAppointment?.age && `Age: ${selectedAppointment?.age}`} {selectedAppointment?.gender && `, Gender: ${selectedAppointment?.gender === 'M' ? 'Male' : selectedAppointment?.gender === 'F' ? 'Female' : ''}`  }
+                                    </Typography>
                                 </Box>
                             </Box>
                         </Grid>
 
+                        <Grid item xs={12}>
+                            <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                                <CalendarTodayIcon color="primary" sx={{ mr: 1.5 }} />
+                                <Box>
+                                    <Typography variant="subtitle2">Appointment Date</Typography>
+                                    <Typography variant="body2" color="text.secondary">{selectedAppointment && formatDate(selectedAppointment.date)}</Typography>
+                                </Box>
+                            </Box>
+                        </Grid>
+                        
                         <Grid item xs={6}>
                             <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                <QueueIcon color="primary" sx={{ mr: 2 }} />
+                                <QueueIcon color="primary" sx={{ mr: 1.5 }} />
                                 <Box>
                                     <Typography variant="subtitle2">Your Token</Typography>
                                     <Typography variant="body2" color="text.secondary">#{selectedAppointment?.token}</Typography>
                                 </Box>
                             </Box>
                         </Grid>
-
+                        
                         <Grid item xs={6}>
                             <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                <PeopleIcon color="primary" sx={{ mr: 2 }} />
+                                <AccessTimeIcon color="primary" sx={{ mr: 1.5 }} />
                                 <Box>
-                                    <Typography variant="subtitle2">People Ahead</Typography>
-                                    <Typography variant="body2" color="text.secondary">{Math.max(0, selectedAppointment?.token - selectedAppointment?.currentToken)}</Typography>
-                                </Box>
-                            </Box>
-                        </Grid>
-
-                        <Grid item xs={12}>
-                            <Divider sx={{ my: 1 }} />
-                        </Grid>
-
-                        <Grid item xs={12}>
-                            <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                                <LocationOnIcon color="primary" sx={{ mr: 2 }} />
-                                <Box>
-                                    <Typography variant="subtitle2">Clinic</Typography>
-                                    <Typography variant="body2" color="text.secondary">{selectedAppointment?.clinic}</Typography>
-                                    <Typography variant="body2" color="text.secondary">{selectedAppointment?.location}</Typography>
-                                </Box>
-                            </Box>
-                        </Grid>
-
-                        <Grid item xs={12}>
-                            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                                <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                    <PhoneIcon color="primary" sx={{ mr: 2 }} />
-                                    <Box>
-                                        <Typography variant="subtitle2">Contact</Typography>
-                                        <Typography variant="body2" color="text.secondary">{selectedAppointment?.phone}</Typography>
-                                    </Box>
-                                </Box>
-                                <Box sx={{ display: 'flex' }}>
-                                    <ButtonGroup variant="outlined" size="small">
-                                        <Button startIcon={<PhoneIcon />} onClick={handleCall} sx={{ height: '32px', fontSize: '0.8rem' }}>
-                                            Call
-                                        </Button>
-                                        <Button startIcon={<DirectionsIcon />} onClick={handleDirections} sx={{ height: '32px', fontSize: '0.8rem' }}>
-                                            Map
-                                        </Button>
-                                    </ButtonGroup>
-                                </Box>
-                            </Box>
-                        </Grid>
-
-                        <Grid item xs={12}>
-                            <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                                <AccessTimeIcon color="primary" sx={{ mr: 2 }} />
-                                <Box>
-                                    <Typography variant="subtitle2">Wait Time</Typography>
+                                    <Typography variant="subtitle2">Expected Time</Typography>
                                     <Typography variant="body2" color="text.secondary">{selectedAppointment?.estimatedWaitTime}</Typography>
-                                    <LinearProgress 
-                                        variant="determinate" 
-                                        value={Math.min(100, (selectedAppointment?.currentToken / selectedAppointment?.token) * 100)} 
-                                        sx={{ height: 6, borderRadius: 3, mt: 1, width: '100%', maxWidth: 200 }} 
-                                    />
                                 </Box>
                             </Box>
                         </Grid>
 
                         <Grid item xs={12}>
-                            <Divider sx={{ my: 1 }} />
-                        </Grid>
-
-                        <Grid item xs={12}>
-                            <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                <MedicalServicesIcon color="primary" sx={{ mr: 2 }} />
+                            <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                                <MedicalServicesIcon color="primary" sx={{ mr: 1.5 }} />
                                 <Box>
                                     <Typography variant="subtitle2">Appointment Details</Typography>
+                                    <Typography variant="body2" color="text.secondary">
+                                        Appointment ID: {selectedAppointment?.id}
+                                    </Typography>
                                     <Typography variant="body2" color="text.secondary">
                                         Type: {selectedAppointment?.appointmentType}
                                     </Typography>
                                     <Typography variant="body2" color="text.secondary">
-                                        Issue: {selectedAppointment?.disease}
-                                    </Typography>
-                                    <Typography variant="body2" color="text.secondary">
-                                        Fees: ₹{selectedAppointment?.fees}
-                                    </Typography>
-                                    <Typography variant="body2" color="text.secondary">
-                                        Status: {selectedAppointment?.feesPaid ? "Paid" : "Unpaid"}
+                                        Issue: {selectedAppointment?.disease || "Not specified"}
                                     </Typography>
                                 </Box>
                             </Box>
                         </Grid>
 
                         <Grid item xs={12}>
-                            <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                <PersonIcon color="primary" sx={{ mr: 2 }} />
-                                <Box>
-                                    <Typography variant="subtitle2">Patient Information</Typography>
-                                    <Typography variant="body2" color="text.secondary">
-                                        Patient ID: {selectedAppointment?.patientId}
-                                    </Typography>
-                                    <Typography variant="body2" color="text.secondary">
-                                        For: {selectedAppointment?.patientFor}
-                                    </Typography>
-                                    <Typography variant="body2" color="text.secondary">
-                                        Age: {selectedAppointment?.age}, Gender: {selectedAppointment?.gender === 'M' ? 'Male' : selectedAppointment?.gender === 'F' ? 'Female' : 'Other'}
-                                    </Typography>
+                            <Divider sx={{ my: 0.5 }} />
+                        </Grid>
+
+                        <Grid item xs={12}>
+                            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1 }}>
+                                <Box sx={{ display: 'flex', alignItems: 'flex-start' }}>
+                                    <PhoneIcon color="primary" sx={{ mr: 1.5, mt: 0.5 }} />
+                                    <Box>
+                                        <Typography variant="subtitle2">Doctor Information</Typography>
+                                        <Typography variant="body2" color="text.secondary">
+                                            Dr. {selectedAppointment?.doctor} • {selectedAppointment?.specialty}
+                                        </Typography>
+                                        <Typography variant="body2" color="text.secondary">
+                                            Clinic: {selectedAppointment?.clinic}
+                                        </Typography>
+                                        {selectedAppointment?.doctorPhone && (
+                                            <Typography variant="body2" color="text.secondary">
+                                                Doctor: {selectedAppointment?.doctorPhone}
+                                            </Typography>
+                                        )}
+                                        {selectedAppointment?.hospitalPhone && (
+                                            <Typography variant="body2" color="text.secondary">
+                                                Clinic: {selectedAppointment?.hospitalPhone}
+                                            </Typography>
+                                        )}
+                                    </Box>
                                 </Box>
+                               
                             </Box>
                         </Grid>
                     </Grid>
                 </DialogContent>
                 <DialogActions sx={{ p: 2, pt: 0 }}>
-                    <Button onClick={() => setShowAppointmentDetails(false)} variant="outlined" size="small" sx={{ borderRadius: 2 }}>
-                        Close
-                    </Button>
                     <Button onClick={() => {
                         setShowAppointmentDetails(false);
                         navigate(`/doctor/${selectedAppointment?.id}`);
-                    }} variant="contained" size="small" sx={{ borderRadius: 2 }}>
+                    }} variant="contained" size="small" fullWidth sx={{ borderRadius: 2 }}>
                         View Doctor
                     </Button>
                 </DialogActions>
