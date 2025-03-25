@@ -45,7 +45,7 @@ import {
 } from "@mui/material";
 import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { getCabinInfo } from "../services/api";
+import { addAppointment, getCabinInfo } from "../services/api";
 
 const DoctorPage = () => {
   const navigate = useNavigate();
@@ -181,14 +181,43 @@ const DoctorPage = () => {
     });
   };
 
-  const handleConfirmBooking = () => {
+  const handleConfirmBooking = async () => {
     setBookingLoading(true);
     
-    // Simulate booking process
-    setTimeout(() => {
+    try {
+      // Get the selected slot from the days array
+      const selectedDate = days[selectedDay].date;
+      const selectedSlot = cabinInfo?.slots?.[0]?.slot || "2025-03-18T12:01:00Z";
+
+      // Prepare appointment data according to API requirements
+      const appointmentData = {
+        cabinId: parseInt(doctorId),
+        slot: selectedSlot,
+        name: patientType === "self" ? "User Name" : familyMember.name,
+        disease: "Health Issue", // Get from the health issue text field
+        appointment_type: "New",
+        phone_number: "9352712911", // Replace with actual user phone from context
+        age: patientType === "self" ? "25" : familyMember.age,
+        gender: patientType === "self" ? "M" : familyMember.gender,
+        location: "",
+        guardian: patientType === "family" ? familyMember.relation : "",
+        fees_paid: cabinInfo?.fees || 0,
+        mode: "",
+        paid: false,
+        checkin: false
+      };
+
+      // Call the API to save appointment
+      const response = await addAppointment(appointmentData);
+      console.log("Appointment saved:", response);
+      
       setBookingLoading(false);
       setBookingStage(2); // Success stage
-    }, 1500);
+    } catch (error) {
+      console.error("Error booking appointment:", error);
+      setBookingLoading(false);
+      // TODO: Show error message to user
+    }
   };
 
   const handleNavigateToHome = () => {
