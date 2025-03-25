@@ -56,6 +56,21 @@ const PatientHome = () => {
     const currentAppointments = user?.current_appointments || [];
     const newAppointments = currentAppointments.filter(app => app.appointment_type === "New");
 
+    // Get patient details from localStorage
+    const getPatientDetails = (patientId) => {
+        try {
+            const userDataString = localStorage.getItem('user');
+            if (userDataString) {
+                const userData = JSON.parse(userDataString);
+                const patients = userData.patients || [];
+                return patients.find(patient => patient.patient_id === patientId) || null;
+            }
+        } catch (error) {
+            console.error("Error fetching patient data:", error);
+        }
+        return null;
+    };
+
     const appointmentsList = newAppointments.map(appointment => ({
         id: appointment.appointment_id,
         doctor: appointment.cabinslot?.cabin?.doctor?.name || "Doctor",
@@ -79,7 +94,8 @@ const PatientHome = () => {
         fees: appointment.cabinslot?.cabin?.fees || 0,
         feesPaid: appointment.fees_paid || 0,
         checkin: appointment.queobj?.checkin || false,
-        late: appointment.queobj?.late || false
+        late: appointment.queobj?.late || false,
+        mode: appointment.mode
     }));
 
     const handleStepChange = (step) => {
@@ -133,7 +149,22 @@ const PatientHome = () => {
     };
 
     const handleViewDetails = (appointment) => {
-        setSelectedAppointment(appointment);
+        // Get detailed patient information from localStorage
+        const patientDetails = getPatientDetails(appointment.patientId);
+        // Merge patient details with appointment
+        const appointmentWithPatientDetails = {
+            ...appointment,
+            // Override with patient details from localStorage if available
+            patientFor: patientDetails?.name,
+            age: patientDetails?.age,
+            gender: patientDetails?.gender,
+            location: patientDetails?.location,
+            phone: patientDetails?.phone_number,
+            guardian: patientDetails?.guardian,
+            allergies: patientDetails?.allergies
+        };
+        
+        setSelectedAppointment(appointmentWithPatientDetails);
         setShowAppointmentDetails(true);
     };
 
@@ -517,7 +548,7 @@ const PatientHome = () => {
             </Button> */}
 
             {/* Appointment Details Dialog */}
-            <Dialog open={showAppointmentDetails} onClose={() => setShowAppointmentDetails(false)} fullWidth maxWidth="sm" PaperProps={{
+            <Dialog open={showAppointmentDetails} onClose={() => setShowAppointmentDetails(false)} fullWidth maxWidth="md" PaperProps={{
                 sx: {
                     borderRadius: 3,
                     overflow: 'hidden'
@@ -547,15 +578,36 @@ const PatientHome = () => {
                                 <PersonIcon color="primary" sx={{ mr: 1.5, mt: 0.5 }} />
                                 <Box>
                                     <Typography variant="subtitle2">Patient Information</Typography>
+                                    {selectedAppointment?.patientFor && (
+                                        <Typography variant="body2" color="text.secondary">
+                                            Name: {selectedAppointment.patientFor}
+                                        </Typography>
+                                    )}
+                                    {selectedAppointment?.patientId && (
+                                        <Typography variant="body2" color="text.secondary">
+                                            Patient ID: {selectedAppointment.patientId}
+                                        </Typography>
+                                    )}
                                     <Typography variant="body2" color="text.secondary">
-                                        Name: {selectedAppointment?.patientFor}
+                                        {selectedAppointment?.age && `Age: ${selectedAppointment.age}`}
+                                        {selectedAppointment?.gender && selectedAppointment.age && `, `}
+                                        {selectedAppointment?.gender && `Gender: ${selectedAppointment.gender === 'M' ? 'Male' : selectedAppointment.gender === 'F' ? 'Female' : selectedAppointment.gender}`}
                                     </Typography>
-                                    <Typography variant="body2" color="text.secondary">
-                                        Patient ID: {selectedAppointment?.patientId}
-                                    </Typography>
-                                    <Typography variant="body2" color="text.secondary">
-                                        {selectedAppointment?.age && `Age: ${selectedAppointment?.age}`} {selectedAppointment?.gender && `, Gender: ${selectedAppointment?.gender === 'M' ? 'Male' : selectedAppointment?.gender === 'F' ? 'Female' : ''}`  }
-                                    </Typography>
+                                    {selectedAppointment?.phone && (
+                                        <Typography variant="body2" color="text.secondary">
+                                            Phone: {selectedAppointment.phone}
+                                        </Typography>
+                                    )}
+                                    {selectedAppointment?.guardian && selectedAppointment.guardian !== "N/A" && (
+                                        <Typography variant="body2" color="text.secondary">
+                                            Guardian: {selectedAppointment.guardian}
+                                        </Typography>
+                                    )}
+                                    {selectedAppointment?.allergies && (
+                                        <Typography variant="body2" color="text.secondary">
+                                            Allergies: {selectedAppointment.allergies}
+                                        </Typography>
+                                    )}
                                 </Box>
                             </Box>
                         </Grid>
@@ -572,7 +624,7 @@ const PatientHome = () => {
                         
                         <Grid item xs={6}>
                             <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                <QueueIcon color="primary" sx={{ mr: 1.5 }} />
+                                <QueueIcon color="primary" sx={{ mr: 1 }} />
                                 <Box>
                                     <Typography variant="subtitle2">Your Token</Typography>
                                     <Typography variant="body2" color="text.secondary">#{selectedAppointment?.token}</Typography>
@@ -582,7 +634,7 @@ const PatientHome = () => {
                         
                         <Grid item xs={6}>
                             <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                <AccessTimeIcon color="primary" sx={{ mr: 1.5 }} />
+                                <AccessTimeIcon color="primary" sx={{ mr: 1 }} />
                                 <Box>
                                     <Typography variant="subtitle2">Expected Time</Typography>
                                     <Typography variant="body2" color="text.secondary">{selectedAppointment?.estimatedWaitTime}</Typography>
@@ -595,15 +647,45 @@ const PatientHome = () => {
                                 <MedicalServicesIcon color="primary" sx={{ mr: 1.5 }} />
                                 <Box>
                                     <Typography variant="subtitle2">Appointment Details</Typography>
-                                    <Typography variant="body2" color="text.secondary">
-                                        Appointment ID: {selectedAppointment?.id}
-                                    </Typography>
-                                    <Typography variant="body2" color="text.secondary">
-                                        Type: {selectedAppointment?.appointmentType}
-                                    </Typography>
-                                    <Typography variant="body2" color="text.secondary">
-                                        Issue: {selectedAppointment?.disease || "Not specified"}
-                                    </Typography>
+                                    {selectedAppointment?.appointmentType && (
+                                        <Typography variant="body2" color="text.secondary">
+                                            Type: {selectedAppointment.appointmentType}
+                                        </Typography>
+                                    )}
+                                    {selectedAppointment?.disease && selectedAppointment.disease !== "Not specified" && (
+                                        <Typography variant="body2" color="text.secondary">
+                                            Issue: {selectedAppointment.disease}
+                                        </Typography>
+                                    )}
+                                    {selectedAppointment?.status && (
+                                        <Typography variant="body2" color="text.secondary">
+                                            Status: {selectedAppointment.status}
+                                        </Typography>
+                                    )}
+                                    {selectedAppointment?.checkin !== undefined && (
+                                        <Typography variant="body2" color="text.secondary">
+                                            Check-in Status: {selectedAppointment.checkin ? "Checked In" : "Not Checked In"}
+                                        </Typography>
+                                    )}
+                                </Box>
+                            </Box>
+                        </Grid>
+                        
+                        <Grid item xs={12}>
+                            <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                                <ReceiptIcon color="primary" sx={{ mr: 1.5 }} />
+                                <Box>
+                                    <Typography variant="subtitle2">Payment Information</Typography>
+                                    {selectedAppointment?.feesPaid !== undefined && selectedAppointment?.fees !== undefined && (
+                                        <Typography variant="body2" color="text.secondary">
+                                            Payment Status: {selectedAppointment.feesPaid >= selectedAppointment.fees ? "Paid" : "Not Paid"}
+                                        </Typography>
+                                    )}
+                                    {selectedAppointment?.mode && (
+                                        <Typography variant="body2" color="text.secondary">
+                                            Payment Mode: {selectedAppointment.mode}
+                                        </Typography>
+                                    )}
                                 </Box>
                             </Box>
                         </Grid>
@@ -619,24 +701,18 @@ const PatientHome = () => {
                                     <Box>
                                         <Typography variant="subtitle2">Doctor Information</Typography>
                                         <Typography variant="body2" color="text.secondary">
-                                            Dr. {selectedAppointment?.doctor} • {selectedAppointment?.specialty}
+                                            Dr. {selectedAppointment?.doctor}
                                         </Typography>
                                         <Typography variant="body2" color="text.secondary">
                                             Clinic: {selectedAppointment?.clinic}
                                         </Typography>
-                                        {selectedAppointment?.doctorPhone && (
+                                        {selectedAppointment?.fees !== undefined && (
                                             <Typography variant="body2" color="text.secondary">
-                                                Doctor: {selectedAppointment?.doctorPhone}
-                                            </Typography>
-                                        )}
-                                        {selectedAppointment?.hospitalPhone && (
-                                            <Typography variant="body2" color="text.secondary">
-                                                Clinic: {selectedAppointment?.hospitalPhone}
+                                                Consultation Fee: ₹{selectedAppointment.fees}
                                             </Typography>
                                         )}
                                     </Box>
                                 </Box>
-                               
                             </Box>
                         </Grid>
                     </Grid>

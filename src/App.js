@@ -231,7 +231,7 @@ const App = () => {
         <Box sx={{ display: "flex", height: "100%" }}>
           <Box
             component="main"
-            sx={{ flexGrow: 1, padding: "6px", height: "100%", width: "100%" }}
+            sx={{ flexGrow: 1, height: "100%", width: "100%" }}
           >
             <Routes>
               <Route

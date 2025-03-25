@@ -277,7 +277,7 @@ const AppointmentsList = () => {
         open={openDialog} 
         onClose={() => setOpenDialog(false)}
         fullWidth
-        maxWidth="sm"
+        maxWidth="md"
         PaperProps={{
           sx: {
             borderRadius: 3,
@@ -304,19 +304,43 @@ const AppointmentsList = () => {
                 <CloseIcon />
               </IconButton>
             </Box>
-            <DialogContent>
+            <DialogContent sx={{ py: 1 }}>
               <Grid container spacing={2} sx={{ mt: 0 }}>
                 <Grid item xs={12}>
                   <Box sx={{ display: 'flex', alignItems: 'flex-start', mb: 1 }}>
                     <PersonIcon color="primary" sx={{ mr: 1.5, mt: 0.5 }} />
                     <Box>
                       <Typography variant="subtitle2">Patient Information</Typography>
+                      {selectedAppointment.name && (
+                        <Typography variant="body2" color="text.secondary">
+                          Name: {selectedAppointment.name}
+                        </Typography>
+                      )}
+                      {selectedAppointment.patient_id && (
+                        <Typography variant="body2" color="text.secondary">
+                          Patient ID: {selectedAppointment.patient_id}
+                        </Typography>
+                      )}
                       <Typography variant="body2" color="text.secondary">
-                        Name: {selectedAppointment.name}
+                        {selectedAppointment.age && `Age: ${selectedAppointment.age}`}
+                        {selectedAppointment.gender && selectedAppointment.age && `, `}
+                        {selectedAppointment.gender && `Gender: ${selectedAppointment.gender === 'M' ? 'Male' : selectedAppointment.gender === 'F' ? 'Female' : selectedAppointment.gender}`}
                       </Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        Patient ID: {selectedAppointment.patient_id}
-                      </Typography>
+                      {selectedAppointment.phone_number && (
+                        <Typography variant="body2" color="text.secondary">
+                          Phone: {selectedAppointment.phone_number}
+                        </Typography>
+                      )}
+                      {selectedAppointment.guardian && selectedAppointment.guardian !== "N/A" && (
+                        <Typography variant="body2" color="text.secondary">
+                          Guardian: {selectedAppointment.guardian}
+                        </Typography>
+                      )}
+                      {selectedAppointment.allergies && (
+                        <Typography variant="body2" color="text.secondary">
+                          Allergies: {selectedAppointment.allergies}
+                        </Typography>
+                      )}
                     </Box>
                   </Box>
                 </Grid>
@@ -335,7 +359,7 @@ const AppointmentsList = () => {
                 
                 <Grid item xs={6}>
                   <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                    <QueueIcon color="primary" sx={{ mr: 1.5 }} />
+                    <QueueIcon color="primary" sx={{ mr: 1 }} />
                     <Box>
                       <Typography variant="subtitle2">Your Token</Typography>
                       <Typography variant="body2" color="text.secondary">#{selectedAppointment.token}</Typography>
@@ -345,7 +369,7 @@ const AppointmentsList = () => {
                 
                 <Grid item xs={6}>
                   <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                    <AccessTimeIcon color="primary" sx={{ mr: 1.5 }} />
+                    <AccessTimeIcon color="primary" sx={{ mr: 1 }} />
                     <Box>
                       <Typography variant="subtitle2">Status</Typography>
                       <Typography variant="body2" color="text.secondary">
@@ -360,21 +384,45 @@ const AppointmentsList = () => {
                     <MedicalServicesIcon color="primary" sx={{ mr: 1.5 }} />
                     <Box>
                       <Typography variant="subtitle2">Appointment Details</Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        Appointment ID: {selectedAppointment.appointment_id}
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        Type: {selectedAppointment.appointment_type}
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        Issue: {selectedAppointment.disease || "Not specified"}
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        Fees: ₹{selectedAppointment.cabinslot.cabin.fees}
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        Payment Status: {selectedAppointment.fees_paid > 0 ? `Paid (${selectedAppointment.mode})` : 'Unpaid'}
-                      </Typography>
+                      {selectedAppointment.appointment_type && (
+                        <Typography variant="body2" color="text.secondary">
+                          Type: {selectedAppointment.appointment_type}
+                        </Typography>
+                      )}
+                      {selectedAppointment.disease && selectedAppointment.disease !== "Not specified" && (
+                        <Typography variant="body2" color="text.secondary">
+                          Issue: {selectedAppointment.disease}
+                        </Typography>
+                      )}
+                      {selectedAppointment.queobj && selectedAppointment.queobj.status && (
+                        <Typography variant="body2" color="text.secondary">
+                          Status: {selectedAppointment.queobj.status.replace(/_/g, ' ').charAt(0).toUpperCase() + selectedAppointment.queobj.status.slice(1).replace(/_/g, ' ')}
+                        </Typography>
+                      )}
+                      {selectedAppointment.queobj && selectedAppointment.queobj.checkin !== undefined && (
+                        <Typography variant="body2" color="text.secondary">
+                          Check-in Status: {selectedAppointment.queobj.checkin ? "Checked In" : "Not Checked In"}
+                        </Typography>
+                      )}
+                    </Box>
+                  </Box>
+                </Grid>
+                
+                <Grid item xs={12}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                    <MedicalServicesIcon color="primary" sx={{ mr: 1.5 }} />
+                    <Box>
+                      <Typography variant="subtitle2">Payment Information</Typography>
+                      {selectedAppointment.fees_paid !== undefined && selectedAppointment.cabinslot?.cabin?.fees !== undefined && (
+                        <Typography variant="body2" color="text.secondary">
+                          Payment Status: {selectedAppointment.fees_paid >= selectedAppointment.cabinslot.cabin.fees ? "Paid" : "Not Paid"}
+                        </Typography>
+                      )}
+                      {selectedAppointment.mode && (
+                        <Typography variant="body2" color="text.secondary">
+                          Payment Mode: {selectedAppointment.mode}
+                        </Typography>
+                      )}
                     </Box>
                   </Box>
                 </Grid>
@@ -390,17 +438,16 @@ const AppointmentsList = () => {
                       <Box>
                         <Typography variant="subtitle2">Doctor Information</Typography>
                         <Typography variant="body2" color="text.secondary">
-                          Dr. {selectedAppointment.cabinslot.cabin.doctor.name} • {selectedAppointment.cabinslot.cabin.doctor.specialization}
+                          Dr. {selectedAppointment.cabinslot.cabin.doctor.name}
                         </Typography>
                         <Typography variant="body2" color="text.secondary">
                           Clinic: {selectedAppointment.cabinslot.cabin.hospital.hospital_name}
                         </Typography>
-                        <Typography variant="body2" color="text.secondary">
-                          Doctor: {selectedAppointment.cabinslot.cabin.doctor.phone_number}
-                        </Typography>
-                        <Typography variant="body2" color="text.secondary">
-                          Clinic: {selectedAppointment.cabinslot.cabin.hospital.phone_number}
-                        </Typography>
+                        {selectedAppointment.cabinslot?.cabin?.fees !== undefined && (
+                          <Typography variant="body2" color="text.secondary">
+                            Consultation Fee: ₹{selectedAppointment.cabinslot.cabin.fees}
+                          </Typography>
+                        )}
                       </Box>
                     </Box>
                   </Box>
@@ -439,6 +486,7 @@ const AppointmentsList = () => {
                   navigate(`/doctor/${selectedAppointment.cabinslot.cabin.id}`);
                 }}
                 variant="contained"
+                size="small"
                 fullWidth
                 sx={{ borderRadius: 2 }}
               >
