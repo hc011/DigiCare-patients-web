@@ -1,58 +1,51 @@
-import React, { useState, useEffect } from "react";
+import DirectionsIcon from "@mui/icons-material/Directions";
+import LocationOnIcon from "@mui/icons-material/LocationOn";
+import MedicalServicesIcon from "@mui/icons-material/MedicalServices";
+import MessageIcon from "@mui/icons-material/Message";
+import MonetizationOnIcon from "@mui/icons-material/MonetizationOn";
+import PeopleIcon from "@mui/icons-material/People";
+import PersonIcon from "@mui/icons-material/Person";
+import PhoneIcon from "@mui/icons-material/Phone";
+import QueueIcon from "@mui/icons-material/Queue";
+import SchoolIcon from "@mui/icons-material/School";
+import StarIcon from "@mui/icons-material/Star";
 import {
-  Box,
-  Typography,
   Avatar,
-  Chip,
+  Box,
   Button,
-  Tabs,
-  Tab,
-  Divider,
-  Grid,
+  ButtonGroup,
   Card,
   CardContent,
+  Chip,
+  CircularProgress,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  Divider,
+  FormControl,
+  FormControlLabel,
+  FormLabel,
+  Grid,
+  MenuItem,
+  Paper,
+  Radio,
+  RadioGroup,
+  Rating,
   Stack,
+  Tab,
   Table,
   TableBody,
   TableCell,
   TableContainer,
-  TableHead,
   TableRow,
-  Paper,
-  LinearProgress,
-  CircularProgress,
-  Rating,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
+  Tabs,
   TextField,
-  MenuItem,
-  FormControl,
-  InputLabel,
-  Select,
-  FormControlLabel,
-  Radio,
-  RadioGroup,
-  FormLabel,
-  IconButton,
-  ButtonGroup
+  Typography
 } from "@mui/material";
-import MedicalServicesIcon from "@mui/icons-material/MedicalServices";
-import LocationOnIcon from "@mui/icons-material/LocationOn";
-import StarIcon from "@mui/icons-material/Star";
-import PhoneIcon from "@mui/icons-material/Phone";
-import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
-import AccessTimeIcon from "@mui/icons-material/AccessTime";
-import SchoolIcon from "@mui/icons-material/School";
-import PersonIcon from "@mui/icons-material/Person";
-import MonetizationOnIcon from "@mui/icons-material/MonetizationOn";
-import MessageIcon from "@mui/icons-material/Message";
-import FamilyRestroomIcon from "@mui/icons-material/FamilyRestroom";
-import QueueIcon from "@mui/icons-material/Queue";
-import DirectionsIcon from "@mui/icons-material/Directions";
-import PeopleIcon from "@mui/icons-material/People";
+import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import { addAppointment, getCabinInfo } from "../services/api";
 
 const DoctorPage = () => {
   const navigate = useNavigate();
@@ -71,17 +64,34 @@ const DoctorPage = () => {
     gender: "M",
   });
 
+  const [cabinInfo, setCabinInfo] = useState(null);
+
+  useEffect(() => {
+    const fetchCabinInfo = async () => {
+      try {
+        const response = await getCabinInfo(doctorId);
+        console.log("API Response:", response);
+        setCabinInfo(response);
+      } catch (error) {
+        console.error("Error fetching cabin info:", error);
+      }
+    };
+
+    fetchCabinInfo();
+  }, [doctorId]);
+
+  // Transform cabinInfo into doctor object with fallbacks
   const doctor = {
-    id: parseInt(doctorId),
-    name: "Dr. Rahul Gupta",
-    specialty: "Skin Specialist",
-    clinic: "Gupta Skin and dental clinic",
-    address: "Station Road, Alwar, Rajasthan",
-    rating: 4.7,
-    reviews: 543,
-    experience: "15 years",
-    education: "MBBS, MD (General Medicine)",
-    about: "Dr. Rahul Gupta is a highly experienced skin specialist with over 15 years of practice. He specializes in treating various skin conditions, including acne, psoriasis, eczema, and skin allergies. Dr. Gupta is known for his patient-centric approach and dedication to providing personalized care.",
+    id: cabinInfo?.id || parseInt(doctorId),
+    name: cabinInfo?.doctor?.name || "Dr. Rahul Gupta",
+    specialty: cabinInfo?.doctor?.specialization || "Skin Specialist",
+    clinic: cabinInfo?.hospital?.hospital_name || "Gupta Skin and dental clinic",
+    address: cabinInfo?.hospital?.map_location || "Station Road, Alwar, Rajasthan",
+    rating: parseFloat(cabinInfo?.doctor?.rating) || 4.7,
+    reviews: 543, // Fallback since not in API
+    experience: `${cabinInfo?.doctor?.experience || 15} years`,
+    education: "MBBS, MD (General Medicine)", // Fallback since not in API
+    about: `Dr. ${cabinInfo?.doctor?.name} is a highly experienced skin specialist with over ${cabinInfo?.doctor?.experience || 15} years of practice. He specializes in treating various skin conditions, including acne, psoriasis, eczema, and skin allergies. Dr. Gupta is known for his patient-centric approach and dedication to providing personalized care.`, // Fallback since not in API
     timings: {
       mon: "9:00 AM - 1:00 PM",
       tue: "9:00 AM - 1:00 PM",
@@ -89,18 +99,21 @@ const DoctorPage = () => {
       thu: "4:00 PM - 8:00 PM",
       fri: "4:00 PM - 8:00 PM",
       sat: "9:00 AM - 1:00 PM",
-    },
-    fees: "₹500 Consultation",
-    currentToken: 8,
-    yourToken: 15,
-    estimatedWaitTime: "1hr 27 mins",
-    phone: "+91 12345 67890",
+    }, // Fallback since not in API
+    fees: `₹${cabinInfo?.fees || 500} Consultation`,
+    currentToken: 8, // Fallback since not in API
+    yourToken: 15, // Fallback since not in API
+    estimatedWaitTime: "1hr 27 mins", // Fallback since not in API
+    phone: cabinInfo?.doctor?.phone_number || "---",
   };
 
+  console.log("Cabin Info State:", cabinInfo);
+  console.log("Transformed Doctor Object:", doctor);
+
   // Calculate people ahead
-  const getPeopleAhead = () => {
-    return Math.max(0, doctor.yourToken - doctor.currentToken);
-  };
+  // const getPeopleAhead = () => {
+  //   return Math.max(0, doctor.yourToken - doctor.currentToken);
+  // };
 
   const days = [
     { day: "Today", date: "15 May", slots: 8 },
@@ -168,14 +181,43 @@ const DoctorPage = () => {
     });
   };
 
-  const handleConfirmBooking = () => {
+  const handleConfirmBooking = async () => {
     setBookingLoading(true);
     
-    // Simulate booking process
-    setTimeout(() => {
+    try {
+      // Get the selected slot from the days array
+      const selectedDate = days[selectedDay].date;
+      const selectedSlot = cabinInfo?.slots?.[0]?.slot || "2025-03-18T12:01:00Z";
+
+      // Prepare appointment data according to API requirements
+      const appointmentData = {
+        cabinId: parseInt(doctorId),
+        slot: selectedSlot,
+        name: patientType === "self" ? "User Name" : familyMember.name,
+        disease: "Health Issue", // Get from the health issue text field
+        appointment_type: "New",
+        phone_number: "9352712911", // Replace with actual user phone from context
+        age: patientType === "self" ? "25" : familyMember.age,
+        gender: patientType === "self" ? "M" : familyMember.gender,
+        location: "",
+        guardian: patientType === "family" ? familyMember.relation : "",
+        fees_paid: cabinInfo?.fees || 0,
+        mode: "",
+        paid: false,
+        checkin: false
+      };
+
+      // Call the API to save appointment
+      const response = await addAppointment(appointmentData);
+      console.log("Appointment saved:", response);
+      
       setBookingLoading(false);
       setBookingStage(2); // Success stage
-    }, 1500);
+    } catch (error) {
+      console.error("Error booking appointment:", error);
+      setBookingLoading(false);
+      // TODO: Show error message to user
+    }
   };
 
   const handleNavigateToHome = () => {
@@ -260,13 +302,13 @@ const DoctorPage = () => {
                   boxShadow: "0 4px 10px rgba(0,0,0,0.15)"
                 }}
               >
-                {doctor.name.charAt(4)}
+                {doctor.name.charAt(0)}
               </Avatar>
             </Grid>
             
             <Grid item xs>
               <Typography variant="h5" sx={{ fontWeight: 600, mb: 0.5 }}>
-                {doctor.name}
+                Dr. {doctor.name}
               </Typography>
               
               <Box sx={{ display: "flex", alignItems: "center", mb: 1 }}>
@@ -289,12 +331,12 @@ const DoctorPage = () => {
                   size="small"
                   sx={{ bgcolor: "rgba(0,0,0,0.05)" }}
                 />
-                <Chip
+                {/* <Chip
                   icon={<PersonIcon fontSize="small" />}
                   label="English, Hindi"
                   size="small"
                   sx={{ bgcolor: "rgba(0,0,0,0.05)" }}
-                />
+                /> */}
               </Stack>
               
               <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
@@ -362,18 +404,18 @@ const DoctorPage = () => {
             <Grid item xs={6} sm={3}>
               <Box sx={{ textAlign: "center" }}>
                 <Typography variant="caption" color="text.secondary" display="block">
-                  People Ahead
+                  Total Patient
                 </Typography>
                 <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
                   <Typography variant="body2" fontWeight="medium" color="primary.dark">
-                    {getPeopleAhead()}
+                    {615}
                   </Typography>
-                  <Chip
+                  {/* <Chip
                     label="Active"
                     size="small"
                     color="success"
                     sx={{ ml: 1, height: 20, fontSize: "0.7rem" }}
-                  />
+                  /> */}
                 </Box>
               </Box>
             </Grid>
@@ -808,7 +850,7 @@ const DoctorPage = () => {
                 </Box>
                 <Box>
                   <Typography variant="body2" fontWeight="medium">
-                    People Ahead: {getPeopleAhead()}
+                    People Ahead: {615}
                   </Typography>
                   <Typography variant="body2" color="text.secondary">
                     Estimated wait time: {doctor.estimatedWaitTime}

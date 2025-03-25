@@ -1,46 +1,39 @@
 import AccessTimeIcon from "@mui/icons-material/AccessTime";
-import ArrowBackIosIcon from "@mui/icons-material/ArrowBackIos";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
-import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos";
 import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
+import CloseIcon from "@mui/icons-material/Close";
 import DirectionsIcon from "@mui/icons-material/Directions";
 import EventBusyIcon from '@mui/icons-material/EventBusy';
-import LocationOnIcon from "@mui/icons-material/LocationOn";
-import ReceiptIcon from '@mui/icons-material/Receipt';
 import MedicalServicesIcon from "@mui/icons-material/MedicalServices";
-import PeopleIcon from "@mui/icons-material/People";
 import PersonIcon from "@mui/icons-material/Person";
 import PhoneIcon from "@mui/icons-material/Phone";
 import QueueIcon from "@mui/icons-material/Queue";
 import SearchIcon from "@mui/icons-material/Search";
-import CloseIcon from "@mui/icons-material/Close";
 import AddIcon from '@mui/icons-material/Add';
+import ReceiptIcon from '@mui/icons-material/Receipt';
 import {
-    Avatar,
-    Box,
-    Button,
-    ButtonGroup,
-    Card,
-    CardContent,
-    Chip,
-    CircularProgress,
-    Dialog,
-    DialogActions,
-    DialogContent,
-    DialogTitle,
-    Divider,
-    Grid,
-    IconButton,
-    LinearProgress,
-    Typography
+  Avatar,
+  Box,
+  Button,
+  Card,
+  CardContent,
+  CircularProgress,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  Divider,
+  Grid,
+  IconButton,
+  Typography
 } from "@mui/material";
 import React, { useContext, useEffect, useState } from "react";
-import { Swiper, SwiperSlide } from 'swiper/react';
-import { Navigation, Pagination } from 'swiper/modules';
+import { useLocation, useNavigate } from "react-router-dom";
 import 'swiper/css';
 import 'swiper/css/navigation';
 import 'swiper/css/pagination';
-import { useLocation, useNavigate } from "react-router-dom";
+import { Navigation, Pagination } from 'swiper/modules';
+import { Swiper, SwiperSlide } from 'swiper/react';
 import { AuthContext } from "../context/AuthContext";
 
 const PatientHome = () => {
@@ -95,7 +88,8 @@ const PatientHome = () => {
         feesPaid: appointment.fees_paid || 0,
         checkin: appointment.queobj?.checkin || false,
         late: appointment.queobj?.late || false,
-        mode: appointment.mode
+        mode: appointment.mode,
+        cabinId: appointment.cabinslot?.cabin?.id ||-1
     }));
 
     const handleStepChange = (step) => {
@@ -720,7 +714,7 @@ const PatientHome = () => {
                 <DialogActions sx={{ p: 2, pt: 0 }}>
                     <Button onClick={() => {
                         setShowAppointmentDetails(false);
-                        navigate(`/doctor/${selectedAppointment?.id}`);
+                        navigate(`/doctor/${selectedAppointment?.cabinId}`);
                     }} variant="contained" size="small" fullWidth sx={{ borderRadius: 2 }}>
                         View Doctor
                     </Button>

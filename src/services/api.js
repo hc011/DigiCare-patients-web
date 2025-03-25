@@ -27,6 +27,18 @@ export const getDoctorList = async() => {
     }
 };
 
+// get cabin info
+export const getCabinInfo = async(cabinId) => {
+    try {
+        const response = await axiosInstance.get(
+            `/doctorinfo/cabin/${cabinId}`, { withCredentials: true }
+        );
+        return response.data;
+    } catch (error) {
+        console.error("Error fetching doctor list:", error);
+        throw error;
+    }
+};
 // Add appointment
 export const addAppointment = async(payload) => {
     try {
@@ -174,4 +186,3 @@ export const getAllAppointments = async() => {
         throw error;
     }
 }
-
