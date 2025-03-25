@@ -295,25 +295,25 @@ const Login = () => {
                   <OutlinedInput
                     required
                     name="password"
+                    inputProps={{ type: 'number' }}
                     value={credential.password}
                     onChange={handleChange}
-                    type={showPassword ? "text" : "password"}
-                    endAdornment={
-                      <InputAdornment position="end">
-                        <IconButton
-                          onClick={handleClickShowPassword}
-                          onMouseDown={(e) => e.preventDefault()}
-                          edge="end"
-                        >
-                          {showPassword ? <Visibility /> : <VisibilityOff />}
-                        </IconButton>
-                      </InputAdornment>
-                    }
-                    startAdornment={
-                      <InputAdornment position="start">
-                        <LockIcon sx={{ color: "#1976d2" }} />
-                      </InputAdornment>
-                    }
+                    // endAdornment={
+                    //   <InputAdornment position="end">
+                    //     <IconButton
+                    //       onClick={handleClickShowPassword}
+                    //       onMouseDown={(e) => e.preventDefault()}
+                    //       edge="end"
+                    //     >
+                    //       {showPassword ? <Visibility /> : <VisibilityOff />}
+                    //     </IconButton>
+                    //   </InputAdornment>
+                    // }
+                    // startAdornment={
+                    //   <InputAdornment position="start">
+                    //     <LockIcon sx={{ color: "#1976d2" }} />
+                    //   </InputAdornment>
+                    // }
                     sx={{
                       borderRadius: "8px",
                       backgroundColor: "#f8f9fa",

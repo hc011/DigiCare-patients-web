@@ -163,3 +163,15 @@ export const updateUser = async(payload) => {
         throw error;
     }
 }
+
+
+export const getAllAppointments = async() => {
+    try {
+        const response = await axiosInstance.get("/userinfo/patients/appointments/", { withCredentials: true });
+        return response.data;
+    } catch (error) {
+        console.error("Error fetching all appointments:", error);
+        throw error;
+    }
+}
+

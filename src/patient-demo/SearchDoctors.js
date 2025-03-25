@@ -258,7 +258,7 @@ const SearchDoctors = () => {
       </Box>
 
       {/* Specialty tabs */}
-      <Box sx={{ mb: 2, borderBottom: 1, borderColor: 'divider' }}>
+      {/* <Box sx={{ mb: 2, borderBottom: 1, borderColor: 'divider' }}>
         <Tabs 
           value={selectedTab} 
           onChange={handleTabChange}
@@ -278,7 +278,7 @@ const SearchDoctors = () => {
             <Tab key={index} label={tab} />
           ))}
         </Tabs>
-      </Box>
+      </Box> */}
 
       {/* Loading progress */}
       {loading && (
