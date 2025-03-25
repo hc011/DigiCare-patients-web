@@ -17,6 +17,7 @@ import DoctorPage from "./patient-demo/DoctorPage";
 import PatientHome from "./patient-demo/PatientHome";
 import ProfilePage from "./patient-demo/ProfilePage";
 import SearchDoctors from "./patient-demo/SearchDoctors";
+import Register from './Pages/Register';
 
 const App = () => {
   const { user } = useContext(AuthContext);
@@ -236,6 +237,10 @@ const App = () => {
               <Route
                 path="/login"
                 element={user ? <Navigate to="/patient" replace /> : <Login />}
+              />
+              <Route
+                path="/register"
+                element={<Register />}
               />
 
               {/* Patient Routes */}

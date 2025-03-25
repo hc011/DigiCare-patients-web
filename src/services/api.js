@@ -149,3 +149,17 @@ export const removeAppointment = async(payload) => {
         throw error;
     }
 };
+
+
+export const updateUser = async(payload) => {
+    try {
+        const response = await axiosInstance.put(
+            "/userinfo/patients/update/",
+            payload, { withCredentials: true }
+        );
+        return response.data;
+    } catch (error) {
+        console.error("Error updating user:", error);
+        throw error;
+    }
+}

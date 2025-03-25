@@ -1,5 +1,7 @@
 import AccessTimeIcon from "@mui/icons-material/AccessTime";
+import ArrowBackIosIcon from "@mui/icons-material/ArrowBackIos";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
+import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos";
 import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
 import DirectionsIcon from "@mui/icons-material/Directions";
 import EventBusyIcon from '@mui/icons-material/EventBusy';
@@ -25,10 +27,12 @@ import {
     DialogTitle,
     Divider,
     Grid,
+    IconButton,
     LinearProgress,
     Typography
 } from "@mui/material";
 import React, { useContext, useEffect, useState } from "react";
+import SwipeableViews from 'react-swipeable-views';
 import { useLocation, useNavigate } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 
@@ -40,6 +44,7 @@ const PatientHome = () => {
     const [hasAppointment, setHasAppointment] = useState(false);
     const [showAppointmentDetails, setShowAppointmentDetails] = useState(false);
     const [selectedAppointment, setSelectedAppointment] = useState(null);
+    const [activeStep, setActiveStep] = useState(0);
     const { user } = useContext(AuthContext);
     const currentAppointments = user?.current_appointments || [];
     const newAppointments = currentAppointments.filter(app => app.appointment_type === "New");
@@ -69,6 +74,22 @@ const PatientHome = () => {
         checkin: appointment.queobj?.checkin || false,
         late: appointment.queobj?.late || false
     }));
+
+    const handleStepChange = (step) => {
+        setActiveStep(step);
+    };
+
+    const handleNext = () => {
+        setActiveStep((prevActiveStep) => 
+            prevActiveStep === appointmentsList.length - 1 ? 0 : prevActiveStep + 1
+        );
+    };
+
+    const handleBack = () => {
+        setActiveStep((prevActiveStep) => 
+            prevActiveStep === 0 ? appointmentsList.length - 1 : prevActiveStep - 1
+        );
+    };
 
     useEffect(() => {
         // Check if we should show appointment based on URL param or existing appointments
@@ -257,151 +278,203 @@ const PatientHome = () => {
             </Grid>
 
             {/* Current Appointment Section */}
-            <Typography variant="h6" fontWeight="600" gutterBottom>
-                Current Appointments
-            </Typography>
+            <Box sx={{ mb: 4 }}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                    <Typography variant="h6" fontWeight="600">
+                        Current Appointments
+                    </Typography>
+                    {appointmentsList.length > 1 && (
+                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                            <IconButton size="small" onClick={handleBack} sx={{ mr: 0.5 }}>
+                                <ArrowBackIosIcon fontSize="small" />
+                            </IconButton>
+                            <Typography variant="body2" color="text.secondary" sx={{ mr: 1 }}>
+                                {activeStep + 1}/{appointmentsList.length}
+                            </Typography>
+                            <IconButton size="small" onClick={handleNext}>
+                                <ArrowForwardIosIcon fontSize="small" />
+                            </IconButton>
+                        </Box>
+                    )}
+                </Box>
 
-            {hasAppointment && appointmentsList.length > 0 ? (
-                appointmentsList.map((appointment) => (
-                    <Card key={appointment.id} elevation={1} sx={{
+                {hasAppointment && appointmentsList.length > 0 ? (
+                    <Box sx={{ position: 'relative' }}>
+                        <SwipeableViews
+                            axis="x"
+                            index={activeStep}
+                            onChangeIndex={handleStepChange}
+                            enableMouseEvents
+                            style={{ borderRadius: 12, overflow: 'hidden' }}
+                        >
+                            {appointmentsList.map((appointment, index) => (
+                                <Box key={appointment.id} sx={{ px: 0.5, pb: 1 }}>
+                                    <Card elevation={1} sx={{
+                                        borderRadius: 3,
+                                        overflow: 'hidden',
+                                        transition: 'transform 0.3s, box-shadow 0.3s',
+                                        '&:hover': {
+                                            boxShadow: '0 8px 24px rgba(0,0,0,0.12)'
+                                        }
+                                    }}>
+                                        <Box sx={{ bgcolor: '#1976d2', color: 'white', p: 2 }}>
+                                            <Typography variant="subtitle1">{appointment.clinic}</Typography>
+                                            <Typography variant="body2" sx={{ opacity: 0.9 }}>{appointment.doctor} • {appointment.specialty}</Typography>
+                                        </Box>
+
+                                        <CardContent>
+                                            <Grid container spacing={3}>
+                                                <Grid item xs={6}>
+                                                    <Box sx={{ textAlign: 'center', mb: 2 }}>
+                                                        <QueueIcon color="primary" />
+                                                        <Typography variant="body2" color="text.secondary" gutterBottom>
+                                                            Your Token
+                                                        </Typography>
+                                                        <Typography variant="h4" color="primary" fontWeight="bold">#{appointment.token}</Typography>
+                                                    </Box>
+                                                </Grid>
+                                                <Grid item xs={6}>
+                                                    <Box sx={{ textAlign: 'center', mb: 2 }}>
+                                                        <PeopleIcon color="primary" />
+                                                        <Typography variant="body2" color="text.secondary" gutterBottom>
+                                                            People Ahead of You
+                                                        </Typography>
+                                                        <Typography variant="h4" color="primary" fontWeight="bold">
+                                                            {Math.max(0, appointment.token - appointment.currentToken)}
+                                                        </Typography>
+                                                    </Box>
+                                                </Grid>
+                                            </Grid>
+
+                                            <Divider sx={{ my: 2 }} />
+
+                                            <Typography variant="body2" color="text.secondary" gutterBottom>
+                                                Queue Progress
+                                            </Typography>
+                                            <LinearProgress 
+                                                variant="determinate" 
+                                                value={Math.min(100, (appointment.currentToken / appointment.token) * 100)} 
+                                                sx={{ height: 8, borderRadius: 4, mb: 1 }} 
+                                            />
+
+                                            <Box sx={{
+                                                mt: 3,
+                                                p: 2,
+                                                bgcolor: '#f0f9ff',
+                                                borderRadius: 2,
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'space-between'
+                                            }}>
+                                                <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                                    <AccessTimeIcon color="info" sx={{ mr: 1 }} />
+                                                    <Box>
+                                                        <Typography variant="body2" fontWeight="medium">
+                                                            Estimated Wait Time
+                                                        </Typography>
+                                                        <Typography variant="body2" color="text.secondary">{appointment.estimatedWaitTime}</Typography>
+                                                    </Box>
+                                                </Box>
+                                                <Chip 
+                                                    label={appointment.status} 
+                                                    color={appointment.checkin ? "success" : "primary"} 
+                                                    size="small" 
+                                                    sx={{
+                                                        '& .MuiChip-label': {
+                                                            px: 1,
+                                                            fontSize: '0.75rem'
+                                                        }
+                                                    }} 
+                                                />
+                                            </Box>
+
+                                            <Button 
+                                                variant="outlined" 
+                                                fullWidth 
+                                                endIcon={<ArrowForwardIcon />} 
+                                                sx={{
+                                                    mt: 3,
+                                                    borderRadius: 2,
+                                                    transition: 'all 0.2s',
+                                                    '&:hover': {
+                                                        transform: 'translateX(4px)'
+                                                    }
+                                                }} 
+                                                onClick={() => handleViewDetails(appointment)}
+                                            >
+                                                View Details
+                                            </Button>
+                                        </CardContent>
+                                    </Card>
+                                </Box>
+                            ))}
+                        </SwipeableViews>
+
+                        {/* Dots Indicator */}
+                        {appointmentsList.length > 1 && (
+                            <Box sx={{ 
+                                display: 'flex', 
+                                justifyContent: 'center', 
+                                mt: 2 
+                            }}>
+                                {appointmentsList.map((_, index) => (
+                                    <Box
+                                        key={index}
+                                        sx={{
+                                            width: 8,
+                                            height: 8,
+                                            borderRadius: '50%',
+                                            mx: 0.5,
+                                            bgcolor: index === activeStep ? 'primary.main' : 'grey.300',
+                                            cursor: 'pointer'
+                                        }}
+                                        onClick={() => handleStepChange(index)}
+                                    />
+                                ))}
+                            </Box>
+                        )}
+                    </Box>
+                ) : (
+                    <Card elevation={1} sx={{
                         borderRadius: 3,
-                        mb: 3,
-                        overflow: 'hidden',
+                        mb: 4,
+                        p: 3,
+                        bgcolor: '#fafafa',
                         transition: 'transform 0.3s, box-shadow 0.3s',
                         '&:hover': {
                             boxShadow: '0 8px 24px rgba(0,0,0,0.12)'
                         }
                     }}>
-                        <Box sx={{ bgcolor: '#1976d2', color: 'white', p: 2 }}>
-                            <Typography variant="subtitle1">{appointment.clinic}</Typography>
-                            <Typography variant="body2" sx={{ opacity: 0.9 }}>{appointment.doctor}• {appointment.specialty}</Typography>
-                        </Box>
-
-                        <CardContent>
-                            <Grid container spacing={3}>
-                                <Grid item xs={6}>
-                                    <Box sx={{ textAlign: 'center', mb: 2 }}>
-                                        <QueueIcon color="primary" />
-                                        <Typography variant="body2" color="text.secondary" gutterBottom>
-                                            Your Token
-                                        </Typography>
-                                        <Typography variant="h4" color="primary" fontWeight="bold">#{appointment.token}</Typography>
-                                    </Box>
-                                </Grid>
-                                <Grid item xs={6}>
-                                    <Box sx={{ textAlign: 'center', mb: 2 }}>
-                                        <PeopleIcon color="primary" />
-                                        <Typography variant="body2" color="text.secondary" gutterBottom>
-                                            People Ahead of You
-                                        </Typography>
-                                        <Typography variant="h4" color="primary" fontWeight="bold">
-                                            {Math.max(0, appointment.token - appointment.currentToken)}
-                                        </Typography>
-                                    </Box>
-                                </Grid>
-                            </Grid>
-
-                            <Divider sx={{ my: 2 }} />
-
-                            <Typography variant="body2" color="text.secondary" gutterBottom>
-                                Queue Progress
+                        <Box sx={{ textAlign: 'center', py: 4 }}>
+                            <EventBusyIcon sx={{ fontSize: 48, color: '#9ca3af', mb: 2 }} />
+                            <Typography variant="h6" gutterBottom>
+                                No New Appointments Scheduled
                             </Typography>
-                            <LinearProgress 
-                                variant="determinate" 
-                                value={Math.min(100, (appointment.currentToken / appointment.token) * 100)} 
-                                sx={{ height: 8, borderRadius: 4, mb: 1 }} 
-                            />
-
-                            <Box sx={{
-                                mt: 3,
-                                p: 2,
-                                bgcolor: '#f0f9ff',
-                                borderRadius: 2,
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'space-between'
-                            }}>
-                                <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                    <AccessTimeIcon color="info" sx={{ mr: 1 }} />
-                                    <Box>
-                                        <Typography variant="body2" fontWeight="medium">
-                                            Estimated Wait Time
-                                        </Typography>
-                                        <Typography variant="body2" color="text.secondary">{appointment.estimatedWaitTime}</Typography>
-                                    </Box>
-                                </Box>
-                                <Chip 
-                                    label={appointment.status} 
-                                    color={appointment.checkin ? "success" : "primary"} 
-                                    size="small" 
-                                    sx={{
-                                        '& .MuiChip-label': {
-                                            px: 1,
-                                            fontSize: '0.75rem'
-                                        }
-                                    }} 
-                                />
-                            </Box>
-
+                            <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+                                You don't have any new appointments in the queue.
+                            </Typography>
                             <Button 
-                                variant="outlined" 
-                                fullWidth 
-                                endIcon={<ArrowForwardIcon />} 
+                                variant="contained" 
+                                onClick={() => navigate("/search")} 
+                                startIcon={<SearchIcon />} 
                                 sx={{
-                                    mt: 3,
                                     borderRadius: 2,
-                                    transition: 'all 0.2s',
+                                    transition: 'transform 0.2s, box-shadow 0.2s',
                                     '&:hover': {
-                                        transform: 'translateX(4px)'
+                                        transform: 'translateY(-2px)',
+                                        boxShadow: '0 8px 16px rgba(0,0,0,0.1)'
+                                    },
+                                    '&:active': {
+                                        transform: 'translateY(0px)',
                                     }
-                                }} 
-                                onClick={() => handleViewDetails(appointment)}
+                                }}
                             >
-                                View Details
+                                Find a Doctor
                             </Button>
-                        </CardContent>
+                        </Box>
                     </Card>
-                ))
-            ) : (
-                <Card elevation={1} sx={{
-                    borderRadius: 3,
-                    mb: 4,
-                    p: 3,
-                    bgcolor: '#fafafa',
-                    transition: 'transform 0.3s, box-shadow 0.3s',
-                    '&:hover': {
-                        boxShadow: '0 8px 24px rgba(0,0,0,0.12)'
-                    }
-                }}>
-                    <Box sx={{ textAlign: 'center', py: 4 }}>
-                        <EventBusyIcon sx={{ fontSize: 48, color: '#9ca3af', mb: 2 }} />
-                        <Typography variant="h6" gutterBottom>
-                            No New Appointments Scheduled
-                        </Typography>
-                        <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-                            You don't have any new appointments in the queue.
-                        </Typography>
-                        <Button 
-                            variant="contained" 
-                            onClick={() => navigate("/search")} 
-                            startIcon={<SearchIcon />} 
-                            sx={{
-                                borderRadius: 2,
-                                transition: 'transform 0.2s, box-shadow 0.2s',
-                                '&:hover': {
-                                    transform: 'translateY(-2px)',
-                                    boxShadow: '0 8px 16px rgba(0,0,0,0.1)'
-                                },
-                                '&:active': {
-                                    transform: 'translateY(0px)',
-                                }
-                            }}
-                        >
-                            Find a Doctor
-                        </Button>
-                    </Box>
-                </Card>
-            )}
+                )}
+            </Box>
 
             {/* Popular Specialties */}
             <Typography variant="h6" fontWeight="600" gutterBottom>
@@ -464,7 +537,7 @@ const PatientHome = () => {
                     <DialogTitle sx={{ p: 0, fontWeight: 600 }}>
                         Appointment Details
                     </DialogTitle>
-                    <Typography variant="body2" sx={{ opacity: 0.9 }}>{selectedAppointment?.doctor}• {selectedAppointment?.specialty}</Typography>
+                    <Typography variant="body2" sx={{ opacity: 0.9 }}>{selectedAppointment?.doctor} • {selectedAppointment?.specialty}</Typography>
                 </Box>
                 <DialogContent>
                     <Grid container spacing={3} sx={{ mt: 1 }}>
