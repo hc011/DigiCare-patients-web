@@ -1,31 +1,27 @@
-import React, { useState, useContext, useEffect } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import {
+    Visibility as VisibilityIcon,
+    VisibilityOff as VisibilityOffIcon
+} from '@mui/icons-material';
 import {
     Box,
-    Container,
-    Paper,
-    Typography,
-    TextField,
     Button,
-    Grid,
-    InputAdornment,
-    IconButton,
-    useTheme,
-    useMediaQuery,
+    Checkbox,
     CircularProgress,
-    Alert,
-    Snackbar
+    FormControlLabel,
+    Grid,
+    IconButton,
+    InputAdornment,
+    Link,
+    TextField,
+    Typography,
+    useMediaQuery,
+    useTheme
 } from '@mui/material';
-import {
-    Person as PersonIcon,
-    Email as EmailIcon,
-    Lock as LockIcon,
-    Visibility as VisibilityIcon,
-    VisibilityOff as VisibilityOffIcon,
-    ArrowBack as ArrowBackIcon
-} from '@mui/icons-material';
-import { updateUser } from '../services/api';
+import React, { useContext, useEffect, useState } from 'react';
+import { Link as RouterLink, useLocation, useNavigate } from 'react-router-dom';
+import BackButton from "../components/BackButton";
 import { AuthContext } from '../context/AuthContext';
+import { updateUser } from '../services/api';
 
 const Register = () => {
     const theme = useTheme();
@@ -41,7 +37,9 @@ const Register = () => {
         firstName: '',
         lastName: '',
         email: '',
-        password: ''
+        password: '',
+        phone: '',
+        terms: false
     });
 
     const [errors, setErrors] = useState({});
@@ -71,7 +69,7 @@ const Register = () => {
             [name]: value
         }));
         if (errors[name]) {
-            setErrors(prev => ({ ...prev, [name]: '' }));
+            setErrors(prev => ({...prev, [name]: '' }));
         }
     };
 
@@ -83,12 +81,14 @@ const Register = () => {
         else if (!/\S+@\S+\.\S+/.test(formData.email)) newErrors.email = 'Email is invalid';
         if (!formData.password) newErrors.password = 'Password is required';
         else if (formData.password.length < 6) newErrors.password = 'Password must be at least 6 characters';
-        
+        if (!formData.phone.trim()) newErrors.phone = 'Phone number is required';
+        if (!formData.terms) newErrors.terms = 'You must agree to the terms of service';
+
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
     };
 
-    const handleSubmit = async (e) => {
+    const handleSubmit = async(e) => {
         e.preventDefault();
         if (!validateForm()) return;
 
@@ -98,7 +98,8 @@ const Register = () => {
                 first_name: formData.firstName,
                 last_name: formData.lastName,
                 email: formData.email,
-                password: formData.password
+                password: formData.password,
+                phone: formData.phone
             };
 
             const response = await updateUser(updatePayload);
@@ -128,176 +129,198 @@ const Register = () => {
         }
     };
 
+    const toggleShowPassword = () => {
+        setShowPassword(!showPassword);
+    };
+
     return (
-        <Box sx={{
-            minHeight: '100vh',
-            bgcolor: '#f5f7fa',
-            display: 'flex',
-            flexDirection: 'column',
-            p: 0
-        }}>
-            {/* Header */}
-            <Box sx={{
-                bgcolor: '#1976d2',
-                color: 'white',
-                py: 2,
-                px: 3,
-                display: 'flex',
-                alignItems: 'center',
-                gap: 2
-            }}>
-                <IconButton color="inherit" onClick={handleBack}>
-                    <ArrowBackIcon />
-                </IconButton>
-                <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                    Complete Your Profile
-                </Typography>
-            </Box>
-
-            <Container maxWidth="sm" sx={{ 
-                py: 4, 
-                flexGrow: 1,
-                p: 0,
-                '& .MuiContainer-root': {
-                    p: 0
-                }
-            }}>
-                <Paper
-                    elevation={3}
-                    sx={{
-                        p: { xs: 2, sm: 4 },
-                        borderRadius: 3,
-                        bgcolor: 'white'
-                    }}
-                >
-                    <form onSubmit={handleSubmit}>
-                        <Grid container spacing={3}>
-                            <Grid item xs={12}>
-                                <TextField
-                                    fullWidth
-                                    label="First Name"
-                                    name="firstName"
-                                    value={formData.firstName}
-                                    onChange={handleChange}
-                                    error={!!errors.firstName}
-                                    helperText={errors.firstName}
-                                    InputProps={{
-                                        startAdornment: (
-                                            <InputAdornment position="start">
-                                                <PersonIcon color="primary" />
-                                            </InputAdornment>
-                                        ),
-                                    }}
-                                />
-                            </Grid>
-                            <Grid item xs={12}>
-                                <TextField
-                                    fullWidth
-                                    label="Last Name"
-                                    name="lastName"
-                                    value={formData.lastName}
-                                    onChange={handleChange}
-                                    error={!!errors.lastName}
-                                    helperText={errors.lastName}
-                                    InputProps={{
-                                        startAdornment: (
-                                            <InputAdornment position="start">
-                                                <PersonIcon color="primary" />
-                                            </InputAdornment>
-                                        ),
-                                    }}
-                                />
-                            </Grid>
-                            <Grid item xs={12}>
-                                <TextField
-                                    fullWidth
-                                    label="Email"
-                                    name="email"
-                                    type="email"
-                                    value={formData.email}
-                                    onChange={handleChange}
-                                    error={!!errors.email}
-                                    helperText={errors.email}
-                                    InputProps={{
-                                        startAdornment: (
-                                            <InputAdornment position="start">
-                                                <EmailIcon color="primary" />
-                                            </InputAdornment>
-                                        ),
-                                    }}
-                                />
-                            </Grid>
-                            <Grid item xs={12}>
-                                <TextField
-                                    fullWidth
-                                    label="Password"
-                                    name="password"
-                                    type={showPassword ? 'text' : 'password'}
-                                    value={formData.password}
-                                    onChange={handleChange}
-                                    error={!!errors.password}
-                                    helperText={errors.password}
-                                    InputProps={{
-                                        startAdornment: (
-                                            <InputAdornment position="start">
-                                                <LockIcon color="primary" />
-                                            </InputAdornment>
-                                        ),
-                                        endAdornment: (
-                                            <InputAdornment position="end">
-                                                <IconButton
-                                                    onClick={() => setShowPassword(!showPassword)}
-                                                    edge="end"
-                                                >
-                                                    {showPassword ? <VisibilityOffIcon /> : <VisibilityIcon />}
-                                                </IconButton>
-                                            </InputAdornment>
-                                        ),
-                                    }}
-                                />
-                            </Grid>
-                            <Grid item xs={12}>
-                                <Button
-                                    variant="contained"
-                                    type="submit"
-                                    fullWidth
-                                    disabled={loading}
-                                    sx={{ 
-                                        py: 1.5,
-                                        borderRadius: 2,
-                                        textTransform: 'none',
-                                        fontSize: '1rem',
-                                        fontWeight: 600
-                                    }}
-                                >
-                                    {loading ? (
-                                        <CircularProgress size={24} color="inherit" />
-                                    ) : (
-                                        'Complete Registration'
-                                    )}
-                                </Button>
-                            </Grid>
-                        </Grid>
-                    </form>
-                </Paper>
-            </Container>
-
-            <Snackbar
-                open={snackbar.open}
-                autoHideDuration={5000}
-                onClose={() => setSnackbar(prev => ({ ...prev, open: false }))}
-                anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+        <Box sx={{ p: 2, height: "100%" }}>
+            <BackButton />
+            <Box
+                component="form"
+                noValidate
+                onSubmit={handleSubmit}
+                sx={{
+                    maxWidth: "500px",
+                    mx: "auto",
+                    mt: 5,
+                    mb: 10,
+                    p: 3,
+                    borderRadius: 3,
+                    boxShadow: "0 4px 20px rgba(0,0,0,0.1)",
+                    bgcolor: "background.paper",
+                }}
             >
-                <Alert
-                    severity={snackbar.severity}
-                    onClose={() => setSnackbar(prev => ({ ...prev, open: false }))}
-                    sx={{ width: '100%' }}
+                <Box sx={{ mb: 3, textAlign: "center" }}>
+                    <Typography variant="h5" component="h1" fontWeight="700" gutterBottom>
+                        Create an Account
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                        Sign up to access all the features of DigiCare
+                    </Typography>
+                </Box>
+
+                {/* Form fields */}
+                <Grid container spacing={2}>
+                    <Grid item xs={12} sm={6}>
+                        <TextField
+                            name="firstName"
+                            required
+                            fullWidth
+                            id="firstName"
+                            label="First Name"
+                            autoFocus
+                            value={formData.firstName}
+                            onChange={handleChange}
+                            error={!!errors.firstName}
+                            helperText={errors.firstName}
+                            size="small"
+                        />
+                    </Grid>
+                    <Grid item xs={12} sm={6}>
+                        <TextField
+                            required
+                            fullWidth
+                            id="lastName"
+                            label="Last Name"
+                            name="lastName"
+                            value={formData.lastName}
+                            onChange={handleChange}
+                            error={!!errors.lastName}
+                            helperText={errors.lastName}
+                            size="small"
+                        />
+                    </Grid>
+                    <Grid item xs={12}>
+                        <TextField
+                            required
+                            fullWidth
+                            id="email"
+                            label="Email Address"
+                            name="email"
+                            autoComplete="email"
+                            value={formData.email}
+                            onChange={handleChange}
+                            error={!!errors.email}
+                            helperText={errors.email}
+                            size="small"
+                        />
+                    </Grid>
+                    <Grid item xs={12}>
+                        <TextField
+                            required
+                            fullWidth
+                            name="phone"
+                            label="Phone Number"
+                            id="phone"
+                            value={formData.phone}
+                            onChange={handleChange}
+                            error={!!errors.phone}
+                            helperText={errors.phone}
+                            size="small"
+                        />
+                    </Grid>
+                    <Grid item xs={12}>
+                        <TextField
+                            required
+                            fullWidth
+                            name="password"
+                            label="Password"
+                            type={showPassword ? "text" : "password"}
+                            id="password"
+                            autoComplete="new-password"
+                            value={formData.password}
+                            onChange={handleChange}
+                            error={!!errors.password}
+                            helperText={errors.password}
+                            size="small"
+                            InputProps={{
+                                endAdornment: (
+                                    <InputAdornment position="end">
+                                        <IconButton
+                                            aria-label="toggle password visibility"
+                                            onClick={toggleShowPassword}
+                                            edge="end"
+                                        >
+                                            {showPassword ? <VisibilityOffIcon /> : <VisibilityIcon />}
+                                        </IconButton>
+                                    </InputAdornment>
+                                ),
+                            }}
+                        />
+                    </Grid>
+                    <Grid item xs={12}>
+                        <FormControlLabel
+                            control={
+                                <Checkbox
+                                    checked={formData.terms}
+                                    onChange={handleChange}
+                                    name="terms"
+                                    color="primary"
+                                    size="small"
+                                />
+                            }
+                            label={
+                                <Typography variant="body2">
+                                    I agree to the{" "}
+                                    <Link
+                                        component="button"
+                                        variant="body2"
+                                        onClick={(e) => {
+                                            e.preventDefault();
+                                            // Handle terms link click
+                                        }}
+                                    >
+                                        Terms of Service
+                                    </Link>{" "}
+                                    and{" "}
+                                    <Link
+                                        component="button"
+                                        variant="body2"
+                                        onClick={(e) => {
+                                            e.preventDefault();
+                                            // Handle privacy link click
+                                        }}
+                                    >
+                                        Privacy Policy
+                                    </Link>
+                                </Typography>
+                            }
+                        />
+                        {errors.terms && (
+                            <Typography variant="caption" color="error" sx={{ ml: 2 }}>
+                                {errors.terms}
+                            </Typography>
+                        )}
+                    </Grid>
+                </Grid>
+                <Button
+                    type="submit"
+                    fullWidth
+                    variant="contained"
+                    sx={{ mt: 3, mb: 2, borderRadius: 2, py: 1.2 }}
+                    disabled={loading}
                 >
-                    {snackbar.message}
-                </Alert>
-            </Snackbar>
+                    {loading ? <CircularProgress size={24} /> : "Sign Up"}
+                </Button>
+                <Grid container justifyContent="center">
+                    <Grid item>
+                        <Typography variant="body2">
+                            Already have an account?{" "}
+                            <Link
+                                component={RouterLink}
+                                to="/login"
+                                variant="body2"
+                                sx={{ fontWeight: 600 }}
+                            >
+                                Sign in
+                            </Link>
+                        </Typography>
+                    </Grid>
+                </Grid>
+            </Box>
         </Box>
     );
 };
 
-export default Register; 
+export default Register;
