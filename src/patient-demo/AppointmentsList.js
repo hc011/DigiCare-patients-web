@@ -439,11 +439,9 @@ const AppointmentsList = () => {
                     <MedicalServicesIcon color="primary" sx={{ mr: 1.5 }} />
                     <Box>
                       <Typography variant="subtitle2">Payment Information</Typography>
-                      {selectedAppointment.fees_paid !== undefined && selectedAppointment.cabinslot?.cabin?.fees !== undefined && (
                         <Typography variant="body2" color="text.secondary">
-                          Payment Status: {selectedAppointment.fees_paid >= selectedAppointment.cabinslot.cabin.fees ? "Paid" : "Not Paid"}
+                          Payment Status: {selectedAppointment?.queobj?.payment_status === "paid" ? "Paid" : "Not Paid"}
                         </Typography>
-                      )}
                       {selectedAppointment.mode && (
                         <Typography variant="body2" color="text.secondary">
                           Payment Mode: {selectedAppointment.mode}

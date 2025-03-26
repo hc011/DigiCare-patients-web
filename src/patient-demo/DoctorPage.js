@@ -950,14 +950,14 @@ const DoctorPage = () => {
                 <Card variant="outlined" sx={{ mb: 2 }}>
                   <CardContent>
                     <Grid container spacing={2}>
-                      <Grid item xs={12}>
+                      {/* <Grid item xs={12}>
                         <Typography variant="subtitle2" color="text.secondary">
                           Appointment ID
                         </Typography>
                         <Typography variant="body1" gutterBottom>
                           {appointmentResponse.appointment_id}
                         </Typography>
-                      </Grid>
+                      </Grid> */}
                       
                       <Grid item xs={6}>
                         <Typography variant="subtitle2" color="text.secondary">
@@ -986,18 +986,18 @@ const DoctorPage = () => {
                         </Typography>
                       </Grid>
                       
-                      <Grid item xs={6}>
+                      {/* <Grid item xs={6}>
                         <Typography variant="subtitle2" color="text.secondary">
                           Consultation Fee
                         </Typography>
                         <Typography variant="body1" gutterBottom>
                           ₹{appointmentResponse.fees_paid}
                         </Typography>
-                      </Grid>
+                      </Grid> */}
                       
-                      <Grid item xs={12}>
+                      <Grid item xs={6}>
                         <Typography variant="subtitle2" color="text.secondary">
-                          Appointment Time
+                          Appointment Slot
                         </Typography>
                         <Typography variant="body1" gutterBottom>
                           {formatSlotDateTime(appointmentResponse.cabinslot.slot)}
