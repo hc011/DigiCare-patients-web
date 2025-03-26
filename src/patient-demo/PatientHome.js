@@ -1,5 +1,4 @@
 import AccessTimeIcon from "@mui/icons-material/AccessTime";
-import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
 import CloseIcon from "@mui/icons-material/Close";
 import DirectionsIcon from "@mui/icons-material/Directions";
@@ -419,7 +418,6 @@ const PatientHome = () => {
                                                         <Button 
                                                             variant="contained" 
                                                             fullWidth 
-                                                            endIcon={<ArrowForwardIcon />} 
                                                             sx={{
                                                                 mt: 2,
                                                                 borderRadius: 2,

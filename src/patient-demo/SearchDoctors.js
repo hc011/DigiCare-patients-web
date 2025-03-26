@@ -4,6 +4,8 @@ import LocationOnIcon from "@mui/icons-material/LocationOn";
 import MedicalServicesIcon from "@mui/icons-material/MedicalServices";
 import PhoneIcon from "@mui/icons-material/Phone";
 import SearchIcon from "@mui/icons-material/Search";
+import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
+
 import {
   Avatar,
   Box,
@@ -434,6 +436,7 @@ const SearchDoctors = () => {
 
                       <Button
                         variant="contained"
+                        endIcon={<ArrowForwardIcon />} 
                         onClick={(e) => { e.stopPropagation(); handleDoctorClick(doctor.id); }}
                         sx={{ 
                           borderRadius: 2,
