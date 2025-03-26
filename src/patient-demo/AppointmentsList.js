@@ -16,6 +16,7 @@ import {
   DialogContent,
   DialogActions,
   IconButton,
+  Skeleton,
 } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import AccessTimeIcon from "@mui/icons-material/AccessTime";
@@ -98,14 +99,18 @@ const AppointmentsList = () => {
   const formatDate = (dateStr) => {
     if (!dateStr) return "Not specified";
     const date = new Date(dateStr);
-    return date.toLocaleDateString('en-US', { 
-      weekday: 'short', 
-      year: 'numeric', 
-      month: 'short', 
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
+    // Adjust for timezone offset
+    const userTimezoneOffset = date.getTimezoneOffset() * 60000;
+    const adjustedDate = new Date(date.getTime() + userTimezoneOffset);
+    
+    const day = adjustedDate.getDate().toString().padStart(2, '0');
+    const month = (adjustedDate.getMonth() + 1).toString().padStart(2, '0');
+    const year = adjustedDate.getFullYear();
+    const hours = adjustedDate.getHours();
+    const minutes = adjustedDate.getMinutes().toString().padStart(2, '0');
+    const ampm = hours >= 12 ? 'PM' : 'AM';
+    const formattedHours = (hours % 12 || 12).toString().padStart(2, '0');
+    return `${day}/${month}/${year}, ${formattedHours}:${minutes} ${ampm}`;
   };
 
   const handleViewDetails = (appointment) => {
@@ -115,32 +120,53 @@ const AppointmentsList = () => {
 
   return (
     <Box sx={{ p: 2, pb: 16, height: "calc(100vh - 130px)", overflowY: "auto" }}>
-      {loading && (
-        <Box 
-          sx={{ 
-            position: 'fixed', 
-            top: 0, 
-            left: 0, 
-            right: 0, 
-            bottom: 0, 
-            bgcolor: 'rgba(255,255,255,0.7)', 
-            zIndex: 9999,
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center'
-          }}
-        >
-          <CircularProgress size={60} />
-          <Typography variant="h6" sx={{ mt: 2 }}>Loading...</Typography>
-        </Box>
-      )}
-      
       <Typography variant="h6" gutterBottom fontWeight="600">
         My Appointments
       </Typography>
 
-      {!loading && appointments.length === 0 ? (
+      {loading ? (
+        <List>
+          {[1, 2, 3].map((item) => (
+            <Paper
+              key={item}
+              elevation={0}
+              sx={{ 
+                mb: 2, 
+                bgcolor: "#f5f5f5",
+                borderRadius: 3,
+                overflow: 'hidden'
+              }}
+            >
+              <ListItem>
+                <Box sx={{ width: '100%' }}>
+                  <Box sx={{ display: "flex", justifyContent: "space-between", mb: 1 }}>
+                    <Skeleton variant="text" width="40%" height={24} />
+                    <Skeleton variant="rectangular" width={100} height={32} sx={{ borderRadius: 1 }} />
+                  </Box>
+                  <Skeleton variant="text" width="60%" />
+                  <Skeleton variant="text" width="70%" />
+                </Box>
+              </ListItem>
+              <Divider />
+              <Box sx={{ p: 2 }}>
+                <Grid container spacing={2}>
+                  <Grid item xs={12} sm={6}>
+                    <Skeleton variant="text" width="80%" />
+                    <Skeleton variant="text" width="60%" />
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <Skeleton variant="text" width="70%" />
+                    <Skeleton variant="text" width="50%" />
+                  </Grid>
+                </Grid>
+              </Box>
+              <Box sx={{ display: "flex", justifyContent: "flex-end", p: 1 }}>
+                <Skeleton variant="rectangular" width={100} height={36} sx={{ borderRadius: 1 }} />
+              </Box>
+            </Paper>
+          ))}
+        </List>
+      ) : appointments.length === 0 ? (
         <Box sx={{ textAlign: 'center', py: 6 }}>
           <CalendarTodayIcon sx={{ fontSize: 48, color: 'text.disabled', mb: 2 }} />
           <Typography variant="h6" color="text.secondary" gutterBottom>
@@ -190,7 +216,7 @@ const AppointmentsList = () => {
                         {formatDate(appointment.cabinslot.slot)}
                       </Typography>
                       <Typography variant="body2">
-                        {appointment.cabinslot.cabin.hospital.hospital_name} • {appointment.cabinslot.cabin.doctor.specialization}
+                        {appointment.cabinslot.cabin.hospital.hospital_name}{/*  • {appointment.cabinslot.cabin.doctor.specialization} */}
                       </Typography>
                     </>
                   }

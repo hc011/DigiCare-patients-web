@@ -80,7 +80,6 @@ const SearchDoctors = () => {
     const fetchDoctors = async () => {
       try {
         // Set existing doctors first to show something immediately
-        setDoctors(existingDoctors);
         
         const response = await getDoctorList();
         if (response && Array.isArray(response)) {
@@ -107,15 +106,7 @@ const SearchDoctors = () => {
             phone: item.doctor.phone_number,
           }));
 
-          // Combine existing doctors with API doctors, avoiding duplicates by ID
-          const combinedDoctors = [...existingDoctors];
-          transformedDoctors.forEach(apiDoctor => {
-            if (!combinedDoctors.some(existingDoctor => existingDoctor.id === apiDoctor.id)) {
-              combinedDoctors.push(apiDoctor);
-            }
-          });
-
-          setDoctors(combinedDoctors);
+          setDoctors(transformedDoctors);
         }
       } catch (err) {
         console.error("Error fetching doctors:", err);
@@ -169,13 +160,7 @@ const SearchDoctors = () => {
   };
   
   const handleDoctorClick = (doctorId) => {
-    setDoctorCardLoading(true);
-    
-    // Simulate loading delay before navigation
-    setTimeout(() => {
-      setDoctorCardLoading(false);
-      navigate(`/doctor/${doctorId}`);
-    }, 500);
+    navigate(`/doctor/${doctorId}`);
   };
   
   const handleCall = (event, phone) => {
@@ -203,28 +188,6 @@ const SearchDoctors = () => {
         bgcolor: "#f9fafc"
       }}
     >
-      {/* Doctor Card Loading Overlay */}
-      {doctorCardLoading && (
-        <Box 
-          sx={{ 
-            position: 'fixed', 
-            top: 0, 
-            left: 0, 
-            right: 0, 
-            bottom: 0, 
-            bgcolor: 'rgba(255,255,255,0.7)', 
-            zIndex: 9999,
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center'
-          }}
-        >
-          <CircularProgress size={60} />
-          <Typography variant="h6" sx={{ mt: 2 }}>Opening doctor profile...</Typography>
-        </Box>
-      )}
-    
       {/* Search bar */}
       <Box sx={{ position: 'relative', mb: 2 }}>
         <TextField
@@ -256,36 +219,6 @@ const SearchDoctors = () => {
           }}
         />
       </Box>
-
-      {/* Specialty tabs */}
-      {/* <Box sx={{ mb: 2, borderBottom: 1, borderColor: 'divider' }}>
-        <Tabs 
-          value={selectedTab} 
-          onChange={handleTabChange}
-          variant="scrollable"
-          scrollButtons="auto"
-          sx={{
-            '& .MuiTab-root': {
-              minWidth: 'auto',
-              px: 2,
-              fontWeight: 500,
-              textTransform: 'none',
-              fontSize: '0.9rem'
-            }
-          }}
-        >
-          {specialtyTabs.map((tab, index) => (
-            <Tab key={index} label={tab} />
-          ))}
-        </Tabs>
-      </Box> */}
-
-      {/* Loading progress */}
-      {loading && (
-        <Box sx={{ width: '100%', mb: 2 }}>
-          <LinearProgress sx={{ borderRadius: 1 }} />
-        </Box>
-      )}
 
       {/* Doctor list */}
       <Box sx={{ flex: 1, overflowY: "auto", pr: 1, pb: 5 }}>
@@ -329,7 +262,10 @@ const SearchDoctors = () => {
                         <Skeleton width="80%" height={40} />
                       </Grid>
                     </Grid>
-                    <Skeleton width="100%" height={30} sx={{ mt: 2 }} />
+                    <Box sx={{ mt: 2, display: 'flex', justifyContent: 'space-between' }}>
+                      <Skeleton width="30%" height={36} />
+                      <Skeleton width="30%" height={36} />
+                    </Box>
                   </Box>
                 </CardContent>
               </Card>
@@ -354,8 +290,8 @@ const SearchDoctors = () => {
                 <Card
                   key={doctor.id}
                   sx={{
-                    borderRadius: 2,
-                    boxShadow: '0 2px 12px rgba(0,0,0,0.05)',
+                    borderRadius: 3,
+                    mb: 2,
                     transition: "all 0.2s",
                     border: '1px solid rgba(0,0,0,0.05)',
                     "&:hover": { 
@@ -397,12 +333,12 @@ const SearchDoctors = () => {
                               fontSize: '1.5rem'
                             }}
                           >
-                            {doctor.name.charAt(4)}
+                            {doctor.name.charAt(0)}
                           </Avatar>
                         </Grid>
                         <Grid item xs>
                           <Typography variant="h6" sx={{ fontWeight: 600, mb: 0.5 }}>
-                            {doctor.name}
+                            Dr. {doctor.name}
                           </Typography>
                           <Box sx={{ display: 'flex', alignItems: 'center', mb: 0.5 }}>
                             <Rating 
@@ -462,7 +398,7 @@ const SearchDoctors = () => {
                       </Grid>
                       
                       {/* Queue status */}
-                      <Box sx={{ mt: 2 }}>
+                      {/* <Box sx={{ mt: 2 }}>
                         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 0.5 }}>
                           <Typography variant="caption" color="text.secondary">
                             Current Queue
@@ -473,10 +409,12 @@ const SearchDoctors = () => {
                           value={Math.min(100, (doctor.currentToken / 25) * 100)} 
                           sx={{ height: 4, borderRadius: 2 }}
                         />
-                      </Box>
+                      </Box> */}
+
+
                     </Box>
 
-                    <Box sx={{ mt: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <Box sx={{ mt: 2, ml: 2, mr: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                       <ButtonGroup variant="outlined" size="small">
                         <Button
                           startIcon={<PhoneIcon />}
@@ -496,6 +434,7 @@ const SearchDoctors = () => {
 
                       <Button
                         variant="contained"
+                        onClick={(e) => { e.stopPropagation(); handleDoctorClick(doctor.id); }}
                         sx={{ 
                           borderRadius: 2,
                           boxShadow: '0 2px 8px rgba(25,118,210,0.3)',

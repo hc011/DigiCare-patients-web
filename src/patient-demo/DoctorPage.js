@@ -9,6 +9,7 @@ import PhoneIcon from "@mui/icons-material/Phone";
 import QueueIcon from "@mui/icons-material/Queue";
 import SchoolIcon from "@mui/icons-material/School";
 import StarIcon from "@mui/icons-material/Star";
+import CloseIcon from "@mui/icons-material/Close";
 import {
   Avatar,
   Box,
@@ -41,11 +42,16 @@ import {
   TableRow,
   Tabs,
   TextField,
-  Typography
+  Typography,
+  Autocomplete,
+  Snackbar,
+  Alert,
+  IconButton
 } from "@mui/material";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useContext } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { addAppointment, getCabinInfo } from "../services/api";
+import { AuthContext } from "../context/AuthContext";
 
 const DoctorPage = () => {
   const navigate = useNavigate();
@@ -63,8 +69,32 @@ const DoctorPage = () => {
     age: "",
     gender: "M",
   });
+  const [snackbar, setSnackbar] = useState({
+    open: false,
+    message: "",
+    severity: "error"
+  });
 
   const [cabinInfo, setCabinInfo] = useState(null);
+  const [formData, setFormData] = useState({
+    name: "",
+    age: "",
+    gender: "M",
+    guardian: "",
+    location: "",
+    healthIssue: "",
+    appointmentType: "New",
+    selectedSlot: null,
+    patientId: null
+  });
+
+  // Get user data from localStorage
+  const userData = JSON.parse(localStorage.getItem("user") || "{}");
+  const patients = userData.patients || [];
+  const slots = cabinInfo?.slots || [];
+
+  const { user, setUser } = useContext(AuthContext);
+  const [appointmentResponse, setAppointmentResponse] = useState(null);
 
   useEffect(() => {
     const fetchCabinInfo = async () => {
@@ -72,6 +102,7 @@ const DoctorPage = () => {
         const response = await getCabinInfo(doctorId);
         console.log("API Response:", response);
         setCabinInfo(response);
+        setLoading(false);
       } catch (error) {
         console.error("Error fetching cabin info:", error);
       }
@@ -91,7 +122,7 @@ const DoctorPage = () => {
     reviews: 543, // Fallback since not in API
     experience: `${cabinInfo?.doctor?.experience || 15} years`,
     education: "MBBS, MD (General Medicine)", // Fallback since not in API
-    about: `Dr. ${cabinInfo?.doctor?.name} is a highly experienced skin specialist with over ${cabinInfo?.doctor?.experience || 15} years of practice. He specializes in treating various skin conditions, including acne, psoriasis, eczema, and skin allergies. Dr. Gupta is known for his patient-centric approach and dedication to providing personalized care.`, // Fallback since not in API
+    about: `Dr. ${cabinInfo?.doctor?.name} is a highly experienced with over ${cabinInfo?.doctor?.experience || 15} years of practice. Dr. ${cabinInfo?.doctor?.name} is known for his patient-centric approach and dedication to providing personalized care.`, // Fallback since not in API
     timings: {
       mon: "9:00 AM - 1:00 PM",
       tue: "9:00 AM - 1:00 PM",
@@ -100,7 +131,7 @@ const DoctorPage = () => {
       fri: "4:00 PM - 8:00 PM",
       sat: "9:00 AM - 1:00 PM",
     }, // Fallback since not in API
-    fees: `₹${cabinInfo?.fees || 500} Consultation`,
+    fees: `₹${cabinInfo?.fees || 500}`,
     currentToken: 8, // Fallback since not in API
     yourToken: 15, // Fallback since not in API
     estimatedWaitTime: "1hr 27 mins", // Fallback since not in API
@@ -148,15 +179,6 @@ const DoctorPage = () => {
     },
   ];
 
-  // Simulating loading effect
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setLoading(false);
-    }, 1000);
-    
-    return () => clearTimeout(timer);
-  }, []);
-
   const handleTabChange = (event, newValue) => {
     setSelectedTab(newValue);
   };
@@ -181,42 +203,107 @@ const DoctorPage = () => {
     });
   };
 
+  const handleFormChange = (field, value) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
+  const handlePatientSelect = (event, value) => {
+    if (value) {
+      if (typeof value === 'string') {
+        // Handle freeSolo input
+        setFormData(prev => ({
+          ...prev,
+          name: value,
+          patientId: null
+        }));
+      } else {
+        // Handle selection from options
+        setFormData(prev => ({
+          ...prev,
+          name: value.name,
+          age: value.age || "",
+          gender: value.gender || "M",
+          guardian: value.guardian || "",
+          location: value.location || "",
+          patientId: value.patient_id
+        }));
+      }
+    }
+  };
+
+  const formatSlotDateTime = (isoString) => {
+    if (!isoString) return "";
+    const date = new Date(isoString);
+    // Adjust for timezone offset
+    const userTimezoneOffset = date.getTimezoneOffset() * 60000;
+    const adjustedDate = new Date(date.getTime() + userTimezoneOffset);
+    
+    const day = adjustedDate.getDate().toString().padStart(2, '0');
+    const month = (adjustedDate.getMonth() + 1).toString().padStart(2, '0');
+    const year = adjustedDate.getFullYear();
+    const hours = adjustedDate.getHours();
+    const minutes = adjustedDate.getMinutes().toString().padStart(2, '0');
+    const ampm = hours >= 12 ? 'PM' : 'AM';
+    const formattedHours = (hours % 12 || 12).toString().padStart(2, '0');
+    
+    return `${day}/${month}/${year}, ${formattedHours}:${minutes} ${ampm}`;
+  };
+
   const handleConfirmBooking = async () => {
     setBookingLoading(true);
     
     try {
-      // Get the selected slot from the days array
-      const selectedDate = days[selectedDay].date;
-      const selectedSlot = cabinInfo?.slots?.[0]?.slot || "2025-03-18T12:01:00Z";
-
       // Prepare appointment data according to API requirements
       const appointmentData = {
         cabinId: parseInt(doctorId),
-        slot: selectedSlot,
-        name: patientType === "self" ? "User Name" : familyMember.name,
-        disease: "Health Issue", // Get from the health issue text field
-        appointment_type: "New",
-        phone_number: "9352712911", // Replace with actual user phone from context
-        age: patientType === "self" ? "25" : familyMember.age,
-        gender: patientType === "self" ? "M" : familyMember.gender,
-        location: "",
-        guardian: patientType === "family" ? familyMember.relation : "",
+        slot: formData.selectedSlot || cabinInfo?.slots?.[0]?.slot,
+        name: formData.name,
+        disease: formData.healthIssue || "",
+        appointment_type: formData.appointmentType,
+        phone_number: userData.user?.phone_number || "",
+        age: formData.age,
+        gender: formData.gender,
+        location: formData.location || "",
+        guardian: formData.guardian || "",
         fees_paid: cabinInfo?.fees || 0,
         mode: "",
         paid: false,
-        checkin: false
+        checkin: false,
+        patient_id: formData.patientId
       };
 
       // Call the API to save appointment
       const response = await addAppointment(appointmentData);
       console.log("Appointment saved:", response);
       
+      // Store the appointment response for the confirmation dialog
+      setAppointmentResponse(response);
+
+      // Update user object with new appointment
+      const updatedUser = {
+        ...userData,
+        current_appointments: [response, ...(userData.current_appointments || [])]
+      };
+
+      // Update localStorage
+      localStorage.setItem("user", JSON.stringify(updatedUser));
+      
+      // Update context
+      setUser(updatedUser);
+      
       setBookingLoading(false);
       setBookingStage(2); // Success stage
     } catch (error) {
       console.error("Error booking appointment:", error);
       setBookingLoading(false);
-      // TODO: Show error message to user
+      setSnackbar({
+        open: true,
+        message: "Failed to book appointment. Please try again.",
+        severity: "error"
+      });
     }
   };
 
@@ -343,24 +430,7 @@ const DoctorPage = () => {
                 <Typography variant="body2" color="text.secondary" sx={{ display: "flex", alignItems: "center" }}>
                   <LocationOnIcon fontSize="small" sx={{ mr: 0.5, color: "text.disabled" }} />
                   {doctor.clinic}, {doctor.address}
-                </Typography>
-                
-                <ButtonGroup variant="outlined" size="small" sx={{ ml: 2 }}>
-                  <Button
-                    startIcon={<PhoneIcon />}
-                    onClick={handleCall}
-                    sx={{ borderRadius: '8px 0 0 8px', height: '32px', fontSize: '0.8rem' }}
-                  >
-                    Call
-                  </Button>
-                  <Button
-                    startIcon={<DirectionsIcon />}
-                    onClick={handleDirections}
-                    sx={{ borderRadius: '0 8px 8px 0', height: '32px', fontSize: '0.8rem' }}
-                  >
-                    Map
-                  </Button>
-                </ButtonGroup>
+                </Typography>                
               </Box>
             </Grid>
           </Grid>
@@ -396,7 +466,7 @@ const DoctorPage = () => {
                   Consultation Fee
                 </Typography>
                 <Typography variant="body2" fontWeight="medium" color="primary">
-                  {doctor.fees.split(" ")[0]}
+                  {doctor.fees}
                 </Typography>
               </Box>
             </Grid>
@@ -480,7 +550,7 @@ const DoctorPage = () => {
               </Typography>
               <Typography variant="body2" color="text.secondary" sx={{ display: "flex", alignItems: "center" }}>
                 <MedicalServicesIcon fontSize="small" sx={{ mr: 1, color: "primary.main" }} />
-                {doctor.experience} of experience in {doctor.specialty}
+                {doctor.experience} of experience
               </Typography>
             </Stack>
             
@@ -522,7 +592,7 @@ const DoctorPage = () => {
               </Box>
               <Typography variant="body2" color="text.secondary" sx={{ display: "flex", alignItems: "center" }}>
                 <MonetizationOnIcon fontSize="small" sx={{ mr: 1, color: "primary.main" }} />
-                {doctor.fees}
+                {doctor.fees} Consultation Fee
               </Typography>
             </Stack>
             
@@ -635,19 +705,34 @@ const DoctorPage = () => {
           sx: { borderRadius: 3, maxWidth: 500 }
         }}
       >
-        <DialogTitle sx={{ pb: 1 }}>
-          {bookingStage === 0 && "Book Appointment"}
-          {bookingStage === 1 && "Processing"}
-          {bookingStage === 2 && "Appointment Confirmed"}
-        </DialogTitle>
+        <Box sx={{ bgcolor: 'primary.main', color: 'white', py: 1.5, px: 3, position: 'relative' }}>
+          <DialogTitle sx={{ p: 0, fontWeight: 600 }}>
+            {bookingStage === 0 && "Book Appointment"}
+            {bookingStage === 1 && "Processing"}
+            {bookingStage === 2 && "Appointment Confirmed"}
+          </DialogTitle>
+          {bookingStage === 0 && (
+            <IconButton
+              onClick={handleCloseDialog}
+              sx={{
+                position: 'absolute',
+                right: 8,
+                top: '50%',
+                transform: 'translateY(-50%)',
+                color: 'white'
+              }}
+            >
+              <CloseIcon />
+            </IconButton>
+          )}
+        </Box>
         
         <DialogContent>
           {bookingStage === 0 && (
             <>
-              <Typography variant="subtitle1" sx={{ fontWeight: 500, mb: 2 }}>
+              {/* <Typography variant="subtitle1" sx={{ fontWeight: 500, mb: 1 }}>
                 Appointment Details
-              </Typography>
-              
+              </Typography> */}
               <Grid container spacing={2} sx={{ mb: 1 }}>
                 <Grid item xs={6}>
                   <Typography variant="body2" color="text.secondary">
@@ -657,30 +742,30 @@ const DoctorPage = () => {
                     {doctor.name}
                   </Typography>
                 </Grid>
-                <Grid item xs={6}>
+                {/* <Grid item xs={6}>
                   <Typography variant="body2" color="text.secondary">
                     Specialty
                   </Typography>
                   <Typography variant="body1" fontWeight={500}>
                     {doctor.specialty}
                   </Typography>
-                </Grid>
-                <Grid item xs={6}>
+                </Grid> */}
+                {/* <Grid item xs={6}>
                   <Typography variant="body2" color="text.secondary">
                     Date
                   </Typography>
                   <Typography variant="body1" fontWeight={500}>
                     {days[selectedDay].date}
                   </Typography>
-                </Grid>
-                <Grid item xs={6}>
+                </Grid> */}
+                {/* <Grid item xs={6}>
                   <Typography variant="body2" color="text.secondary">
                     Current Queue
                   </Typography>
                   <Typography variant="body1" fontWeight={500}>
                     Token #{doctor.currentToken}
                   </Typography>
-                </Grid>
+                </Grid> */}
                 <Grid item xs={6}>
                   <Typography variant="body2" color="text.secondary">
                     Clinic
@@ -704,92 +789,127 @@ const DoctorPage = () => {
               <Typography variant="subtitle1" sx={{ fontWeight: 500, mb: 2 }}>
                 Patient Information
               </Typography>
-              
-              <FormControl component="fieldset" sx={{ mb: 2 }}>
-                <FormLabel component="legend">Appointment For</FormLabel>
-                <RadioGroup
-                  row
-                  value={patientType}
-                  onChange={handlePatientTypeChange}
-                >
-                  <FormControlLabel value="self" control={<Radio />} label="Myself" />
-                  <FormControlLabel value="family" control={<Radio />} label="Family Member" />
-                </RadioGroup>
-              </FormControl>
-              
-              {patientType === "family" && (
-                <Box sx={{ mb: 2 }}>
-                  <Grid container spacing={2}>
-                    <Grid item xs={12} sm={6}>
+
+              <Grid container spacing={2}>
+                <Grid item xs={12}>
+                  <Autocomplete
+                    freeSolo={true}
+                    options={patients}
+                    getOptionLabel={(option) => typeof option === 'string' ? option : option.name}
+                    onChange={handlePatientSelect}
+                    onInputChange={(event, value) => {
+                      if (value) {
+                        handlePatientSelect(event, value);
+                      }
+                    }}
+                    renderInput={(params) => (
                       <TextField
-                        fullWidth
-                        label="Family Member Name"
-                        value={familyMember.name}
-                        onChange={(e) => handleFamilyMemberChange('name', e.target.value)}
+                        {...params}
+                        label="Patient Name"
                         required
+                        fullWidth
                         size="small"
                       />
-                    </Grid>
-                    <Grid item xs={12} sm={6}>
-                      <TextField
-                        fullWidth
-                        label="Relation"
-                        value={familyMember.relation}
-                        onChange={(e) => handleFamilyMemberChange('relation', e.target.value)}
-                        required
-                        size="small"
-                        select
-                      >
-                        <MenuItem value="spouse">Spouse</MenuItem>
-                        <MenuItem value="child">Child</MenuItem>
-                        <MenuItem value="parent">Parent</MenuItem>
-                        <MenuItem value="sibling">Sibling</MenuItem>
-                        <MenuItem value="other">Other</MenuItem>
-                      </TextField>
-                    </Grid>
-                    <Grid item xs={12} sm={6}>
-                      <TextField
-                        fullWidth
-                        label="Age"
-                        type="number"
-                        value={familyMember.age}
-                        onChange={(e) => handleFamilyMemberChange('age', e.target.value)}
-                        required
-                        size="small"
-                      />
-                    </Grid>
-                    <Grid item xs={12} sm={6}>
-                      <TextField
-                        fullWidth
-                        label="Gender"
-                        value={familyMember.gender}
-                        onChange={(e) => handleFamilyMemberChange('gender', e.target.value)}
-                        required
-                        size="small"
-                        select
-                      >
-                        <MenuItem value="M">Male</MenuItem>
-                        <MenuItem value="F">Female</MenuItem>
-                        <MenuItem value="O">Other</MenuItem>
-                      </TextField>
-                    </Grid>
-                  </Grid>
-                </Box>
-              )}
-              
-              <TextField
-                fullWidth
-                label="Health Issue / Symptoms"
-                multiline
-                rows={2}
-                variant="outlined"
-                size="small"
-                sx={{ mb: 2 }}
-                defaultValue="Skin Allergy"
-              />
-              
+                    )}
+                  />
+                </Grid>
+
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    fullWidth
+                    label="Age"
+                    type="number"
+                    value={formData.age}
+                    onChange={(e) => handleFormChange('age', e.target.value)}
+                    required
+                    size="small"
+                  />
+                </Grid>
+
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    fullWidth
+                    label="Gender"
+                    value={formData.gender}
+                    onChange={(e) => handleFormChange('gender', e.target.value)}
+                    required
+                    size="small"
+                    select
+                  >
+                    <MenuItem value="M">Male</MenuItem>
+                    <MenuItem value="F">Female</MenuItem>
+                    <MenuItem value="O">Other</MenuItem>
+                  </TextField>
+                </Grid>
+
+                <Grid item xs={12}>
+                  <TextField
+                    fullWidth
+                    label="Guardian"
+                    value={formData.guardian}
+                    onChange={(e) => handleFormChange('guardian', e.target.value)}
+                    size="small"
+                  />
+                </Grid>
+
+                <Grid item xs={12}>
+                  <TextField
+                    fullWidth
+                    label="Location"
+                    value={formData.location}
+                    onChange={(e) => handleFormChange('location', e.target.value)}
+                    size="small"
+                  />
+                </Grid>
+
+                <Grid item xs={12}>
+                  <TextField
+                    fullWidth
+                    label="Health Issue"
+                    value={formData.healthIssue}
+                    onChange={(e) => handleFormChange('healthIssue', e.target.value)}
+                    multiline
+                    rows={2}
+                    size="small"
+                  />
+                </Grid>
+
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    fullWidth
+                    label="Appointment Type"
+                    value={formData.appointmentType}
+                    onChange={(e) => handleFormChange('appointmentType', e.target.value)}
+                    required
+                    size="small"
+                    select
+                  >
+                    <MenuItem value="New">New</MenuItem>
+                    <MenuItem value="Follow-up">Follow-up</MenuItem>
+                  </TextField>
+                </Grid>
+
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    fullWidth
+                    label="Select Slot"
+                    value={formData.selectedSlot}
+                    onChange={(e) => handleFormChange('selectedSlot', e.target.value)}
+                    required
+                    size="small"
+                    select
+                  >
+                    {slots.map((slot, index) => (
+                      <MenuItem key={index} value={slot.slot}>
+                        {formatSlotDateTime(slot.slot)}
+                      </MenuItem>
+                    ))}
+                  </TextField>
+                </Grid>
+              </Grid>
+
               <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 2 }}>
-                By confirming this appointment, you agree to our terms and conditions. You will receive a token number for the queue. You can cancel your appointment up to 30 minutes before your expected turn.
+                By confirming this appointment, you agree to our terms and conditions.
               </Typography>
             </>
           )}
@@ -806,7 +926,7 @@ const DoctorPage = () => {
             </Box>
           )}
           
-          {bookingStage === 2 && (
+          {bookingStage === 2 && appointmentResponse && (
             <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', py: 3 }}>
               <Box 
                 sx={{ 
@@ -825,35 +945,99 @@ const DoctorPage = () => {
               <Typography variant="h6" align="center" gutterBottom>
                 Your appointment has been confirmed!
               </Typography>
-              <Typography variant="body1" align="center" sx={{ mb: 1 }}>
-                {days[selectedDay].date} at {doctor.clinic}
-              </Typography>
-              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', mb: 2 }}>
-                <QueueIcon color="primary" sx={{ mr: 1 }} />
-                <Typography variant="h4" color="primary" fontWeight="bold">
-                  Token #15
-                </Typography>
-              </Box>
-              <Typography variant="body2" color="text.secondary" align="center">
-                Your appointment details have been sent to your registered mobile number. Please arrive at the clinic before your token number is called.
-              </Typography>
-              <Box sx={{ 
-                bgcolor: 'rgba(25,118,210,0.1)', 
-                p: 2, 
-                borderRadius: 2, 
-                mt: 2, 
-                display: 'flex', 
-                alignItems: 'center'
-              }}>
-                <Box sx={{ mr: 1.5, display: 'flex' }}>
-                  <PeopleIcon color="primary" sx={{ fontSize: '1.5rem' }} />
-                </Box>
-                <Box>
-                  <Typography variant="body2" fontWeight="medium">
-                    People Ahead: {615}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    Estimated wait time: {doctor.estimatedWaitTime}
+              
+              <Box sx={{ width: '100%', mt: 2 }}>
+                <Card variant="outlined" sx={{ mb: 2 }}>
+                  <CardContent>
+                    <Grid container spacing={2}>
+                      <Grid item xs={12}>
+                        <Typography variant="subtitle2" color="text.secondary">
+                          Appointment ID
+                        </Typography>
+                        <Typography variant="body1" gutterBottom>
+                          {appointmentResponse.appointment_id}
+                        </Typography>
+                      </Grid>
+                      
+                      <Grid item xs={6}>
+                        <Typography variant="subtitle2" color="text.secondary">
+                          Patient Name
+                        </Typography>
+                        <Typography variant="body1" gutterBottom>
+                          {appointmentResponse.name}
+                        </Typography>
+                      </Grid>
+                      
+                      <Grid item xs={6}>
+                        <Typography variant="subtitle2" color="text.secondary">
+                          Token Number
+                        </Typography>
+                        <Typography variant="h6" color="primary" sx={{ fontWeight: 'bold' }}>
+                          #{appointmentResponse.token}
+                        </Typography>
+                      </Grid>
+                      
+                      <Grid item xs={6}>
+                        <Typography variant="subtitle2" color="text.secondary">
+                          Appointment Type
+                        </Typography>
+                        <Typography variant="body1" gutterBottom>
+                          {appointmentResponse.appointment_type}
+                        </Typography>
+                      </Grid>
+                      
+                      <Grid item xs={6}>
+                        <Typography variant="subtitle2" color="text.secondary">
+                          Consultation Fee
+                        </Typography>
+                        <Typography variant="body1" gutterBottom>
+                          ₹{appointmentResponse.fees_paid}
+                        </Typography>
+                      </Grid>
+                      
+                      <Grid item xs={12}>
+                        <Typography variant="subtitle2" color="text.secondary">
+                          Appointment Time
+                        </Typography>
+                        <Typography variant="body1" gutterBottom>
+                          {formatSlotDateTime(appointmentResponse.cabinslot.slot)}
+                        </Typography>
+                      </Grid>
+                      
+                      <Grid item xs={12}>
+                        <Typography variant="subtitle2" color="text.secondary">
+                          Hospital
+                        </Typography>
+                        <Typography variant="body1" gutterBottom>
+                          {appointmentResponse.cabinslot.cabin.hospital.hospital_name}
+                        </Typography>
+                      </Grid>
+                      
+                      {appointmentResponse.disease && (
+                        <Grid item xs={12}>
+                          <Typography variant="subtitle2" color="text.secondary">
+                            Health Issue
+                          </Typography>
+                          <Typography variant="body1" gutterBottom>
+                            {appointmentResponse.disease}
+                          </Typography>
+                        </Grid>
+                      )}
+                    </Grid>
+                  </CardContent>
+                </Card>
+
+                <Box sx={{ 
+                  bgcolor: 'primary.light', 
+                  p: 2, 
+                  borderRadius: 2,
+                  color: 'primary.contrastText'
+                }}>
+                  <Typography variant="body2" align="center">
+                    Please arrive at the clinic before your token number is called.
+                    {!appointmentResponse.queobj.paid && (
+                      " Remember to complete the payment at the reception."
+                    )}
                   </Typography>
                 </Box>
               </Box>
@@ -863,18 +1047,16 @@ const DoctorPage = () => {
         
         <DialogActions sx={{ px: 3, pb: 3 }}>
           {bookingStage === 0 && (
-            <>
-              <Button onClick={handleCloseDialog}>Cancel</Button>
-              <Button 
-                variant="contained" 
-                onClick={() => {
-                  setBookingStage(1);
-                  handleConfirmBooking();
-                }}
-              >
-                Confirm Appointment
-              </Button>
-            </>
+            <Button 
+              variant="contained" 
+              onClick={() => {
+                setBookingStage(1);
+                handleConfirmBooking();
+              }}
+              fullWidth
+            >
+              Complete Booking
+            </Button>
           )}
           
           {bookingStage === 2 && (
@@ -888,6 +1070,21 @@ const DoctorPage = () => {
           )}
         </DialogActions>
       </Dialog>
+      
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={5000}
+        onClose={() => setSnackbar(prev => ({ ...prev, open: false }))}
+        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+      >
+        <Alert
+          onClose={() => setSnackbar(prev => ({ ...prev, open: false }))}
+          severity={snackbar.severity}
+          sx={{ width: '100%' }}
+        >
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 };

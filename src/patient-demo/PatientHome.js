@@ -47,7 +47,7 @@ const PatientHome = () => {
     const [activeStep, setActiveStep] = useState(0);
     const { user } = useContext(AuthContext);
     const currentAppointments = user?.current_appointments || [];
-    const newAppointments = currentAppointments.filter(app => app.appointment_type === "New");
+    const newAppointments = currentAppointments.filter(app => app.queobj?.status === "pending");
 
     // Get patient details from localStorage
     const getPatientDetails = (patientId) => {
@@ -139,7 +139,18 @@ const PatientHome = () => {
     const formatDate = (dateStr) => {
         if (!dateStr) return "Not specified";
         const date = new Date(dateStr);
-        return `${date.getDate().toString().padStart(2, '0')}/${(date.getMonth() + 1).toString().padStart(2, '0')}/${date.getFullYear()}`;
+        // Adjust for timezone offset
+        const userTimezoneOffset = date.getTimezoneOffset() * 60000;
+        const adjustedDate = new Date(date.getTime() + userTimezoneOffset);
+        
+        const day = adjustedDate.getDate().toString().padStart(2, '0');
+        const month = (adjustedDate.getMonth() + 1).toString().padStart(2, '0');
+        const year = adjustedDate.getFullYear();
+        const hours = adjustedDate.getHours();
+        const minutes = adjustedDate.getMinutes().toString().padStart(2, '0');
+        const ampm = hours >= 12 ? 'PM' : 'AM';
+        const formattedHours = (hours % 12 || 12).toString().padStart(2, '0');
+        return `${day}/${month}/${year}, ${formattedHours}:${minutes} ${ampm}`;
     };
 
     const handleViewDetails = (appointment) => {
@@ -331,7 +342,7 @@ const PatientHome = () => {
                                             <Box sx={{ bgcolor: '#1976d2', color: 'white', p: 2 }}>
                                                 <Typography variant="subtitle1" fontWeight="600">Dr. {appointment.doctor}</Typography>
                                                 <Typography variant="body2" sx={{ opacity: 0.9 }}>
-                                                    {appointment.specialty} • {appointment.clinic}
+                                                    {/* {appointment.specialty} • */} {appointment.clinic}
                                                 </Typography>
                                             </Box>
 
@@ -341,7 +352,7 @@ const PatientHome = () => {
                                                         <Box sx={{ display: "flex", alignItems: "center", mb: 0 }}>
                                                             <CalendarTodayIcon sx={{ mr: 1, color: "primary.main" }} />
                                                             <Typography variant="body2">
-                                                                <strong>Appointment Date:</strong> {formatDate(appointment.date)}
+                                                                <strong>Slot:</strong> {formatDate(appointment.date)}
                                                             </Typography>
                                                         </Box>
                                                     </Grid>
@@ -610,7 +621,7 @@ const PatientHome = () => {
                             <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
                                 <CalendarTodayIcon color="primary" sx={{ mr: 1.5 }} />
                                 <Box>
-                                    <Typography variant="subtitle2">Appointment Date</Typography>
+                                    <Typography variant="subtitle2">Appointment Slot</Typography>
                                     <Typography variant="body2" color="text.secondary">{selectedAppointment && formatDate(selectedAppointment.date)}</Typography>
                                 </Box>
                             </Box>
