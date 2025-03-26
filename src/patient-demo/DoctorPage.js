@@ -871,110 +871,124 @@ const DoctorPage = () => {
              </Grid>
              </Grid>
 
-             <Typography 
-                 variant="caption" 
-                 color="text.secondary" 
-                 sx={{ display: 'block', mt: 2 }}
-             >
-             By confirming this appointment, you agree to our terms and conditions.
-             </Typography>
-             </>
-         )}
-
-         {bookingStage === 1 && (
-             <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', py: 3 }}>
-             <CircularProgress size={60} />
-             <Typography variant="h6" sx={{ mt: 2 }}>
-             Processing your appointment
-             </Typography>
-             <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-             Please wait, we 're confirming your appointment...
-             </Typography>
-             </Box>
-         )}
-
-         {bookingStage === 2 && appointmentResponse && (
-             <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', py: 3 }}>
-             <Box sx={{
-                 width: 80,
-                 height: 80,
-                 borderRadius: '50%',
-                 bgcolor: 'success.light',
-                 display: 'flex',
-                 alignItems: 'center',
-                 justifyContent: 'center',
-                 mb: 2
-             }}>
-             <Typography variant="h4" sx={{ color: 'white' }}>✓</Typography>
-             </Box>
-             <Typography variant="h6" align="center" gutterBottom>
-             Your appointment has been confirmed!
-             </Typography>
-
-             <Box sx={{ width: '100%', mt: 2 }}>
-             <Card variant="outlined" sx={{ mb: 2 }}>
-             <CardContent>
-             <Grid container spacing={2}>
-             <Grid item xs={12}>
-             <Typography variant="subtitle2" color="text.secondary">
-             Appointment ID
-             </Typography>
-             <Typography variant="body1" gutterBottom>{appointmentResponse.appointment_id}</Typography>
-             </Grid>
-
-             <Grid item xs={6}>
-             <Typography variant="subtitle2" color="text.secondary">
-             Patient Name
-             </Typography>
-             <Typography variant="body1" gutterBottom>{appointmentResponse.name}</Typography>
-             </Grid>
-
-             <Grid item xs={6}>
-             <Typography variant="subtitle2" color="text.secondary">
-             Token Number
-             </Typography>
-             <Typography variant="h6" color="primary" sx={{ fontWeight: 'bold' }}>#{appointmentResponse.token}</Typography>
-             </Grid>
-
-             <Grid item xs={6}>
-             <Typography variant="subtitle2" color="text.secondary">
-             Appointment Type
-             </Typography>
-             <Typography variant="body1" gutterBottom>{appointmentResponse.appointment_type}</Typography>
-             </Grid>
-
-             <Grid item xs={6}>
-             <Typography variant="subtitle2" color="text.secondary">
-             Consultation Fee
-             </Typography>
-             <Typography variant="body1" gutterBottom>₹{appointmentResponse.fees_paid}</Typography>
-             </Grid>
-
-             <Grid item xs={12}>
-             <Typography variant="subtitle2" color="text.secondary">
-             Appointment Time
-             </Typography>
-             <Typography variant="body1" gutterBottom>{formatSlotDateTime(appointmentResponse.cabinslot.slot)}</Typography>
-             </Grid>
-
-             <Grid item xs={12}>
-             <Typography variant="subtitle2" color="text.secondary">
-             Hospital
-             </Typography>
-             <Typography variant="body1" gutterBottom>{appointmentResponse.cabinslot.cabin.hospital.hospital_name}</Typography>
-             </Grid>
-
-             {appointmentResponse.disease && (
-                 <Grid item xs={12}>
-                 <Typography variant="subtitle2" color="text.secondary">
-                 Health Issue
-                 </Typography>
-                 <Typography variant="body1" gutterBottom>{appointmentResponse.disease}</Typography>
-                 </Grid>
-             )}
-             </Grid>
-             </CardContent>
-             </Card>
+              <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 2 }}>
+                By confirming this appointment, you agree to our terms and conditions.
+              </Typography>
+            </>
+          )}
+          
+          {bookingStage === 1 && (
+            <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', py: 3 }}>
+              <CircularProgress size={60} />
+              <Typography variant="h6" sx={{ mt: 2 }}>
+                Processing your appointment
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                Please wait, we're confirming your appointment...
+              </Typography>
+            </Box>
+          )}
+          
+          {bookingStage === 2 && appointmentResponse && (
+            <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', py: 3 }}>
+              <Box 
+                sx={{ 
+                  width: 80, 
+                  height: 80, 
+                  borderRadius: '50%', 
+                  bgcolor: 'success.light',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  mb: 2
+                }}
+              >
+                <Typography variant="h4" sx={{ color: 'white' }}>✓</Typography>
+              </Box>
+              <Typography variant="h6" align="center" gutterBottom>
+                Your appointment has been confirmed!
+              </Typography>
+              
+              <Box sx={{ width: '100%', mt: 2 }}>
+                <Card variant="outlined" sx={{ mb: 2 }}>
+                  <CardContent>
+                    <Grid container spacing={2}>
+                      {/* <Grid item xs={12}>
+                        <Typography variant="subtitle2" color="text.secondary">
+                          Appointment ID
+                        </Typography>
+                        <Typography variant="body1" gutterBottom>
+                          {appointmentResponse.appointment_id}
+                        </Typography>
+                      </Grid> */}
+                      
+                      <Grid item xs={6}>
+                        <Typography variant="subtitle2" color="text.secondary">
+                          Patient Name
+                        </Typography>
+                        <Typography variant="body1" gutterBottom>
+                          {appointmentResponse.name}
+                        </Typography>
+                      </Grid>
+                      
+                      <Grid item xs={6}>
+                        <Typography variant="subtitle2" color="text.secondary">
+                          Token Number
+                        </Typography>
+                        <Typography variant="h6" color="primary" sx={{ fontWeight: 'bold' }}>
+                          #{appointmentResponse.token}
+                        </Typography>
+                      </Grid>
+                      
+                      <Grid item xs={6}>
+                        <Typography variant="subtitle2" color="text.secondary">
+                          Appointment Type
+                        </Typography>
+                        <Typography variant="body1" gutterBottom>
+                          {appointmentResponse.appointment_type}
+                        </Typography>
+                      </Grid>
+                      
+                      {/* <Grid item xs={6}>
+                        <Typography variant="subtitle2" color="text.secondary">
+                          Consultation Fee
+                        </Typography>
+                        <Typography variant="body1" gutterBottom>
+                          ₹{appointmentResponse.fees_paid}
+                        </Typography>
+                      </Grid> */}
+                      
+                      <Grid item xs={6}>
+                        <Typography variant="subtitle2" color="text.secondary">
+                          Appointment Slot
+                        </Typography>
+                        <Typography variant="body1" gutterBottom>
+                          {formatSlotDateTime(appointmentResponse.cabinslot.slot)}
+                        </Typography>
+                      </Grid>
+                      
+                      <Grid item xs={12}>
+                        <Typography variant="subtitle2" color="text.secondary">
+                          Hospital
+                        </Typography>
+                        <Typography variant="body1" gutterBottom>
+                          {appointmentResponse.cabinslot.cabin.hospital.hospital_name}
+                        </Typography>
+                      </Grid>
+                      
+                      {appointmentResponse.disease && (
+                        <Grid item xs={12}>
+                          <Typography variant="subtitle2" color="text.secondary">
+                            Health Issue
+                          </Typography>
+                          <Typography variant="body1" gutterBottom>
+                            {appointmentResponse.disease}
+                          </Typography>
+                        </Grid>
+                      )}
+                    </Grid>
+                  </CardContent>
+                </Card>
 
              <Box sx={{
                  bgcolor: 'primary.light',

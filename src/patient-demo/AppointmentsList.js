@@ -9,22 +9,22 @@ import PersonIcon from "@mui/icons-material/Person";
 import PhoneIcon from "@mui/icons-material/Phone";
 import QueueIcon from "@mui/icons-material/Queue";
 import {
-  Box,
-  Button,
-  Chip,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-  Divider,
-  Grid,
-  IconButton,
-  List,
-  ListItem,
-  ListItemText,
-  Paper,
-  Skeleton,
-  Typography
+    Box,
+    Button,
+    Chip,
+    Dialog,
+    DialogActions,
+    DialogContent,
+    DialogTitle,
+    Divider,
+    Grid,
+    IconButton,
+    List,
+    ListItem,
+    ListItemText,
+    Paper,
+    Skeleton,
+    Typography
 } from "@mui/material";
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -418,53 +418,51 @@ const AppointmentsList = () => {
                                     </Box>
                                 </Grid>
 
-                                <Grid item xs={12}>
-                                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                                        <MedicalServicesIcon color="primary" sx={{ mr: 1.5 }} />
-                                        <Box>
-                                            <Typography variant="subtitle2">Appointment Details</Typography>
-                                            {selectedAppointment.appointment_type && (
-                                                <Typography variant="body2" color="text.secondary">
-                                                    Type: {selectedAppointment.appointment_type}
-                                                </Typography>
-                                            )}
-                                            {selectedAppointment.disease && selectedAppointment.disease !== "Not specified" && (
-                                                <Typography variant="body2" color="text.secondary">
-                                                    Issue: {selectedAppointment.disease}
-                                                </Typography>
-                                            )}
-                                            {selectedAppointment.queobj && selectedAppointment.queobj.status && (
-                                                <Typography variant="body2" color="text.secondary">
-                                                    Status: {selectedAppointment.queobj.status.replace(/_/g, ' ').charAt(0).toUpperCase() + selectedAppointment.queobj.status.slice(1).replace(/_/g, ' ')}
-                                                </Typography>
-                                            )}
-                                            {selectedAppointment.queobj && selectedAppointment.queobj.checkin !== undefined && (
-                                                <Typography variant="body2" color="text.secondary">
-                                                    Check-in Status: {selectedAppointment.queobj.checkin ? "Checked In" : "Not Checked In"}
-                                                </Typography>
-                                            )}
-                                        </Box>
-                                    </Box>
-                                </Grid>
-
-                                <Grid item xs={12}>
-                                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                                        <MedicalServicesIcon color="primary" sx={{ mr: 1.5 }} />
-                                        <Box>
-                                            <Typography variant="subtitle2">Payment Information</Typography>
-                                            {selectedAppointment.fees_paid !== undefined && selectedAppointment.cabinslot?.cabin?.fees !== undefined && (
-                                                <Typography variant="body2" color="text.secondary">
-                                                    Payment Status: {selectedAppointment.fees_paid >= selectedAppointment.cabinslot.cabin.fees ? "Paid" : "Not Paid"}
-                                                </Typography>
-                                            )}
-                                            {selectedAppointment.mode && (
-                                                <Typography variant="body2" color="text.secondary">
-                                                    Payment Mode: {selectedAppointment.mode}
-                                                </Typography>
-                                            )}
-                                        </Box>
-                                    </Box>
-                                </Grid>
+                <Grid item xs={12}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                    <MedicalServicesIcon color="primary" sx={{ mr: 1.5 }} />
+                    <Box>
+                      <Typography variant="subtitle2">Appointment Details</Typography>
+                      {selectedAppointment.appointment_type && (
+                        <Typography variant="body2" color="text.secondary">
+                          Type: {selectedAppointment.appointment_type}
+                        </Typography>
+                      )}
+                      {selectedAppointment.disease && selectedAppointment.disease !== "Not specified" && (
+                        <Typography variant="body2" color="text.secondary">
+                          Issue: {selectedAppointment.disease}
+                        </Typography>
+                      )}
+                      {selectedAppointment.queobj && selectedAppointment.queobj.status && (
+                        <Typography variant="body2" color="text.secondary">
+                          Status: {selectedAppointment.queobj.status.replace(/_/g, ' ').charAt(0).toUpperCase() + selectedAppointment.queobj.status.slice(1).replace(/_/g, ' ')}
+                        </Typography>
+                      )}
+                      {selectedAppointment.queobj && selectedAppointment.queobj.checkin !== undefined && (
+                        <Typography variant="body2" color="text.secondary">
+                          Check-in Status: {selectedAppointment.queobj.checkin ? "Checked In" : "Not Checked In"}
+                        </Typography>
+                      )}
+                    </Box>
+                  </Box>
+                </Grid>
+                
+                <Grid item xs={12}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                    <MedicalServicesIcon color="primary" sx={{ mr: 1.5 }} />
+                    <Box>
+                      <Typography variant="subtitle2">Payment Information</Typography>
+                        <Typography variant="body2" color="text.secondary">
+                          Payment Status: {selectedAppointment?.queobj?.payment_status === "paid" ? "Paid" : "Not Paid"}
+                        </Typography>
+                      {selectedAppointment.mode && (
+                        <Typography variant="body2" color="text.secondary">
+                          Payment Mode: {selectedAppointment.mode}
+                        </Typography>
+                      )}
+                    </Box>
+                  </Box>
+                </Grid>
 
                                 <Grid item xs={12}>
                                     <Divider sx={{ my: 0.5 }} />
