@@ -63,7 +63,6 @@ const PatientHome = () => {
         }
         return null;
     };
-
     const appointmentsList = newAppointments.map(appointment => ({
         id: appointment.appointment_id,
         doctor: appointment.cabinslot?.cabin?.doctor?.name || "Doctor",
@@ -78,14 +77,15 @@ const PatientHome = () => {
         location: appointment.patient?.location || "Not specified",
         appointmentType: appointment.appointment_type || "New",
         disease: appointment.disease || "Not specified",
-        patientFor: appointment.name || "Self",
-        phone: appointment.cabinslot?.cabin?.doctor?.phone_number || "+91 12345 67890",
+        patientFor: appointment.name,
+        phone: appointment.cabinslot?.cabin?.doctor?.phone_number || "",
         age: appointment.patient?.age,
         gender: appointment.patient?.gender,
         doctorPhone: appointment.cabinslot?.cabin?.doctor?.phone_number,
         hospitalPhone: appointment.cabinslot?.cabin?.hospital?.phone_number,
         fees: appointment.cabinslot?.cabin?.fees || 0,
         feesPaid: appointment.fees_paid || 0,
+        paid: appointment?.queobj?.paid,
         checkin: appointment.queobj?.checkin || false,
         late: appointment.queobj?.late || false,
         mode: appointment.mode,
@@ -681,11 +681,9 @@ const PatientHome = () => {
                                 <ReceiptIcon color="primary" sx={{ mr: 1.5 }} />
                                 <Box>
                                     <Typography variant="subtitle2">Payment Information</Typography>
-                                    {selectedAppointment?.feesPaid !== undefined && selectedAppointment?.fees !== undefined && (
                                         <Typography variant="body2" color="text.secondary">
-                                            Payment Status: {selectedAppointment.feesPaid >= selectedAppointment.fees ? "Paid" : "Not Paid"}
+                                            Payment Status: {selectedAppointment?.paid === true ? "Paid" : "Not Paid"}
                                         </Typography>
-                                    )}
                                     {selectedAppointment?.mode && (
                                         <Typography variant="body2" color="text.secondary">
                                             Payment Mode: {selectedAppointment.mode}

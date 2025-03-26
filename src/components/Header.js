@@ -7,6 +7,7 @@ import {
   DialogContentText,
   DialogTitle,
   IconButton,
+  CircularProgress,
 } from "@mui/material";
 import React, { useContext, useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -18,6 +19,7 @@ import "./Header.module.css";
 function Header({ closeEventSource }) {
   const isMobile = window.innerWidth <= 768;
   const [open, setOpen] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
   const { setUser } = useContext(AuthContext);
   const navigate = useNavigate();
 
@@ -32,10 +34,17 @@ function Header({ closeEventSource }) {
     setOpen(false);
   };
 
-  const handleLogout = () => {
-    setUser(null);
-    logout();
-    handleClose();
+  const handleLogout = async () => {
+    setIsLoggingOut(true);
+    try {
+      await logout();
+      setUser(null);
+      handleClose();
+      navigate('/login');
+    } catch (error) {
+      console.error('Logout failed:', error);
+    }
+    setIsLoggingOut(false);
   };
 
   return (
@@ -52,7 +61,8 @@ function Header({ closeEventSource }) {
         <IconButton
           color="primary"
           onClick={handleClickOpen}
-          sx={{ marginLeft: "auto" }} // Push to the right
+          sx={{ marginLeft: "auto" }}
+          disabled={isLoggingOut}
         >
           <LogoutIcon />
         </IconButton>
@@ -61,7 +71,12 @@ function Header({ closeEventSource }) {
       {/* Desktop Logout Button */}
       {!isMobile && (
         <div className="logout-button">
-          <Button variant="contained" color="primary" onClick={handleClickOpen}>
+          <Button 
+            variant="contained" 
+            color="primary" 
+            onClick={handleClickOpen}
+            disabled={isLoggingOut}
+          >
             Logout
           </Button>
         </div>
@@ -81,11 +96,16 @@ function Header({ closeEventSource }) {
           </DialogContentText>
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleClose} color="primary">
+          <Button onClick={handleClose} color="primary" disabled={isLoggingOut}>
             Cancel
           </Button>
-          <Button onClick={handleLogout} color="primary" autoFocus>
-            Logout
+          <Button 
+            onClick={handleLogout} 
+            color="primary" 
+            disabled={isLoggingOut}
+            autoFocus
+          >
+          {isLoggingOut ? <CircularProgress size={24} /> : "Logout"}
           </Button>
         </DialogActions>
       </Dialog>
