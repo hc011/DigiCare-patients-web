@@ -14,7 +14,10 @@ import {
     useMediaQuery,
     CircularProgress,
     Alert,
-    Snackbar
+    Snackbar,
+    FormControlLabel,
+    Checkbox,
+    Link,
 } from '@mui/material';
 import {
     Person as PersonIcon,
@@ -36,6 +39,7 @@ const Register = () => {
     const [loading, setLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
     const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'error' });
+    const [acceptedTerms, setAcceptedTerms] = useState(false);
 
     const [formData, setFormData] = useState({
         firstName: '',
@@ -92,36 +96,41 @@ const Register = () => {
         e.preventDefault();
         if (!validateForm()) return;
 
+        if (!acceptedTerms) {
+            setSnackbar({
+                open: true,
+                message: "Please accept the Terms & Conditions and Privacy Policy",
+                severity: "error"
+            });
+            return;
+        }
+
         setLoading(true);
         try {
-            const updatePayload = {
+            const response = await updateUser({
                 first_name: formData.firstName,
                 last_name: formData.lastName,
                 email: formData.email,
                 password: formData.password
-            };
-
-            const response = await updateUser(updatePayload);
-            console.log("User update response:", response);
+            });
 
             const userData = location.state?.userData;
             const updatedUserData = {
                 ...userData,
                 user: {
                     ...userData.user,
-                    ...updatePayload
+                    ...formData
                 }
             };
 
-            localStorage.setItem("user", JSON.stringify(updatedUserData));
+            localStorage.setItem('user', JSON.stringify(updatedUserData));
             setUser(updatedUserData);
-            navigate("/patient", { state: { freshLogin: true } }, { replace: true });
+            navigate('/patient', { state: { freshLogin: true }, replace: true });
         } catch (error) {
-            console.error("Error updating user details:", error);
             setSnackbar({
                 open: true,
-                message: "Failed to update profile. Please try again.",
-                severity: "error"
+                message: 'Failed to update profile. Please try again.',
+                severity: 'error'
             });
         } finally {
             setLoading(false);
@@ -249,7 +258,7 @@ const Register = () => {
                                                     onClick={() => setShowPassword(!showPassword)}
                                                     edge="end"
                                                 >
-                                                    {showPassword ? <VisibilityOffIcon /> : <VisibilityIcon />}
+                                                    {showPassword ? <VisibilityIcon /> : <VisibilityOffIcon />}
                                                 </IconButton>
                                             </InputAdornment>
                                         ),
@@ -257,11 +266,44 @@ const Register = () => {
                                 />
                             </Grid>
                             <Grid item xs={12}>
+                                <FormControlLabel
+                                    control={
+                                        <Checkbox
+                                            checked={acceptedTerms}
+                                            onChange={(e) => setAcceptedTerms(e.target.checked)}
+                                            color="primary"
+                                        />
+                                    }
+                                    label={
+                                        <Typography variant="body2">
+                                            I agree to the{' '}
+                                            <Link
+                                                href="/terms-and-conditions"
+                                                target="_blank"
+                                                rel="noopener"
+                                                color="primary"
+                                            >
+                                                Terms & Conditions
+                                            </Link>
+                                            {' '}and{' '}
+                                            <Link
+                                                href="/privacy-policy"
+                                                target="_blank"
+                                                rel="noopener"
+                                                color="primary"
+                                            >
+                                                Privacy Policy
+                                            </Link>
+                                        </Typography>
+                                    }
+                                />
+                            </Grid>
+                            <Grid item xs={12}>
                                 <Button
                                     variant="contained"
                                     type="submit"
                                     fullWidth
-                                    disabled={loading}
+                                    disabled={loading || !acceptedTerms}
                                     sx={{ 
                                         py: 1.5,
                                         borderRadius: 2,

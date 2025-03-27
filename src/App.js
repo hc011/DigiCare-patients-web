@@ -18,6 +18,8 @@ import PatientHome from "./patient-demo/PatientHome";
 import ProfilePage from "./patient-demo/ProfilePage";
 import SearchDoctors from "./patient-demo/SearchDoctors";
 import Register from './Pages/Register';
+import PrivacyPolicy from './Pages/PrivacyPolicy';
+import TermsAndConditions from './Pages/TermsAndConditions';
 
 const App = () => {
   const { user } = useContext(AuthContext);
@@ -241,6 +243,14 @@ const App = () => {
               <Route
                 path="/register"
                 element={<Register />}
+              />
+              <Route
+                path="/privacy-policy"
+                element={<PrivacyPolicy />}
+              />
+              <Route
+                path="/terms-and-conditions"
+                element={<TermsAndConditions />}
               />
 
               {/* Patient Routes */}

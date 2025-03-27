@@ -85,7 +85,8 @@ const DoctorPage = () => {
     healthIssue: "",
     appointmentType: "New",
     selectedSlot: null,
-    patientId: null
+    patientId: null,
+    formSubmitted: false
   });
 
   // Get user data from localStorage
@@ -253,7 +254,16 @@ const DoctorPage = () => {
   };
 
   const handleConfirmBooking = async () => {
+    // Set form as submitted to trigger validation
+    setFormData(prev => ({ ...prev, formSubmitted: true }));
+
+    // Check required fields
+    if (!formData.selectedSlot || !formData.name || !formData.age || !formData.gender || !formData.appointmentType) {
+      return;
+    }
+
     setBookingLoading(true);
+    setBookingStage(1); // Move stage change here after validation passes
     
     try {
       // Prepare appointment data according to API requirements
@@ -299,6 +309,7 @@ const DoctorPage = () => {
     } catch (error) {
       console.error("Error booking appointment:", error);
       setBookingLoading(false);
+      setBookingStage(0); // Reset to initial stage on error
       setSnackbar({
         open: true,
         message: "Failed to book appointment. Please try again.",
@@ -787,6 +798,34 @@ const DoctorPage = () => {
               <Divider sx={{ my: 2 }} />
               
               <Typography variant="subtitle1" sx={{ fontWeight: 500, mb: 2 }}>
+                Select Appointment Slot
+              </Typography>
+
+              <Grid container spacing={2}>
+                <Grid item xs={12}>
+                  <TextField
+                    fullWidth
+                    label="Select Slot"
+                    value={formData.selectedSlot}
+                    onChange={(e) => handleFormChange('selectedSlot', e.target.value)}
+                    required
+                    size="small"
+                    select
+                    error={!formData.selectedSlot && formData.formSubmitted}
+                    helperText={!formData.selectedSlot && formData.formSubmitted ? "Please select a slot" : ""}
+                  >
+                    {slots.map((slot, index) => (
+                      <MenuItem key={index} value={slot.slot}>
+                        {formatSlotDateTime(slot.slot)}
+                      </MenuItem>
+                    ))}
+                  </TextField>
+                </Grid>
+              </Grid>
+
+              <Divider sx={{ my: 2 }} />
+              
+              <Typography variant="subtitle1" sx={{ fontWeight: 500, mb: 2 }}>
                 Patient Information
               </Typography>
 
@@ -809,6 +848,8 @@ const DoctorPage = () => {
                         required
                         fullWidth
                         size="small"
+                        error={!formData.name && formData.formSubmitted}
+                        helperText={!formData.name && formData.formSubmitted ? "Patient name is required" : ""}
                       />
                     )}
                   />
@@ -823,6 +864,8 @@ const DoctorPage = () => {
                     onChange={(e) => handleFormChange('age', e.target.value)}
                     required
                     size="small"
+                    error={!formData.age && formData.formSubmitted}
+                    helperText={!formData.age && formData.formSubmitted ? "Age is required" : ""}
                   />
                 </Grid>
 
@@ -835,6 +878,8 @@ const DoctorPage = () => {
                     required
                     size="small"
                     select
+                    error={!formData.gender && formData.formSubmitted}
+                    helperText={!formData.gender && formData.formSubmitted ? "Gender is required" : ""}
                   >
                     <MenuItem value="M">Male</MenuItem>
                     <MenuItem value="F">Female</MenuItem>
@@ -874,7 +919,7 @@ const DoctorPage = () => {
                   />
                 </Grid>
 
-                <Grid item xs={12} sm={6}>
+                <Grid item xs={12}>
                   <TextField
                     fullWidth
                     label="Appointment Type"
@@ -883,27 +928,11 @@ const DoctorPage = () => {
                     required
                     size="small"
                     select
+                    error={!formData.appointmentType && formData.formSubmitted}
+                    helperText={!formData.appointmentType && formData.formSubmitted ? "Appointment type is required" : ""}
                   >
                     <MenuItem value="New">New</MenuItem>
                     <MenuItem value="Follow-up">Follow-up</MenuItem>
-                  </TextField>
-                </Grid>
-
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    fullWidth
-                    label="Select Slot"
-                    value={formData.selectedSlot}
-                    onChange={(e) => handleFormChange('selectedSlot', e.target.value)}
-                    required
-                    size="small"
-                    select
-                  >
-                    {slots.map((slot, index) => (
-                      <MenuItem key={index} value={slot.slot}>
-                        {formatSlotDateTime(slot.slot)}
-                      </MenuItem>
-                    ))}
                   </TextField>
                 </Grid>
               </Grid>
@@ -1049,10 +1078,7 @@ const DoctorPage = () => {
           {bookingStage === 0 && (
             <Button 
               variant="contained" 
-              onClick={() => {
-                setBookingStage(1);
-                handleConfirmBooking();
-              }}
+              onClick={handleConfirmBooking}
               fullWidth
             >
               Complete Booking

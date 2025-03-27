@@ -61,6 +61,15 @@ const Login = () => {
       return;
     }
 
+    if (credential.mobileNumber.length !== 10) {
+      setSnackbar({
+        open: true,
+        message: "Please enter a valid 10-digit mobile number",
+        severity: "error",
+      });
+      return;
+    }
+
     try {
       setLoading(true);
       //await sendOtp(credential.mobileNumber);
@@ -84,7 +93,13 @@ const Login = () => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setCredential((prev) => ({ ...prev, [name]: value }));
+    // Only allow numbers and limit to 10 digits
+    if (name === 'mobileNumber') {
+      const numericValue = value.replace(/[^0-9]/g, '').slice(0, 10);
+      setCredential((prev) => ({ ...prev, [name]: numericValue }));
+    } else {
+      setCredential((prev) => ({ ...prev, [name]: value }));
+    }
   };
 
   const handleLogin = async (e) => {
