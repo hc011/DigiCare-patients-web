@@ -11,6 +11,7 @@ import {
 import { DateTimePicker } from "@mui/x-date-pickers";
 import React, { useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
+import BackButton from "../components/BackButton";
 import { addAppointment } from "../services/api";
 
 const steps = ["Select Time", "Details", "Confirmation"];
@@ -67,6 +68,8 @@ const AppointmentBooking = () => {
 
     return (
         <Box sx={{ p: 2 }}>
+            <BackButton sx={{ mb: 3 }} />
+            
             <Stepper activeStep={activeStep} alternativeLabel sx={{ mb: 4 }}>
                 {steps.map((label) => (
                     <Step key={label}>

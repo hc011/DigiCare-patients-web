@@ -18,7 +18,7 @@ export const fetchAppointments = async(cabinId, slot) => {
 export const getDoctorList = async() => {
     try {
         const response = await axiosInstance.get(
-            `/doctorinfo/doctors/`, { withCredentials: true }
+            `/patientinfo/doctors/`, { withCredentials: true }
         );
         return response.data;
     } catch (error) {
@@ -31,7 +31,7 @@ export const getDoctorList = async() => {
 export const getCabinInfo = async(cabinId) => {
     try {
         const response = await axiosInstance.get(
-            `/doctorinfo/cabin/${cabinId}`, { withCredentials: true }
+            `/patientinfo/cabin/${cabinId}`, { withCredentials: true }
         );
         return response.data;
     } catch (error) {
@@ -166,7 +166,7 @@ export const removeAppointment = async(payload) => {
 export const updateUser = async(payload) => {
     try {
         const response = await axiosInstance.put(
-            "/userinfo/patients/update/",
+            "/patientinfo/patients/update/",
             payload, { withCredentials: true }
         );
         return response.data;
@@ -177,9 +177,19 @@ export const updateUser = async(payload) => {
 }
 
 
-export const getAllAppointments = async() => {
+export const getAllAppointments = async(query = "all") => {
     try {
-        const response = await axiosInstance.get("/userinfo/patients/appointments/", { withCredentials: true });
+        const response = await axiosInstance.get(`/patientinfo/patients/appointments/${query}`, { withCredentials: true });
+        return response.data;
+    } catch (error) {
+        console.error("Error fetching all appointments:", error);
+        throw error;
+    }
+}
+
+export const getAppointmentDetails = async(appointment_id) => {
+    try {
+        const response = await axiosInstance.get(`/patientinfo/appointment-details/${appointment_id}`, { withCredentials: true });
         return response.data;
     } catch (error) {
         console.error("Error fetching all appointments:", error);

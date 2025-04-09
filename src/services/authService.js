@@ -1,13 +1,14 @@
 import axios from "axios";
 import { cancelAllRequests } from "../utils/axiosInstance";
-const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
+import axiosInstance from "../utils/axiosInstance";
 
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
 // Function to handle user login
 export const login = async(phone_number, otp) => {
     try {
         // Send a POST request to the login API
         const response = await axios.post(
-            `${API_BASE_URL}/userinfo/patients/login/`, {
+            `${API_BASE_URL}/patientinfo/patients/login/`, {
                 phone_number,
                 otp,
             }, { withCredentials: true }
@@ -33,15 +34,13 @@ export const login = async(phone_number, otp) => {
 export const logout = async() => {
     try {
         cancelAllRequests();
-        await axios.post(
-            `${API_BASE_URL}/api/logout`, {}, {
+        await axiosInstance.post(
+            "/api/logout", {}, {
                 withCredentials: true,
             }
         );
     } catch (error) {
-        if (!axios.isCancel(error)) {
-            console.error("Logout error:", error);
-        }
+        console.error("Logout error:", error);
     } finally {
         localStorage.removeItem("user");
         window.location.replace("/login");

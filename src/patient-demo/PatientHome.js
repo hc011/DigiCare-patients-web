@@ -1,4 +1,5 @@
 import AccessTimeIcon from "@mui/icons-material/AccessTime";
+import AddIcon from '@mui/icons-material/Add';
 import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
 import CloseIcon from "@mui/icons-material/Close";
 import DirectionsIcon from "@mui/icons-material/Directions";
@@ -7,24 +8,24 @@ import MedicalServicesIcon from "@mui/icons-material/MedicalServices";
 import PersonIcon from "@mui/icons-material/Person";
 import PhoneIcon from "@mui/icons-material/Phone";
 import QueueIcon from "@mui/icons-material/Queue";
-import SearchIcon from "@mui/icons-material/Search";
-import AddIcon from '@mui/icons-material/Add';
 import ReceiptIcon from '@mui/icons-material/Receipt';
+import { formatSecondsToHoursMinutes } from "../utils/timeUtils";
 import {
-  Avatar,
-  Box,
-  Button,
-  Card,
-  CardContent,
-  CircularProgress,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-  Divider,
-  Grid,
-  IconButton,
-  Typography
+    Avatar,
+    Box,
+    Button,
+    Card,
+    CardContent,
+    CircularProgress,
+    Dialog,
+    DialogActions,
+    DialogContent,
+    DialogTitle,
+    Divider,
+    Grid,
+    IconButton,
+    Skeleton,
+    Typography
 } from "@mui/material";
 import React, { useContext, useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -34,6 +35,58 @@ import 'swiper/css/pagination';
 import { Navigation, Pagination } from 'swiper/modules';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { AuthContext } from "../context/AuthContext";
+import { getAllAppointments, getAppointmentDetails } from "../services/api";
+
+const AppointmentSkeleton = () => (
+    <Card elevation={1} sx={{
+        borderRadius: 3,
+        overflow: 'hidden',
+    }}>
+        <Box sx={{ bgcolor: '#1976d2', color: 'white', p: 2 }}>
+            <Skeleton variant="text" width="60%" height={24} sx={{ bgcolor: 'rgba(255, 255, 255, 0.3)' }} />
+            <Skeleton variant="text" width="40%" height={20} sx={{ bgcolor: 'rgba(255, 255, 255, 0.2)' }} />
+        </Box>
+        <CardContent>
+            <Grid container spacing={1}>
+                <Grid item xs={12}>
+                    <Box sx={{ display: "flex", alignItems: "center", mb: 1 }}>
+                        <Skeleton variant="circular" width={24} height={24} sx={{ mr: 1 }} />
+                        <Skeleton variant="text" width="70%" height={24} />
+                    </Box>
+                    <Box sx={{ display: "flex", alignItems: "center", mb: 1 }}>
+                        <Skeleton variant="circular" width={24} height={24} sx={{ mr: 1 }} />
+                        <Skeleton variant="text" width="60%" height={24} />
+                    </Box>
+                    <Box sx={{ display: "flex", alignItems: "center", mb: 1 }}>
+                        <Skeleton variant="circular" width={24} height={24} sx={{ mr: 1 }} />
+                        <Skeleton variant="text" width="40%" height={24} />
+                    </Box>
+                </Grid>
+                <Grid item xs={6}>
+                    <Box sx={{ textAlign: 'center', mb: 2 }}>
+                        <Skeleton variant="circular" width={24} height={24} sx={{ mx: 'auto', mb: 1 }} />
+                        <Skeleton variant="text" width="80%" height={20} sx={{ mx: 'auto' }} />
+                        <Skeleton variant="text" width="50%" height={32} sx={{ mx: 'auto' }} />
+                    </Box>
+                </Grid>
+                <Grid item xs={6}>
+                    <Box sx={{ textAlign: 'center', mb: 2 }}>
+                        <Skeleton variant="circular" width={24} height={24} sx={{ mx: 'auto', mb: 1 }} />
+                        <Skeleton variant="text" width="80%" height={20} sx={{ mx: 'auto' }} />
+                        <Skeleton variant="text" width="50%" height={32} sx={{ mx: 'auto' }} />
+                    </Box>
+                </Grid>
+                <Grid item xs={12} sx={{ display: 'flex', justifyContent: 'flex-end', mt: 0 }}>
+                    <Skeleton variant="rectangular" width={80} height={36} sx={{ borderRadius: 2, mr: 1 }} />
+                    <Skeleton variant="rectangular" width={100} height={36} sx={{ borderRadius: 2 }} />
+                </Grid>
+                <Grid item xs={12}>
+                    <Skeleton variant="rectangular" width="100%" height={36} sx={{ borderRadius: 2, mt: 2 }} />
+                </Grid>
+            </Grid>
+        </CardContent>
+    </Card>
+);
 
 const PatientHome = () => {
     const navigate = useNavigate();
@@ -43,11 +96,38 @@ const PatientHome = () => {
     const [hasAppointment, setHasAppointment] = useState(false);
     const [showAppointmentDetails, setShowAppointmentDetails] = useState(false);
     const [selectedAppointment, setSelectedAppointment] = useState(null);
+    const [appointmentDetails, setAppointmentDetails] = useState(null);
     const [activeStep, setActiveStep] = useState(0);
     const { user } = useContext(AuthContext);
-    const currentAppointments = user?.current_appointments || [];
-    const newAppointments = currentAppointments.filter(app => app.queobj?.status === "pending");
+    const [currentAppointments, setCurrentAppointments] = useState([]);
 
+
+    const fetchCurrentAppointments = async () => {
+        try {
+            setLoading(true);
+            const response = await getAllAppointments("upcoming");
+            setCurrentAppointments(response);
+        } catch (error) {
+            console.error("Error fetching current appointments:", error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {       
+        fetchCurrentAppointments();
+    }, []);
+
+    const fetchAppointmentdetails = async (appointment_id) => {
+        try {
+            const response = await getAppointmentDetails(appointment_id);
+            setSelectedAppointment(response);
+        } catch (error) {
+            console.error("Error fetching current appointments:", error);
+        } finally {
+        }
+    }
+    
     // Get patient details from localStorage
     const getPatientDetails = (patientId) => {
         try {
@@ -62,49 +142,10 @@ const PatientHome = () => {
         }
         return null;
     };
-    const appointmentsList = newAppointments.map(appointment => ({
-        id: appointment.appointment_id,
-        doctor: appointment.cabinslot?.cabin?.doctor?.name || "Doctor",
-        date: appointment.cabinslot?.slot,
-        status: appointment.queobj?.status || "pending",
-        clinic: appointment.cabinslot?.cabin?.hospital?.hospital_name || "Hospital",
-        specialty: appointment.cabinslot?.cabin?.doctor?.specialization || "Specialist",
-        token: appointment.token,
-        currentToken: appointment.queobj?.position || 1,
-        estimatedWaitTime: "30 minutes", // Dummy value for expected time
-        patientId: appointment.patient_id || "P12345",
-        location: appointment.patient?.location || "Not specified",
-        appointmentType: appointment.appointment_type || "New",
-        disease: appointment.disease || "Not specified",
-        patientFor: appointment.name,
-        phone: appointment.cabinslot?.cabin?.doctor?.phone_number || "",
-        age: appointment.patient?.age,
-        gender: appointment.patient?.gender,
-        doctorPhone: appointment.cabinslot?.cabin?.doctor?.phone_number,
-        hospitalPhone: appointment.cabinslot?.cabin?.hospital?.phone_number,
-        fees: appointment.cabinslot?.cabin?.fees || 0,
-        feesPaid: appointment.fees_paid || 0,
-        paid: appointment?.queobj?.paid,
-        checkin: appointment.queobj?.checkin || false,
-        late: appointment.queobj?.late || false,
-        mode: appointment.mode,
-        cabinId: appointment.cabinslot?.cabin?.id ||-1
-    }));
+    const appointmentsList = currentAppointments;
 
     const handleStepChange = (step) => {
         setActiveStep(step);
-    };
-
-    const handleNext = () => {
-        setActiveStep((prevActiveStep) => 
-            prevActiveStep === appointmentsList.length - 1 ? 0 : prevActiveStep + 1
-        );
-    };
-
-    const handleBack = () => {
-        setActiveStep((prevActiveStep) => 
-            prevActiveStep === 0 ? appointmentsList.length - 1 : prevActiveStep - 1
-        );
     };
 
     useEffect(() => {
@@ -112,13 +153,7 @@ const PatientHome = () => {
         const urlParams = new URLSearchParams(location.search);
         if (urlParams.get('appointmentBooked') === 'true' || location.state?.bookingSuccess) {
             setHasAppointment(true);
-            setLoading(true);
             setShowBookingSuccess(true);
-
-            // Simulate loading
-            const timer = setTimeout(() => {
-                setLoading(false);
-            }, 1500);
 
             // Clear success message after some time
             const successTimer = setTimeout(() => {
@@ -126,13 +161,25 @@ const PatientHome = () => {
             }, 4000);
 
             return () => {
-                clearTimeout(timer);
                 clearTimeout(successTimer);
             };
         } else if (appointmentsList.length > 0) {
             setHasAppointment(true);
         }
     }, [location, appointmentsList]);
+
+    // Add interval to update wait times every minute
+    // useEffect(() => {
+    //     // Initial fetch already happens in the first useEffect
+        
+    //     // Set up interval to fetch fresh data every minute (60000 ms)
+    //     const interval = setInterval(() => {
+    //         fetchCurrentAppointments();
+    //     }, 6000);
+
+    //     // Clean up interval on component unmount
+    //     return () => clearInterval(interval);
+    // }, []); 
 
     // Format date to DD/MM/YYYY
     const formatDate = (dateStr) => {
@@ -141,7 +188,7 @@ const PatientHome = () => {
         // Adjust for timezone offset
         const userTimezoneOffset = date.getTimezoneOffset() * 60000;
         const adjustedDate = new Date(date.getTime() + userTimezoneOffset);
-        
+
         const day = adjustedDate.getDate().toString().padStart(2, '0');
         const month = (adjustedDate.getMonth() + 1).toString().padStart(2, '0');
         const year = adjustedDate.getFullYear();
@@ -152,23 +199,8 @@ const PatientHome = () => {
         return `${day}/${month}/${year}, ${formattedHours}:${minutes} ${ampm}`;
     };
 
-    const handleViewDetails = (appointment) => {
-        // Get detailed patient information from localStorage
-        const patientDetails = getPatientDetails(appointment.patientId);
-        // Merge patient details with appointment
-        const appointmentWithPatientDetails = {
-            ...appointment,
-            // Override with patient details from localStorage if available
-            patientFor: patientDetails?.name,
-            age: patientDetails?.age,
-            gender: patientDetails?.gender,
-            location: patientDetails?.location,
-            phone: patientDetails?.phone_number,
-            guardian: patientDetails?.guardian,
-            allergies: patientDetails?.allergies
-        };
-        
-        setSelectedAppointment(appointmentWithPatientDetails);
+    const handleViewDetails = async (appointment_id) => {
+        await fetchAppointmentdetails(appointment_id);
         setShowAppointmentDetails(true);
     };
 
@@ -182,28 +214,10 @@ const PatientHome = () => {
 
     return (
         <Box sx={{ p: 2, pb: 16, height: "calc(100vh - 180px)", overflowY: "auto" }}>
-            {/* Loading Overlay */}
-            {loading && (
-                <Box sx={{
-                    position: 'fixed',
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    bottom: 0,
-                    bgcolor: 'rgba(255,255,255,0.7)',
-                    zIndex: 9999,
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    justifyContent: 'center'
-                }}>
-                    <CircularProgress size={60} />
-                    <Typography variant="h6" sx={{ mt: 2 }}>Loading...</Typography>
-                </Box>
-            )}
+
 
             {/* Success Message */}
-            {showBookingSuccess && !loading && (
+            {showBookingSuccess && (
                 <Box sx={{
                     position: 'fixed',
                     top: 20,
@@ -237,13 +251,13 @@ const PatientHome = () => {
 
             {/* Header with greeting */}
             {/* <Box sx={{ mb: 4 }}>
-                <Typography variant="h5" fontWeight="600" gutterBottom>
-                    Welcome back, {user?.username || 'Patient'}
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                    {new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
-                </Typography>
-            </Box> */}
+                                        <Typography variant="h5" fontWeight="600" gutterBottom>
+                                            Welcome back, {user?.username || 'Patient'}
+                                        </Typography>
+                                        <Typography variant="body2" color="text.secondary">
+                                            {new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+                                        </Typography>
+                                    </Box> */}
 
             {/* Quick Actions */}
             <Grid container spacing={2} sx={{ mb: 4 }}>
@@ -261,7 +275,8 @@ const PatientHome = () => {
                         '&:active': {
                             transform: 'translateY(-2px)',
                         }
-                    }} onClick={() => navigate("/search")}>
+                    }}
+                        onClick={() => navigate("/doctor/2")}>
                         <CardContent sx={{ textAlign: 'center', p: 2 }}>
                             <Avatar sx={{ bgcolor: '#4f46e5', mx: 'auto', mb: 1 }}>
                                 <AddIcon />
@@ -286,7 +301,8 @@ const PatientHome = () => {
                         '&:active': {
                             transform: 'translateY(-2px)',
                         }
-                    }} onClick={() => navigate("/appointments")}>
+                    }}
+                        onClick={() => navigate("/appointments")}>
                         <CardContent sx={{ textAlign: 'center', p: 2 }}>
                             <Avatar sx={{ bgcolor: '#15803d', mx: 'auto', mb: 1 }}>
                                 <CalendarTodayIcon />
@@ -309,24 +325,17 @@ const PatientHome = () => {
                         {appointmentsList.length > 0 ? `${activeStep + 1}/${appointmentsList.length}` : ''}
                     </Typography>
                 </Box>
-
-                {hasAppointment && appointmentsList.length > 0 ? (
+                {loading ? (
+                    <AppointmentSkeleton />
+                ) : appointmentsList.length > 0 ? (
                     <Box sx={{ position: 'relative' }}>
-                        <Swiper
-                            modules={[Navigation, Pagination]}
-                            spaceBetween={30}
-                            slidesPerView={1}
-                            navigation={false}
-                            pagination={{ 
-                                clickable: true
-                            }}
-                            onSlideChange={(swiper) => handleStepChange(swiper.activeIndex)}
-                            style={{ 
-                                borderRadius: 12, 
-                                overflow: 'visible',
-                                '--swiper-pagination-color': '#1976d2'
-                            }}
-                        >
+                        <Swiper modules={[Navigation, Pagination]} spaceBetween={30} slidesPerView={1} navigation={false} pagination={{
+                            clickable: true
+                        }} onSlideChange={(swiper) => handleStepChange(swiper.activeIndex)} style={{
+                            borderRadius: 12,
+                            overflow: 'visible',
+                            '--swiper-pagination-color': '#1976d2'
+                        }}>
                             {appointmentsList.map((appointment, index) => (
                                 <SwiperSlide key={appointment.id}>
                                     <Box sx={{ px: 0.5, pb: 1 }}>
@@ -339,9 +348,9 @@ const PatientHome = () => {
                                             }
                                         }}>
                                             <Box sx={{ bgcolor: '#1976d2', color: 'white', p: 2 }}>
-                                                <Typography variant="subtitle1" fontWeight="600">Dr. {appointment.doctor}</Typography>
+                                                <Typography variant="subtitle1" fontWeight="600">Dr. {appointment?.doctor}</Typography>
                                                 <Typography variant="body2" sx={{ opacity: 0.9 }}>
-                                                    {/* {appointment.specialty} • */} {appointment.clinic}
+                                                    {appointment?.hospital}
                                                 </Typography>
                                             </Box>
 
@@ -351,36 +360,41 @@ const PatientHome = () => {
                                                         <Box sx={{ display: "flex", alignItems: "center", mb: 0 }}>
                                                             <CalendarTodayIcon sx={{ mr: 1, color: "primary.main" }} />
                                                             <Typography variant="body2">
-                                                                <strong>Slot:</strong> {formatDate(appointment.date)}
-                                                            </Typography>
-                                                        </Box>
-                                                    </Grid>
-                                                    
-                                                    <Grid item xs={12}>
-                                                        <Box sx={{ display: "flex", alignItems: "center", mb: 1 }}>
-                                                            <PersonIcon sx={{ mr: 1, color: "primary.main" }} />
-                                                            <Typography variant="body2">
-                                                                <strong>Patient Name:</strong> {appointment.patientFor}
+                                                                <strong>Slot:</strong> {formatDate(appointment?.slot)}
                                                             </Typography>
                                                         </Box>
                                                         <Box sx={{ display: "flex", alignItems: "center", mb: 1 }}>
                                                             <PersonIcon sx={{ mr: 1, color: "primary.main" }} />
                                                             <Typography variant="body2">
-                                                               <strong>PID:</strong> {appointment.patientId}
+                                                                <strong>Patient Name:</strong> {appointment?.patient_name}
+                                                            </Typography>
+                                                        </Box>
+                                                        <Box sx={{ display: "flex", alignItems: "center", mb: 1 }}>
+                                                            <PersonIcon sx={{ mr: 1, color: "primary.main" }} />
+                                                            <Typography variant="body2">
+                                                                <strong>PID:</strong> {appointment?.pid}
+                                                            </Typography>
+                                                        </Box>
+                                                        <Box sx={{ display: "flex", alignItems: "center", mb: 1 }}>
+                                                            <QueueIcon sx={{ mr: 1, color: "primary.main" }} />
+                                                            <Typography variant="body2">
+                                                                <strong>Token:</strong> #{appointment?.token}
                                                             </Typography>
                                                         </Box>
                                                     </Grid>
-                                                    
+
                                                     <Grid item xs={6}>
                                                         <Box sx={{ textAlign: 'center', mb: 2 }}>
-                                                            <QueueIcon color="primary" />
+                                                            <AccessTimeIcon color="primary" />
                                                             <Typography variant="body2" color="text.secondary" gutterBottom>
-                                                                Your Token
+                                                                Wating
                                                             </Typography>
-                                                            <Typography variant="h5" color="primary" fontWeight="bold">#{appointment.token}</Typography>
+                                                            <Typography variant="h5" color="primary" fontWeight="bold">
+                                                                {appointment?.waiting}
+                                                            </Typography>
                                                         </Box>
                                                     </Grid>
-                                                    
+
                                                     <Grid item xs={6}>
                                                         <Box sx={{ textAlign: 'center', mb: 2 }}>
                                                             <AccessTimeIcon color="primary" />
@@ -388,46 +402,29 @@ const PatientHome = () => {
                                                                 Expected Time
                                                             </Typography>
                                                             <Typography variant="h5" color="primary" fontWeight="bold">
-                                                                {appointment.estimatedWaitTime}
+                                                                {formatSecondsToHoursMinutes(appointment?.wait_time)}
                                                             </Typography>
                                                         </Box>
                                                     </Grid>
-                                                    
+
                                                     <Grid item xs={12} sx={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', mt: 0 }}>
-                                                        <Button
-                                                            variant="outlined"
-                                                            size="small"
-                                                            startIcon={<PhoneIcon />}
-                                                            sx={{ borderRadius: 2, mr: 1 }}
-                                                            onClick={() => window.open(`tel:${appointment.doctorPhone}`)}
-                                                        >
+                                                        <Button variant="outlined" size="small" startIcon={<PhoneIcon />} sx={{ borderRadius: 2, mr: 1 }} onClick={() => window.open(`tel:${appointment.doctorPhone}`)}>
                                                             Call
                                                         </Button>
-                                                        <Button
-                                                            variant="outlined"
-                                                            size="small"
-                                                            startIcon={<DirectionsIcon />}
-                                                            sx={{ borderRadius: 2 }}
-                                                            onClick={() => window.open(`https://maps.google.com/?q=${appointment.clinic}`)}
-                                                        >
+                                                        <Button variant="outlined" size="small" startIcon={<DirectionsIcon />} sx={{ borderRadius: 2 }} onClick={() => window.open(`https://maps.google.com/?q=${appointment.clinic}`)}>
                                                             Directions
                                                         </Button>
                                                     </Grid>
 
                                                     <Grid item xs={12}>
-                                                        <Button 
-                                                            variant="contained" 
-                                                            fullWidth 
-                                                            sx={{
-                                                                mt: 2,
-                                                                borderRadius: 2,
-                                                                transition: 'all 0.2s',
-                                                                '&:hover': {
-                                                                    transform: 'translateX(4px)'
-                                                                }
-                                                            }} 
-                                                            onClick={() => handleViewDetails(appointment)}
-                                                        >
+                                                        <Button variant="contained" fullWidth sx={{
+                                                            mt: 2,
+                                                            borderRadius: 2,
+                                                            transition: 'all 0.2s',
+                                                            '&:hover': {
+                                                                transform: 'translateX(4px)'
+                                                            }
+                                                        }} onClick={() => handleViewDetails(appointment.appointment_id)}>
                                                             View Details
                                                         </Button>
                                                     </Grid>
@@ -471,28 +468,24 @@ const PatientHome = () => {
                         <Box sx={{ textAlign: 'center', py: 4 }}>
                             <EventBusyIcon sx={{ fontSize: 48, color: '#9ca3af', mb: 2 }} />
                             <Typography variant="h6" gutterBottom>
-                                No New Appointments Scheduled
+                                No Appointments Scheduled
                             </Typography>
                             <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-                                You don't have any new appointments in the queue.
+                                You don't have any scheduled appointments currently.
                             </Typography>
-                            <Button 
-                                variant="contained" 
-                                onClick={() => navigate("/search")} 
-                                startIcon={<SearchIcon />} 
-                                sx={{
-                                    borderRadius: 2,
-                                    transition: 'transform 0.2s, box-shadow 0.2s',
-                                    '&:hover': {
-                                        transform: 'translateY(-2px)',
-                                        boxShadow: '0 8px 16px rgba(0,0,0,0.1)'
-                                    },
-                                    '&:active': {
-                                        transform: 'translateY(0px)',
-                                    }
-                                }}
-                            >
-                                Find a Doctor
+                            <Button variant="contained" onClick={() => navigate("/doctor/2")}  
+                            sx={{
+                                borderRadius: 2,
+                                transition: 'transform 0.2s, box-shadow 0.2s',
+                                '&:hover': {
+                                    transform: 'translateY(-2px)',
+                                    boxShadow: '0 8px 16px rgba(0,0,0,0.1)'
+                                },
+                                '&:active': {
+                                    transform: 'translateY(0px)',
+                                }
+                            }}>
+                                Book appointment
                             </Button>
                         </Box>
                     </Card>
@@ -500,7 +493,7 @@ const PatientHome = () => {
             </Box>
 
             {/* Popular Specialties */}
-            <Typography variant="h6" fontWeight="600" gutterBottom>
+            {/* <Typography variant="h6" fontWeight="600" gutterBottom>
                 Popular Specialties
             </Typography>
             <Grid container spacing={2} sx={{ mb: 8 }}>
@@ -517,38 +510,17 @@ const PatientHome = () => {
                             '&:active': {
                                 transform: 'translateY(-2px)',
                             }
-                        }} onClick={() => navigate("/search")}>
+                        }}
+                            onClick={() => navigate("/search")}>
                             <CardContent sx={{ p: 2 }}>
-                                <Typography variant="body1">{specialty}</Typography>
+                                <Typography variant="body1">
+                                    {specialty}
+                                </Typography>
                             </CardContent>
                         </Card>
                     </Grid>
                 ))}
-            </Grid>
-
-            {/* <Button variant="contained" fullWidth startIcon={<SearchIcon />} onClick={() => navigate("/search")} sx={{
-                mt: 2,
-                py: 1.5,
-                borderRadius: 2,
-                position: 'fixed',
-                bottom: 80,
-                left: '50%',
-                transform: 'translateX(-50%)',
-                width: 'calc(100% - 32px)',
-                maxWidth: 600,
-                boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
-                transition: 'transform 0.2s, box-shadow 0.2s',
-                zIndex: 20,
-                '&:hover': {
-                    boxShadow: '0 8px 20px rgba(0,0,0,0.2)',
-                    transform: 'translate(-50%, -2px)'
-                },
-                '&:active': {
-                    transform: 'translate(-50%, 0)',
-                }
-            }}>
-                Book New Appointment
-            </Button> */}
+            </Grid> */}
 
             {/* Appointment Details Dialog */}
             <Dialog open={showAppointmentDetails} onClose={() => setShowAppointmentDetails(false)} fullWidth maxWidth="md" PaperProps={{
@@ -561,54 +533,53 @@ const PatientHome = () => {
                     <DialogTitle sx={{ p: 0, fontWeight: 600 }}>
                         Appointment Details
                     </DialogTitle>
-                    <IconButton 
-                        aria-label="close" 
-                        onClick={() => setShowAppointmentDetails(false)}
-                        sx={{ 
-                            position: 'absolute', 
-                            right: 8, 
-                            top: 8, 
-                            color: 'white'
-                        }}
-                    >
+                    <IconButton aria-label="close" onClick={() => setShowAppointmentDetails(false)} sx={{
+                        position: 'absolute',
+                        right: 8,
+                        top: 8,
+                        color: 'white'
+                    }}>
                         <CloseIcon />
                     </IconButton>
                 </Box>
                 <DialogContent sx={{ py: 1 }}>
-                    <Grid container spacing={2} sx={{ mt: 0 }}>
+                    <Grid container spacing={{ mt: 0 }}>
                         <Grid item xs={12}>
                             <Box sx={{ display: 'flex', alignItems: 'flex-start', mb: 1 }}>
                                 <PersonIcon color="primary" sx={{ mr: 1.5, mt: 0.5 }} />
                                 <Box>
                                     <Typography variant="subtitle2">Patient Information</Typography>
-                                    {selectedAppointment?.patientFor && (
+                                    {selectedAppointment?.name && (
                                         <Typography variant="body2" color="text.secondary">
-                                            Name: {selectedAppointment.patientFor}
+                                            Name: {selectedAppointment?.name}
                                         </Typography>
                                     )}
-                                    {selectedAppointment?.patientId && (
+                                    {selectedAppointment?.patient?.patient_id && (
                                         <Typography variant="body2" color="text.secondary">
-                                            Patient ID: {selectedAppointment.patientId}
+                                            Patient ID: {selectedAppointment?.patient?.patient_id}
+                                        </Typography>
+                                    )}
+                                    {selectedAppointment?.token && (
+                                        <Typography variant="body2" color="text.secondary">
+                                            Token: {selectedAppointment?.token}
                                         </Typography>
                                     )}
                                     <Typography variant="body2" color="text.secondary">
-                                        {selectedAppointment?.age && `Age: ${selectedAppointment.age}`}
-                                        {selectedAppointment?.gender && selectedAppointment.age && `, `}
-                                        {selectedAppointment?.gender && `Gender: ${selectedAppointment.gender === 'M' ? 'Male' : selectedAppointment.gender === 'F' ? 'Female' : selectedAppointment.gender}`}
+                                        {selectedAppointment?.patient?.age && `Age: ${selectedAppointment.patient.age}`} {selectedAppointment?.patient?.gender && selectedAppointment?.patient?.age && `, `} {selectedAppointment?.patient?.gender && `Gender: ${selectedAppointment.patient.gender === 'M' ? 'Male' : selectedAppointment.patient.gender === 'F' ? 'Female' : selectedAppointment.patient.gender}`}
                                     </Typography>
-                                    {selectedAppointment?.phone && (
+                                    {selectedAppointment?.patient?.phone_numer && (
                                         <Typography variant="body2" color="text.secondary">
-                                            Phone: {selectedAppointment.phone}
+                                            Phone: {selectedAppointment?.patient?.phone_numer}
                                         </Typography>
                                     )}
-                                    {selectedAppointment?.guardian && selectedAppointment.guardian !== "N/A" && (
+                                    {selectedAppointment?.patient?.guardian && selectedAppointment?.patient?.guardian !== "N/A" && (
                                         <Typography variant="body2" color="text.secondary">
-                                            Guardian: {selectedAppointment.guardian}
+                                            Guardian: {selectedAppointment?.patient?.guardian}
                                         </Typography>
                                     )}
-                                    {selectedAppointment?.allergies && (
+                                    {selectedAppointment?.patient?.allergies && (
                                         <Typography variant="body2" color="text.secondary">
-                                            Allergies: {selectedAppointment.allergies}
+                                            Allergies: {selectedAppointment.patient.allergies}
                                         </Typography>
                                     )}
                                 </Box>
@@ -620,33 +591,38 @@ const PatientHome = () => {
                                 <CalendarTodayIcon color="primary" sx={{ mr: 1.5 }} />
                                 <Box>
                                     <Typography variant="subtitle2">Appointment Slot</Typography>
-                                    <Typography variant="body2" color="text.secondary">{selectedAppointment && formatDate(selectedAppointment.date)}</Typography>
+                                    <Typography variant="body2" color="text.secondary">
+                                        {selectedAppointment?.cabinslot?.slot && formatDate(selectedAppointment?.cabinslot?.slot)}
+                                    </Typography>
                                 </Box>
                             </Box>
                         </Grid>
-                        
-                        <Grid item xs={6}>
-                            <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                <QueueIcon color="primary" sx={{ mr: 1 }} />
-                                <Box>
-                                    <Typography variant="subtitle2">Your Token</Typography>
-                                    <Typography variant="body2" color="text.secondary">#{selectedAppointment?.token}</Typography>
-                                </Box>
-                            </Box>
-                        </Grid>
-                        
+
                         <Grid item xs={6}>
                             <Box sx={{ display: 'flex', alignItems: 'center' }}>
                                 <AccessTimeIcon color="primary" sx={{ mr: 1 }} />
                                 <Box>
                                     <Typography variant="subtitle2">Expected Time</Typography>
-                                    <Typography variant="body2" color="text.secondary">{selectedAppointment?.estimatedWaitTime}</Typography>
+                                    <Typography variant="body2" color="text.secondary">
+                                        {formatSecondsToHoursMinutes(selectedAppointment?.queobj?.wait_time)}
+                                    </Typography>
+                                </Box>
+                            </Box>
+                        </Grid>
+                        <Grid item xs={6}>
+                            <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                <AccessTimeIcon color="primary" sx={{ mr: 1 }} />
+                                <Box>
+                                    <Typography variant="subtitle2">Waiting</Typography>
+                                    <Typography variant="body2" color="text.secondary">
+                                        {selectedAppointment?.queobj?.waiting}
+                                    </Typography>
                                 </Box>
                             </Box>
                         </Grid>
 
                         <Grid item xs={12}>
-                            <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                            <Box sx={{ display: 'flex', alignItems: 'center', mb: 1, mt: 1 }}>
                                 <MedicalServicesIcon color="primary" sx={{ mr: 1.5 }} />
                                 <Box>
                                     <Typography variant="subtitle2">Appointment Details</Typography>
@@ -655,36 +631,41 @@ const PatientHome = () => {
                                             Type: {selectedAppointment.appointmentType}
                                         </Typography>
                                     )}
-                                    {selectedAppointment?.disease && selectedAppointment.disease !== "Not specified" && (
+                                    {selectedAppointment?.disease && selectedAppointment?.disease !== "Not specified" && (
                                         <Typography variant="body2" color="text.secondary">
                                             Issue: {selectedAppointment.disease}
                                         </Typography>
                                     )}
-                                    {selectedAppointment?.status && (
+                                    {selectedAppointment?.queobj?.status && (
                                         <Typography variant="body2" color="text.secondary">
-                                            Status: {selectedAppointment.status}
+                                            Status: {selectedAppointment?.queobj?.status}
                                         </Typography>
                                     )}
-                                    {selectedAppointment?.checkin !== undefined && (
+                                    {selectedAppointment?.queobj?.checkin !== undefined && (
                                         <Typography variant="body2" color="text.secondary">
-                                            Check-in Status: {selectedAppointment.checkin ? "Checked In" : "Not Checked In"}
+                                            Check-in Status: {selectedAppointment.queobj.checkin ? "Checked In" : "Not Checked In"}
                                         </Typography>
                                     )}
                                 </Box>
                             </Box>
                         </Grid>
-                        
+
                         <Grid item xs={12}>
                             <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
                                 <ReceiptIcon color="primary" sx={{ mr: 1.5 }} />
                                 <Box>
                                     <Typography variant="subtitle2">Payment Information</Typography>
                                         <Typography variant="body2" color="text.secondary">
-                                            Payment Status: {selectedAppointment?.paid === true ? "Paid" : "Not Paid"}
+                                            Payment Status: {selectedAppointment?.queobj?.paid ? "Paid" : "Not Paid"}
                                         </Typography>
                                     {selectedAppointment?.mode && (
                                         <Typography variant="body2" color="text.secondary">
                                             Payment Mode: {selectedAppointment.mode}
+                                        </Typography>
+                                    )}
+                                    {selectedAppointment?.fees_paid && (
+                                        <Typography variant="body2" color="text.secondary">
+                                            Fees Paid: {selectedAppointment.fees_paid}
                                         </Typography>
                                     )}
                                 </Box>
@@ -702,16 +683,11 @@ const PatientHome = () => {
                                     <Box>
                                         <Typography variant="subtitle2">Doctor Information</Typography>
                                         <Typography variant="body2" color="text.secondary">
-                                            Dr. {selectedAppointment?.doctor}
+                                            Dr. {selectedAppointment?.cabin?.doctor?.name}
                                         </Typography>
                                         <Typography variant="body2" color="text.secondary">
-                                            Clinic: {selectedAppointment?.clinic}
+                                            Clinic: {selectedAppointment?.cabin?.hospital?.hospital_name}
                                         </Typography>
-                                        {selectedAppointment?.fees !== undefined && (
-                                            <Typography variant="body2" color="text.secondary">
-                                                Consultation Fee: ₹{selectedAppointment.fees}
-                                            </Typography>
-                                        )}
                                     </Box>
                                 </Box>
                             </Box>
@@ -721,7 +697,7 @@ const PatientHome = () => {
                 <DialogActions sx={{ p: 2, pt: 0 }}>
                     <Button onClick={() => {
                         setShowAppointmentDetails(false);
-                        navigate(`/doctor/${selectedAppointment?.cabinId}`);
+                        navigate("/doctor/2");
                     }} variant="contained" size="small" fullWidth sx={{ borderRadius: 2 }}>
                         View Doctor
                     </Button>

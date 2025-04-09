@@ -314,7 +314,7 @@ const App = () => {
             </Routes>
           </Box>
         </Box>
-        {user !== null && isMobile && <BottomNavigator />}
+        {/* {user !== null && isMobile && <BottomNavigator />} */}
       </div>
     </Router>
   );
