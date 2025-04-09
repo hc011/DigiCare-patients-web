@@ -439,10 +439,27 @@ const AppointmentsList = () => {
                           Status: {selectedAppointment?.queobj?.status}
                         </Typography>
                       )}
-                      {selectedAppointment?.queobj && selectedAppointment?.queobj.checkin !== undefined && (
-                        <Typography variant="body2" color="text.secondary">
-                          Check-in Status: {selectedAppointment?.queobj?.checkin ? "Checked In" : "Not Checked In"}
-                        </Typography>
+                      {selectedAppointment?.queobj?.checkin !== undefined && (
+                        <>
+                          <Typography variant="body2" color="text.secondary">
+                            Check-in Status: <Box component="span" sx={{ 
+                                color: selectedAppointment.queobj.checkin ? '#15803d' : '#dc2626',
+                                fontWeight: 'bold'
+                            }}>
+                                {selectedAppointment.queobj.checkin ? "Checked In" : "Not Checked In"}
+                            </Box>
+                          </Typography>
+                          {!selectedAppointment.queobj.checkin && (
+                            <Typography variant="body2" sx={{ 
+                                color: '#dc2626',
+                                fontSize: '0.8rem',
+                                mt: 0.5,
+                                fontStyle: 'italic'
+                            }}>
+                                Please visit reception desk for check-in process
+                            </Typography>
+                          )}
+                        </>
                       )}
                       {selectedAppointment?.queobj?.waiting && (
                         <Typography variant="body2" color="text.secondary">
@@ -464,7 +481,12 @@ const AppointmentsList = () => {
                     <Box>
                       <Typography variant="subtitle2">Payment Information</Typography>
                         <Typography variant="body2" color="text.secondary">
-                          Payment Status: {selectedAppointment?.queobj?.paid ? "Paid" : "Not Paid"}
+                          Payment Status: <Box component="span" sx={{ 
+                              color: selectedAppointment?.queobj?.paid ? '#15803d' : '#dc2626',
+                              fontWeight: 'bold'
+                          }}>
+                              {selectedAppointment?.queobj?.paid ? "Paid" : "Not Paid"}
+                          </Box>
                         </Typography>
                       {selectedAppointment?.mode && (
                         <Typography variant="body2" color="text.secondary">

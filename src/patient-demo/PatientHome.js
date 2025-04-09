@@ -9,6 +9,7 @@ import PersonIcon from "@mui/icons-material/Person";
 import PhoneIcon from "@mui/icons-material/Phone";
 import QueueIcon from "@mui/icons-material/Queue";
 import ReceiptIcon from '@mui/icons-material/Receipt';
+import RefreshIcon from '@mui/icons-material/Refresh';
 import { formatSecondsToHoursMinutes } from "../utils/timeUtils";
 import {
     Avatar,
@@ -100,13 +101,14 @@ const PatientHome = () => {
     const [activeStep, setActiveStep] = useState(0);
     const { user } = useContext(AuthContext);
     const [currentAppointments, setCurrentAppointments] = useState([]);
-
+    const [isWaitingRefreshing, setIsWaitingRefreshing] = useState(false);
 
     const fetchCurrentAppointments = async () => {
         try {
             setLoading(true);
             const response = await getAllAppointments("upcoming");
-            setCurrentAppointments(response);
+            const sortedAppointments = response.sort((a, b) => (a.waiting) - (b.waiting));
+            setCurrentAppointments(sortedAppointments);
         } catch (error) {
             console.error("Error fetching current appointments:", error);
         } finally {
@@ -127,6 +129,32 @@ const PatientHome = () => {
         } finally {
         }
     }
+
+    const handleWaitingReload = async () => {
+        try {
+            setIsWaitingRefreshing(true);
+            const response = await getAllAppointments("upcoming");
+            
+            // Update only waiting and wait_time for existing appointments
+            setCurrentAppointments(prevAppointments => {
+                return prevAppointments.map(prevApp => {
+                    const updatedApp = response.find(newApp => newApp.appointment_id === prevApp.appointment_id);
+                    if (updatedApp) {
+                        return {
+                            ...prevApp,
+                            waiting: updatedApp.waiting,
+                            wait_time: updatedApp.wait_time
+                        };
+                    }
+                    return prevApp;
+                });
+            });
+        } catch (error) {
+            console.error("Error refreshing waiting times:", error);
+        } finally {
+            setIsWaitingRefreshing(false);
+        }
+    };
     
     // Get patient details from localStorage
     const getPatientDetails = (patientId) => {
@@ -208,8 +236,12 @@ const PatientHome = () => {
         window.open(`tel:${selectedAppointment?.doctorPhone}`);
     };
 
-    const handleDirections = () => {
-        window.open(`https://maps.google.com/?q=${selectedAppointment?.location}`);
+    const handleDirections = (location) => {
+        const coordinates = location.split(",");
+        const latitude = coordinates[0];
+        const longitude = coordinates[1]; 
+        const address =  `${latitude},${longitude}`
+        window.open(`https://www.google.com/maps/dir/?api=1&destination=${address}`);
     };
 
     return (
@@ -337,7 +369,7 @@ const PatientHome = () => {
                             '--swiper-pagination-color': '#1976d2'
                         }}>
                             {appointmentsList.map((appointment, index) => (
-                                <SwiperSlide key={appointment.id}>
+                                <SwiperSlide key={appointment.appointment_id}>
                                     <Box sx={{ px: 0.5, pb: 1 }}>
                                         <Card elevation={1} sx={{
                                             borderRadius: 3,
@@ -383,35 +415,89 @@ const PatientHome = () => {
                                                         </Box>
                                                     </Grid>
 
-                                                    <Grid item xs={6}>
-                                                        <Box sx={{ textAlign: 'center', mb: 2 }}>
-                                                            <AccessTimeIcon color="primary" />
-                                                            <Typography variant="body2" color="text.secondary" gutterBottom>
-                                                                Wating
-                                                            </Typography>
-                                                            <Typography variant="h5" color="primary" fontWeight="bold">
-                                                                {appointment?.waiting}
-                                                            </Typography>
-                                                        </Box>
-                                                    </Grid>
+                                                    <Grid item xs={12}>
+                                                        <Box sx={{ 
+                                                            border: '1px solid #e5e7eb',
+                                                            borderRadius: 3,
+                                                            p: 2,
+                                                            position: 'relative',
+                                                            bgcolor: '#f8fafc'
+                                                        }}>
+                                                            <Grid container spacing={2}>
+                                                                <Grid item xs={6}>
+                                                                    <Box sx={{ textAlign: 'center', mb: 1 }}>
+                                                                        <AccessTimeIcon color="primary" />
+                                                                        <Typography variant="body2" color="text.secondary" gutterBottom>
+                                                                            Waiting
+                                                                        </Typography>
+                                                                        {isWaitingRefreshing ? (
+                                                                            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '40px' }}>
+                                                                                <CircularProgress size={24} />
+                                                                            </Box>
+                                                                        ) : (
+                                                                            <Typography variant="h5" color="primary" fontWeight="bold">
+                                                                                {appointment?.waiting}
+                                                                            </Typography>
+                                                                        )}
+                                                                    </Box>
+                                                                </Grid>
 
-                                                    <Grid item xs={6}>
-                                                        <Box sx={{ textAlign: 'center', mb: 2 }}>
-                                                            <AccessTimeIcon color="primary" />
-                                                            <Typography variant="body2" color="text.secondary" gutterBottom>
-                                                                Expected Time
-                                                            </Typography>
-                                                            <Typography variant="h5" color="primary" fontWeight="bold">
-                                                                {formatSecondsToHoursMinutes(appointment?.wait_time)}
-                                                            </Typography>
+                                                                <Grid item xs={6}>
+                                                                    <Box sx={{ textAlign: 'center', mb: 1 }}>
+                                                                        <AccessTimeIcon color="primary" />
+                                                                        <Typography variant="body2" color="text.secondary" gutterBottom>
+                                                                            Expected Time
+                                                                        </Typography>
+                                                                        {isWaitingRefreshing ? (
+                                                                            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '40px' }}>
+                                                                                <CircularProgress size={24} />
+                                                                            </Box>
+                                                                        ) : (
+                                                                            <Typography variant="h5" color="primary" fontWeight="bold">
+                                                                                {formatSecondsToHoursMinutes(appointment?.wait_time)}
+                                                                            </Typography>
+                                                                        )}
+                                                                    </Box>
+                                                                </Grid>
+                                                            </Grid>
+                                                            <IconButton 
+                                                                size="small" 
+                                                                onClick={handleWaitingReload}
+                                                                disabled={isWaitingRefreshing}
+                                                                sx={{ 
+                                                                    position: 'absolute',
+                                                                    bottom: 8,
+                                                                    right: 8,
+                                                                    bgcolor: 'white',
+                                                                    boxShadow: 1,
+                                                                    '&:hover': {
+                                                                        bgcolor: '#f1f5f9'
+                                                                    }
+                                                                }}
+                                                            >
+                                                                <RefreshIcon 
+                                                                    fontSize="small" 
+                                                                    sx={{
+                                                                        animation: isWaitingRefreshing ? 'spin 1s linear infinite' : 'none',
+                                                                        '@keyframes spin': {
+                                                                            '0%': {
+                                                                                transform: 'rotate(0deg)',
+                                                                            },
+                                                                            '100%': {
+                                                                                transform: 'rotate(360deg)',
+                                                                            },
+                                                                        },
+                                                                    }}
+                                                                />
+                                                            </IconButton>
                                                         </Box>
                                                     </Grid>
 
                                                     <Grid item xs={12} sx={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', mt: 0 }}>
-                                                        <Button variant="outlined" size="small" startIcon={<PhoneIcon />} sx={{ borderRadius: 2, mr: 1 }} onClick={() => window.open(`tel:${appointment.doctorPhone}`)}>
+                                                        <Button variant="outlined" size="small" startIcon={<PhoneIcon />} sx={{ borderRadius: 2, mr: 1 }} onClick={() => window.open(`tel:${appointment.phone_number}`)}>
                                                             Call
                                                         </Button>
-                                                        <Button variant="outlined" size="small" startIcon={<DirectionsIcon />} sx={{ borderRadius: 2 }} onClick={() => window.open(`https://maps.google.com/?q=${appointment.clinic}`)}>
+                                                        <Button variant="outlined" size="small" startIcon={<DirectionsIcon />} sx={{ borderRadius: 2 }} onClick={() => handleDirections(appointment.hospital_location)}>
                                                             Directions
                                                         </Button>
                                                     </Grid>
@@ -642,9 +728,26 @@ const PatientHome = () => {
                                         </Typography>
                                     )}
                                     {selectedAppointment?.queobj?.checkin !== undefined && (
-                                        <Typography variant="body2" color="text.secondary">
-                                            Check-in Status: {selectedAppointment.queobj.checkin ? "Checked In" : "Not Checked In"}
-                                        </Typography>
+                                        <>
+                                            <Typography variant="body2" color="text.secondary">
+                                                Check-in Status: <Box component="span" sx={{ 
+                                                    color: selectedAppointment.queobj.checkin ? '#15803d' : '#dc2626',
+                                                    fontWeight: 'bold'
+                                                }}>
+                                                    {selectedAppointment.queobj.checkin ? "Checked In" : "Not Checked In"}
+                                                </Box>
+                                            </Typography>
+                                            {!selectedAppointment.queobj.checkin && (
+                                                <Typography variant="body2" sx={{ 
+                                                    color: '#dc2626',
+                                                    fontSize: '0.8rem',
+                                                    mt: 0.5,
+                                                    fontStyle: 'italic'
+                                                }}>
+                                                    Please visit reception desk for check-in process
+                                                </Typography>
+                                            )}
+                                        </>
                                     )}
                                 </Box>
                             </Box>
@@ -656,7 +759,12 @@ const PatientHome = () => {
                                 <Box>
                                     <Typography variant="subtitle2">Payment Information</Typography>
                                         <Typography variant="body2" color="text.secondary">
-                                            Payment Status: {selectedAppointment?.queobj?.paid ? "Paid" : "Not Paid"}
+                                            Payment Status: <Box component="span" sx={{ 
+                                                color: selectedAppointment?.queobj?.paid ? '#15803d' : '#dc2626',
+                                                fontWeight: 'bold'
+                                            }}>
+                                                {selectedAppointment?.queobj?.paid ? "Paid" : "Not Paid"}
+                                            </Box>
                                         </Typography>
                                     {selectedAppointment?.mode && (
                                         <Typography variant="body2" color="text.secondary">
