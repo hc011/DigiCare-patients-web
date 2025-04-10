@@ -102,6 +102,7 @@ const PatientHome = () => {
     const { user } = useContext(AuthContext);
     const [currentAppointments, setCurrentAppointments] = useState([]);
     const [isWaitingRefreshing, setIsWaitingRefreshing] = useState(false);
+    const [lastUpdatedTime, setLastUpdatedTime] = useState(new Date());
 
     const fetchCurrentAppointments = async () => {
         try {
@@ -109,6 +110,7 @@ const PatientHome = () => {
             const response = await getAllAppointments("upcoming");
             const sortedAppointments = response.sort((a, b) => (a.waiting) - (b.waiting));
             setCurrentAppointments(sortedAppointments);
+            setLastUpdatedTime(new Date());
         } catch (error) {
             console.error("Error fetching current appointments:", error);
         } finally {
@@ -149,6 +151,9 @@ const PatientHome = () => {
                     return prevApp;
                 });
             });
+            
+            // Update last updated time
+            setLastUpdatedTime(new Date());
         } catch (error) {
             console.error("Error refreshing waiting times:", error);
         } finally {
@@ -196,18 +201,27 @@ const PatientHome = () => {
         }
     }, [location, appointmentsList]);
 
-    // Add interval to update wait times every minute
-    // useEffect(() => {
-    //     // Initial fetch already happens in the first useEffect
-        
-    //     // Set up interval to fetch fresh data every minute (60000 ms)
-    //     const interval = setInterval(() => {
-    //         fetchCurrentAppointments();
-    //     }, 6000);
+    // Add interval to update wait times every 5 minutes
+    useEffect(() => {
+        // Set up interval to fetch fresh data every 5 minutes (300000 ms)
+        const interval = setInterval(() => {
+            handleWaitingReload();
+        }, 300000);
 
-    //     // Clean up interval on component unmount
-    //     return () => clearInterval(interval);
-    // }, []); 
+        // Clean up interval on component unmount
+        return () => clearInterval(interval);
+    }, []); 
+    
+    // Force UI update for the "last updated" time display every minute
+    useEffect(() => {
+        // Update the formatted time display every minute to show elapsed time
+        const timeDisplayInterval = setInterval(() => {
+            // This forces a component re-render to update the "time ago" display
+            setLastUpdatedTime(prevTime => new Date(prevTime.getTime()));
+        }, 60000);
+        
+        return () => clearInterval(timeDisplayInterval);
+    }, []);
 
     // Format date to DD/MM/YYYY
     const formatDate = (dateStr) => {
@@ -242,6 +256,25 @@ const PatientHome = () => {
         const longitude = coordinates[1]; 
         const address =  `${latitude},${longitude}`
         window.open(`https://www.google.com/maps/dir/?api=1&destination=${address}`);
+    };
+
+    // Format time for last updated display
+    const formatLastUpdatedTime = (date) => {
+        if (!date) return "";
+        
+        // Get current time and calculate time difference in minutes
+        const now = new Date();
+        const diffMs = now - date;
+        const diffMins = Math.floor(diffMs / 60000);
+        
+        // Show only time ago indicator
+        if (diffMins < 1) {
+            return "just now";
+        } else if (diffMins === 1) {
+            return "1 min ago";
+        } else {
+            return `${diffMins} mins ago`;
+        }
     };
 
     return (
@@ -379,11 +412,28 @@ const PatientHome = () => {
                                                 boxShadow: '0 8px 24px rgba(0,0,0,0.12)'
                                             }
                                         }}>
-                                            <Box sx={{ bgcolor: '#1976d2', color: 'white', p: 2 }}>
+                                            <Box sx={{ bgcolor: '#1976d2', color: 'white', p: 2, position: 'relative' }}>
                                                 <Typography variant="subtitle1" fontWeight="600">Dr. {appointment?.doctor}</Typography>
-                                                <Typography variant="body2" sx={{ opacity: 0.9 }}>
+                                                <Typography variant="body2" sx={{ opacity: 0.9, pr: 5 }}>
                                                     {appointment?.hospital}
                                                 </Typography>
+                                                <IconButton 
+                                                    size="small"
+                                                    onClick={() => handleDirections(appointment.hospital_location)}
+                                                    sx={{ 
+                                                        position: 'absolute',
+                                                        right: 8,
+                                                        top: '50%',
+                                                        transform: 'translateY(-50%)',
+                                                        color: 'white',
+                                                        bgcolor: 'rgba(255,255,255,0.15)',
+                                                        '&:hover': {
+                                                            bgcolor: 'rgba(255,255,255,0.25)'
+                                                        }
+                                                    }}
+                                                >
+                                                    <DirectionsIcon fontSize="small" />
+                                                </IconButton>
                                             </Box>
 
                                             <CardContent>
@@ -425,51 +475,78 @@ const PatientHome = () => {
                                                         }}>
                                                             <Grid container spacing={2}>
                                                                 <Grid item xs={6}>
-                                                                    <Box sx={{ textAlign: 'center', mb: 1 }}>
-                                                                        <AccessTimeIcon color="primary" />
-                                                                        <Typography variant="body2" color="text.secondary" gutterBottom>
-                                                                            Waiting
-                                                                        </Typography>
-                                                                        {isWaitingRefreshing ? (
-                                                                            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '40px' }}>
-                                                                                <CircularProgress size={24} />
-                                                                            </Box>
-                                                                        ) : (
-                                                                            <Typography variant="h5" color="primary" fontWeight="bold">
-                                                                                {appointment?.waiting}
+                                                                    <Box sx={{ display: 'flex', alignItems: 'center', height: '100%' }}>
+                                                                        <AccessTimeIcon color="primary" sx={{ mr: 1 }} />
+                                                                        <Box>
+                                                                            <Typography variant="body2" color="text.secondary">
+                                                                                Waiting
                                                                             </Typography>
-                                                                        )}
+                                                                            {isWaitingRefreshing ? (
+                                                                                <Box sx={{ display: 'flex', alignItems: 'center', mt: 0.5 }}>
+                                                                                    <CircularProgress size={20} />
+                                                                                </Box>
+                                                                            ) : (
+                                                                                <Typography variant="h5" color="primary" fontWeight="bold">
+                                                                                    {appointment?.waiting}
+                                                                                </Typography>
+                                                                            )}
+                                                                        </Box>
                                                                     </Box>
                                                                 </Grid>
 
                                                                 <Grid item xs={6}>
-                                                                    <Box sx={{ textAlign: 'center', mb: 1 }}>
-                                                                        <AccessTimeIcon color="primary" />
-                                                                        <Typography variant="body2" color="text.secondary" gutterBottom>
-                                                                            Expected Time
-                                                                        </Typography>
-                                                                        {isWaitingRefreshing ? (
-                                                                            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '40px' }}>
-                                                                                <CircularProgress size={24} />
-                                                                            </Box>
-                                                                        ) : (
-                                                                            <Typography variant="h5" color="primary" fontWeight="bold">
-                                                                                {formatSecondsToHoursMinutes(appointment?.wait_time)}
+                                                                    <Box sx={{ display: 'flex', alignItems: 'center', height: '100%' }}>
+                                                                        <AccessTimeIcon color="primary" sx={{ mr: 1 }} />
+                                                                        <Box>
+                                                                            <Typography variant="body2" color="text.secondary">
+                                                                                Expected Time
                                                                             </Typography>
-                                                                        )}
+                                                                            {isWaitingRefreshing ? (
+                                                                                <Box sx={{ display: 'flex', alignItems: 'center', mt: 0.5 }}>
+                                                                                    <CircularProgress size={20} />
+                                                                                </Box>
+                                                                            ) : (
+                                                                                <Typography variant="h5" color="primary" fontWeight="bold">
+                                                                                    {formatSecondsToHoursMinutes(appointment?.wait_time)}
+                                                                                </Typography>
+                                                                            )}
+                                                                        </Box>
                                                                     </Box>
                                                                 </Grid>
                                                             </Grid>
+                                                        </Box>
+                                                    </Grid>
+                                                    
+                                                    {/* Last updated section - moved outside the border box */}
+                                                    <Grid item xs={12}>
+                                                        <Box sx={{ 
+                                                            display: 'flex', 
+                                                            justifyContent: 'flex-end', 
+                                                            alignItems: 'center',
+                                                            mt: 0.5,
+                                                            mb: 1
+                                                        }}>
+                                                            <Typography 
+                                                                variant="caption" 
+                                                                sx={{ 
+                                                                    color: 'text.secondary',
+                                                                    fontSize: '0.7rem',
+                                                                    fontStyle: 'italic',
+                                                                    mr: 1
+                                                                }}
+                                                            >
+                                                                Last updated: {formatLastUpdatedTime(lastUpdatedTime)}
+                                                            </Typography>
+                                                            
                                                             <IconButton 
                                                                 size="small" 
                                                                 onClick={handleWaitingReload}
                                                                 disabled={isWaitingRefreshing}
                                                                 sx={{ 
-                                                                    position: 'absolute',
-                                                                    bottom: 8,
-                                                                    right: 8,
                                                                     bgcolor: 'white',
                                                                     boxShadow: 1,
+                                                                    width: 24,
+                                                                    height: 24,
                                                                     '&:hover': {
                                                                         bgcolor: '#f1f5f9'
                                                                     }
@@ -478,6 +555,7 @@ const PatientHome = () => {
                                                                 <RefreshIcon 
                                                                     fontSize="small" 
                                                                     sx={{
+                                                                        fontSize: '0.875rem',
                                                                         animation: isWaitingRefreshing ? 'spin 1s linear infinite' : 'none',
                                                                         '@keyframes spin': {
                                                                             '0%': {
@@ -493,18 +571,9 @@ const PatientHome = () => {
                                                         </Box>
                                                     </Grid>
 
-                                                    <Grid item xs={12} sx={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', mt: 0 }}>
-                                                        <Button variant="outlined" size="small" startIcon={<PhoneIcon />} sx={{ borderRadius: 2, mr: 1 }} onClick={() => window.open(`tel:${appointment.phone_number}`)}>
-                                                            Call
-                                                        </Button>
-                                                        <Button variant="outlined" size="small" startIcon={<DirectionsIcon />} sx={{ borderRadius: 2 }} onClick={() => handleDirections(appointment.hospital_location)}>
-                                                            Directions
-                                                        </Button>
-                                                    </Grid>
-
                                                     <Grid item xs={12}>
                                                         <Button variant="contained" fullWidth sx={{
-                                                            mt: 2,
+                                                            mt: 1,
                                                             borderRadius: 2,
                                                             transition: 'all 0.2s',
                                                             '&:hover': {
