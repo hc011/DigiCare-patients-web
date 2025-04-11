@@ -1,5 +1,9 @@
+import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import CloseIcon from "@mui/icons-material/Close";
 import DirectionsIcon from "@mui/icons-material/Directions";
+import EventIcon from "@mui/icons-material/Event";
+import HealthAndSafetyIcon from "@mui/icons-material/HealthAndSafety";
+import InfoIcon from "@mui/icons-material/Info";
 import LocationOnIcon from "@mui/icons-material/LocationOn";
 import MedicalServicesIcon from "@mui/icons-material/MedicalServices";
 import MessageIcon from "@mui/icons-material/Message";
@@ -28,6 +32,7 @@ import {
   MenuItem,
   Paper,
   Rating,
+  Skeleton,
   Snackbar,
   Stack,
   Tab,
@@ -90,6 +95,37 @@ const DoctorPage = () => {
     const { user, setUser } = useContext(AuthContext);
     const [appointmentResponse, setAppointmentResponse] = useState(null);
 
+    // Function to format the next_active date
+    const formatNextAvailable = (dateTimeString) => {
+        if (!dateTimeString) return "-";
+        
+        const date = new Date(dateTimeString);
+        // Adjust for timezone offset
+        const userTimezoneOffset = date.getTimezoneOffset() * 60000;
+        const adjustedDate = new Date(date.getTime() + userTimezoneOffset);
+
+        const day = adjustedDate.getDate();
+        const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+        const month = monthNames[adjustedDate.getMonth()];
+        const hours = adjustedDate.getHours();
+        const minutes = adjustedDate.getMinutes().toString().padStart(2, '0');
+        const ampm = hours >= 12 ? 'PM' : 'AM';
+        const formattedHours = (hours % 12 || 12).toString().padStart(2, '0');
+
+        // Add ordinal suffix to day
+        const ordinalSuffix = (day) => {
+            if (day > 3 && day < 21) return 'th';
+            switch (day % 10) {
+                case 1: return 'st';
+                case 2: return 'nd';
+                case 3: return 'rd';
+                default: return 'th';
+            }
+        };
+
+        return `${day}${ordinalSuffix(day)} ${month}, ${formattedHours}:${minutes} ${ampm}`;
+    };
+
     useEffect(() => {
         const fetchCabinInfo = async() => {
             try {
@@ -132,7 +168,7 @@ const DoctorPage = () => {
         yourToken: 15, // Fallback since not in API
         estimatedWaitTime: "25 mins", // Fallback since not in API
         phone: cabinInfo?.doctor?.phone_number || "---",
-        currentStatus: cabinInfo?.is_active ? "Accepting Patients" : "Not Accepting Patients",
+        currentStatus: cabinInfo?.is_active ? "Available" : "Not Available",
         slots: cabinInfo?.slots || [],
     };
 
@@ -195,9 +231,28 @@ const DoctorPage = () => {
             age: "",
             gender: "M",
         });
+        
+        // Reset all form data
+        setFormData({
+            name: "",
+            age: "",
+            gender: "M",
+            guardian: "",
+            location: "",
+            healthIssue: "",
+            appointmentType: "New",
+            selectedSlot: null,
+            patientId: null,
+            formSubmitted: false
+        });
     };
 
     const handleFormChange = (field, value) => {
+        // Convert patient name, guardian, and location to uppercase
+        if (field === 'name' || field === 'guardian' || field === 'location') {
+            value = value.toUpperCase();
+        }
+        
         setFormData(prev => ({
             ...prev,
             [field]: value
@@ -207,10 +262,10 @@ const DoctorPage = () => {
     const handlePatientSelect = (event, value) => {
         if (value) {
             if (typeof value === 'string') {
-                // Handle freeSolo input
+                // Handle freeSolo input - convert to uppercase
                 setFormData(prev => ({
                     ...prev,
-                    name: value,
+                    name: value.toUpperCase(),
                     patientId: null
                 }));
             } else {
@@ -224,8 +279,42 @@ const DoctorPage = () => {
                     location: value.location || "",
                     patientId: value.patient_id
                 }));
+                
+                // Only close keyboard when selecting from dropdown (not during typing)
+                if (document.activeElement) {
+                    document.activeElement.blur();
+                }
             }
         }
+    };
+
+    // Add a separate function for handling input changes
+    const handlePatientInputChange = (event, value) => {
+        if (value === '') {
+            // If value is cleared, reset patient information
+            handleClearPatient();
+        }
+    };
+
+    // Add a new function to handle clearing patient data
+    const handleClearPatient = () => {
+        setFormData(prev => ({
+            ...prev,
+            name: "",
+            age: "",
+            gender: "M",
+            guardian: "",
+            location: "",
+            patientId: null
+        }));
+        
+        // Focus on the input to open dropdown again
+        setTimeout(() => {
+            const inputElement = document.querySelector('input[name="patientName"]');
+            if (inputElement) {
+                inputElement.focus();
+            }
+        }, 100);
     };
 
     const formatSlotDateTime = (isoString) => {
@@ -343,25 +432,91 @@ const DoctorPage = () => {
 
     if (loading) {
         return (
-            <Box sx={{
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                justifyContent: "center",
-                height: "calc(90vh)",
-                overflowY: "auto",
-                mb: 10
-            }}>
-            <CircularProgress size={60} thickness={4} />
-            <Typography variant="h6" sx={{ mt: 2 }}>
-            Loading doctor profile...
-            </Typography>
+            <Box sx={{ p: 2, pb: 10, bgcolor: "#f9fafc", height: "calc(100vh - 180px)", overflowY: "auto" }}>
+                {/* Back Button */}
+                <BackButton />
+                
+                {/* Doctor Information Card Skeleton */}
+                <Card 
+                    elevation={0}
+                    sx={{
+                        borderRadius: 3,
+                        mb: 2,
+                        border: "1px solid rgba(0,0,0,0.08)",
+                        boxShadow: "0 4px 12px rgba(0,0,0,0.05)",
+                        overflow: "hidden"
+                    }}>
+                    {/* Header with specialty skeleton */}
+                    <Box sx={{ p: 2, bgcolor: "#f0f7ff", borderBottom: "1px solid rgba(0,0,0,0.08)" }}>
+                        <Skeleton variant="rounded" width={150} height={32} />
+                    </Box>
+                    
+                    <CardContent>
+                        <Grid container spacing={2}>
+                            <Grid item>
+                                <Skeleton variant="circular" width={80} height={80} />
+                            </Grid>
+                            
+                            <Grid item xs>
+                                <Skeleton variant="text" width="70%" height={40} sx={{ mb: 1 }} />
+                                <Skeleton variant="text" width="40%" height={24} sx={{ mb: 1 }} />
+                                <Skeleton variant="rounded" width={150} height={30} sx={{ mb: 1 }} />
+                                <Skeleton variant="text" width="60%" height={24} />
+                            </Grid>
+                        </Grid>
+                        
+                        <Divider sx={{ my: 2 }} />
+                        
+                        <Grid container spacing={2}>
+                            {[1, 2, 3, 4].map((item) => (
+                                <Grid item xs={6} sm={3} key={item}>
+                                    <Box sx={{ textAlign: "center" }}>
+                                        <Skeleton variant="text" width="80%" height={20} sx={{ mx: "auto", mb: 1 }} />
+                                        <Skeleton variant="text" width="50%" height={24} sx={{ mx: "auto" }} />
+                                    </Box>
+                                </Grid>
+                            ))}
+                        </Grid>
+                        
+                        <Skeleton variant="rounded" width="100%" height={48} sx={{ mt: 2, borderRadius: 2 }} />
+                    </CardContent>
+                </Card>
+                
+                {/* Tabs Skeleton */}
+                <Box sx={{ borderBottom: 1, borderColor: "divider", bgcolor: "white", borderRadius: "12px 12px 0 0" }}>
+                    <Box sx={{ p: 1, display: "flex" }}>
+                        <Skeleton variant="rounded" width={120} height={40} sx={{ mr: 2 }} />
+                        <Skeleton variant="rounded" width={120} height={40} />
+                    </Box>
+                </Box>
+                
+                {/* Tab Content Skeleton */}
+                <Box sx={{ bgcolor: "white", p: 2, borderRadius: "0 0 12px 12px", boxShadow: "0 2px 8px rgba(0,0,0,0.05)" }}>
+                    <Skeleton variant="text" width="40%" height={32} sx={{ mb: 1 }} />
+                    <Skeleton variant="text" width="100%" height={20} />
+                    <Skeleton variant="text" width="100%" height={20} />
+                    <Skeleton variant="text" width="90%" height={20} />
+                    
+                    <Divider sx={{ my: 2 }} />
+                    
+                    <Skeleton variant="text" width="40%" height={32} sx={{ mb: 1 }} />
+                    <Stack spacing={1}>
+                        <Skeleton variant="text" width="70%" height={24} />
+                        <Skeleton variant="text" width="80%" height={24} />
+                        <Skeleton variant="text" width="60%" height={24} />
+                    </Stack>
+                    
+                    <Divider sx={{ my: 2 }} />
+                    
+                    <Skeleton variant="text" width="40%" height={32} sx={{ mb: 1 }} />
+                    <Skeleton variant="rectangular" width="100%" height={160} sx={{ borderRadius: 1 }} />
+                </Box>
             </Box>
         );
     }
 
     return (
-        <Box sx={{ p: 2, pb: 10, bgcolor: "#f9fafc", height: "calc(100vh - 180px)", overflowY: "auto" }}>
+        <Box sx={{ p: 2, pb: 16, bgcolor: "#f9fafc", height: "calc(100vh - 180px)", overflowY: "auto" }}>
         {/* Back Button */}
         <BackButton />
 
@@ -405,6 +560,7 @@ const DoctorPage = () => {
         Dr. {doctor.name}
         </Typography>
 
+        {/* Rating stars - commented out
         <Box sx={{ display: "flex", alignItems: "center", mb: 1 }}>
         <Rating 
             value={doctor.rating}
@@ -417,6 +573,7 @@ const DoctorPage = () => {
             {doctor.rating}• {doctor.reviews} reviews
         </Typography>
         </Box>
+        */}
 
         <Stack 
             direction="row"
@@ -453,7 +610,7 @@ const DoctorPage = () => {
         <Grid item xs={6} sm={3}>
         <Box sx={{ textAlign: "center" }}>
         <Typography variant="caption" color="text.secondary" display="block">
-        Current Slot Status
+        Doctor Availability
         </Typography>
         <Typography variant="body2" fontWeight="medium" color="primary">
         {doctor.currentStatus}
@@ -461,6 +618,7 @@ const DoctorPage = () => {
         </Box>
         </Grid>
 
+        {/* Wait Time - commented out
         <Grid item xs={6} sm={3}>
         <Box sx={{ textAlign: "center" }}>
         <Typography variant="caption" color="text.secondary" display="block">
@@ -471,6 +629,7 @@ const DoctorPage = () => {
         </Typography>
         </Box>
         </Grid>
+        */}
 
         <Grid item xs={6} sm={3}>
         <Box sx={{ textAlign: "center" }}>
@@ -490,31 +649,31 @@ const DoctorPage = () => {
         </Typography>
         <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
         <Typography variant="body2" fontWeight="medium" color="primary.dark">
-        {slots.length > 0 ? '10th April, 10:00 AM' : 'No slots available'}
+        {formatNextAvailable(cabinInfo?.next_active)}
         </Typography>
         </Box>
         </Box>
         </Grid>
         </Grid>
-
-        <Button 
-            variant="contained"
-            fullWidth 
-            sx={{
-                mt: 2,
-                py: 1.2,
-                borderRadius: 2,
-                boxShadow: "0 4px 12px rgba(25,118,210,0.3)",
-                "&:hover": {
-                    boxShadow: "0 6px 16px rgba(25,118,210,0.4)",
-                }
-            }}
-            onClick={handleBookNow}
-            disabled={slots.length === 0}>
-        {slots.length > 0 ? 'Book Appointment' : 'No Slots Available'}
-        </Button>
         </CardContent>
         </Card>
+
+        {/* Warning for no slots */}
+        {slots.length === 0 && (
+          <Alert 
+            severity="warning" 
+            variant="outlined" 
+            sx={{ 
+              mb: 2, 
+              borderRadius: 2,
+              backgroundColor: 'rgba(255, 152, 0, 0.05)'
+            }}
+          >
+            <Typography variant="body2" sx={{ fontWeight: 500 }}>
+              Not accepting online bookings currently
+            </Typography>
+          </Alert>
+        )}
 
         {/* Tabs */}
         <Box sx={{ borderBottom: 1, borderColor: "divider", bgcolor: "white", borderRadius: "12px 12px 0 0" }}>
@@ -530,10 +689,12 @@ const DoctorPage = () => {
             label="Profile"
             icon={<PersonIcon />}
             iconPosition="start" />
+        {/* Reviews Tab - commented out
         <Tab 
             label="Reviews"
             icon={<StarIcon />}
             iconPosition="start" />
+        */}
         </Tabs>
         </Box>
 
@@ -686,92 +847,78 @@ const DoctorPage = () => {
       <Dialog 
         open={showBookingDialog} 
         onClose={handleCloseDialog}
+        fullScreen
         PaperProps={{
-          sx: { borderRadius: 3, maxWidth: 500 }
+          sx: { 
+            overflowY: "auto",
+            bgcolor: "#f9fafc"
+          }
         }}
       >
-        <Box sx={{ bgcolor: 'primary.main', color: 'white', py: 1.5, px: 3, position: 'relative' }}>
-          <DialogTitle sx={{ p: 0, fontWeight: 600 }}>
+        <Box sx={{ bgcolor: 'primary.main', color: 'white', py: 2, px: 3, position: 'relative', boxShadow: "0 2px 10px rgba(0,0,0,0.1)" }}>
+          <Typography variant="h6" sx={{ textAlign: 'center', fontWeight: 600 }}>
             {bookingStage === 0 && "Book Appointment"}
             {bookingStage === 1 && "Processing"}
             {bookingStage === 2 && "Appointment Confirmed"}
-          </DialogTitle>
-          {bookingStage === 0 && (
-            <IconButton
-              onClick={handleCloseDialog}
-              sx={{
-                position: 'absolute',
-                right: 8,
-                top: '50%',
-                transform: 'translateY(-50%)',
-                color: 'white'
-              }}
-            >
-              <CloseIcon />
-            </IconButton>
-          )}
+          </Typography>
         </Box>
         
-        <DialogContent>
+        <Box sx={{ p: 3, mb: 10 }}>
           {bookingStage === 0 && (
             <>
-              {/* <Typography variant="subtitle1" sx={{ fontWeight: 500, mb: 1 }}>
-                Appointment Details
-              </Typography> */}
-              <Grid container spacing={2} sx={{ mb: 1 }}>
-                <Grid item xs={6}>
-                  <Typography variant="body2" color="text.secondary">
-                    Doctor
-                  </Typography>
-                  <Typography variant="body1" fontWeight={500}>
-                    {doctor.name}
-                  </Typography>
-                </Grid>
-                {/* <Grid item xs={6}>
-                  <Typography variant="body2" color="text.secondary">
-                    Specialty
-                  </Typography>
-                  <Typography variant="body1" fontWeight={500}>
-                    {doctor.specialty}
-                  </Typography>
-                </Grid> */}
-                {/* <Grid item xs={6}>
-                  <Typography variant="body2" color="text.secondary">
-                    Date
-                  </Typography>
-                  <Typography variant="body1" fontWeight={500}>
-                    {days[selectedDay].date}
-                  </Typography>
-                </Grid> */}
-                {/* <Grid item xs={6}>
-                  <Typography variant="body2" color="text.secondary">
-                    Current Queue
-                  </Typography>
-                  <Typography variant="body1" fontWeight={500}>
-                    Token #{doctor.currentToken}
-                  </Typography>
-                </Grid> */}
-                <Grid item xs={6}>
-                  <Typography variant="body2" color="text.secondary">
-                    Clinic
-                  </Typography>
-                  <Typography variant="body1" fontWeight={500}>
-                    {doctor.clinic}
-                  </Typography>
-                </Grid>
-                <Grid item xs={6}>
-                  <Typography variant="body2" color="text.secondary">
-                    Fees
-                  </Typography>
-                  <Typography variant="body1" fontWeight={500}>
-                    {doctor.fees} (pay at clinic)
-                  </Typography>
-                </Grid>
-              </Grid>
+              <Card elevation={0} sx={{ mb: 3, borderRadius: 2, border: "1px solid rgba(0,0,0,0.08)", overflow: "hidden" }}>
+                <CardContent sx={{ p: 2 }}>
+                  <Grid container spacing={2}>
+                    <Grid item xs={3}>
+                      <Avatar sx={{
+                        bgcolor: "primary.main",
+                        width: 60,
+                        height: 60,
+                        fontSize: "1.5rem"
+                      }}>
+                        {doctor.name.charAt(0)}
+                      </Avatar>
+                    </Grid>
+                    <Grid item xs={9}>
+                      <Typography variant="h6" sx={{ fontWeight: 600, mb: 0.5 }}>
+                        Dr. {doctor.name}
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        {doctor.specialty}
+                      </Typography>
+                      <Box sx={{ display: "flex", alignItems: "center", mt: 1 }}>
+                        <LocationOnIcon fontSize="small" sx={{ color: "text.disabled", mr: 0.5 }} />
+                        <Typography variant="body2" color="text.secondary" noWrap>
+                          {doctor.clinic}
+                        </Typography>
+                      </Box>
+                    </Grid>
+                  </Grid>
+                </CardContent>
+                <Divider />
+                <Box sx={{ px: 2, py: 1.5, bgcolor: "rgba(0,0,0,0.02)" }}>
+                  <Grid container>
+                    <Grid item xs={6}>
+                      <Typography variant="body2" color="text.secondary">
+                        Consultation Fee
+                      </Typography>
+                      <Typography variant="body1" fontWeight={500}>
+                        {doctor.fees}
+                      </Typography>
+                    </Grid>
+                    <Grid item xs={6} sx={{ textAlign: 'right' }}>
+                      <Typography variant="body2" color="text.secondary">
+                        Payment
+                      </Typography>
+                      <Typography variant="body1" fontWeight={500}>
+                        Pay at clinic
+                      </Typography>
+                    </Grid>
+                  </Grid>
+                </Box>
+              </Card>
               
-              <Divider sx={{ my: 2 }} />
-              
-              <Typography variant="subtitle1" sx={{ fontWeight: 500, mb: 2 }}>
+              <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>
                 Select Appointment Slot
               </Typography>
 
@@ -801,9 +948,9 @@ const DoctorPage = () => {
                 </Grid>
               </Grid>
 
-              <Divider sx={{ my: 2 }} />
+              <Divider sx={{ my: 3 }} />
               
-              <Typography variant="subtitle1" sx={{ fontWeight: 500, mb: 2 }}>
+              <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>
                 Patient Information
               </Typography>
 
@@ -814,11 +961,9 @@ const DoctorPage = () => {
                     options={patients}
                     getOptionLabel={(option) => typeof option === 'string' ? option : option.name}
                     onChange={handlePatientSelect}
-                    onInputChange={(event, value) => {
-                      if (value) {
-                        handlePatientSelect(event, value);
-                      }
-                    }}
+                    onInputChange={handlePatientInputChange}
+                    clearOnBlur={false}
+                    value={formData.name ? formData.name : null}
                     renderInput={(params) => (
                       <TextField
                         {...params}
@@ -826,8 +971,18 @@ const DoctorPage = () => {
                         required
                         fullWidth
                         size="small"
+                        name="patientName"
                         error={!formData.name && formData.formSubmitted}
                         helperText={!formData.name && formData.formSubmitted ? "Patient name is required" : ""}
+                        inputProps={{
+                          ...params.inputProps,
+                          style: { textTransform: 'uppercase' }
+                        }}
+                        onChange={(e) => {
+                          // Handle uppercase conversion during typing
+                          const value = e.target.value.toUpperCase();
+                          handleFormChange('name', value);
+                        }}
                       />
                     )}
                   />
@@ -868,20 +1023,26 @@ const DoctorPage = () => {
              <Grid item xs={12}>
              <TextField 
                  fullWidth 
-                 label="Guardian" 
+                 label="Guardian Name" 
                  value={formData.guardian} 
                  onChange={(e) => handleFormChange('guardian', e.target.value)} 
-                 size="small" 
+                 size="small"
+                 InputProps={{
+                   style: { textTransform: 'uppercase' }
+                 }}
              />
              </Grid>
 
              <Grid item xs={12}>
              <TextField 
                  fullWidth 
-                 label="Location" 
+                 label="Address" 
                  value={formData.location} 
                  onChange={(e) => handleFormChange('location', e.target.value)} 
-                 size="small" 
+                 size="small"
+                 InputProps={{
+                   style: { textTransform: 'uppercase' }
+                 }}
              />
              </Grid>
 
@@ -922,9 +1083,9 @@ const DoctorPage = () => {
           )}
           
           {bookingStage === 1 && (
-            <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', py: 3 }}>
+            <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', py: 5 }}>
               <CircularProgress size={60} />
-              <Typography variant="h6" sx={{ mt: 2 }}>
+              <Typography variant="h6" sx={{ mt: 3 }}>
                 Processing your appointment
               </Typography>
               <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
@@ -934,147 +1095,306 @@ const DoctorPage = () => {
           )}
           
           {bookingStage === 2 && appointmentResponse && (
-            <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', py: 3 }}>
+            <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', py: 2, px: 1 }}>
+              {/* Success animation container */}
               <Box 
                 sx={{ 
-                  width: 80, 
-                  height: 80, 
+                  width: 100, 
+                  height: 100, 
                   borderRadius: '50%', 
-                  bgcolor: 'success.light',
+                  background: 'linear-gradient(135deg, #4caf50 0%, #2e7d32 100%)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  mb: 2
+                  mb: 2,
+                  boxShadow: '0 10px 20px rgba(46, 125, 50, 0.2)',
+                  position: 'relative',
+                  overflow: 'hidden',
+                  '&::after': {
+                    content: '""',
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    background: 'linear-gradient(135deg, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0) 50%)',
+                    borderRadius: '50%'
+                  }
                 }}
               >
-                <Typography variant="h4" sx={{ color: 'white' }}>✓</Typography>
+                <Typography variant="h3" sx={{ color: 'white', fontWeight: 'bold' }}>✓</Typography>
               </Box>
-              <Typography variant="h6" align="center" gutterBottom>
-                Your appointment has been confirmed!
+              
+              <Typography variant="h5" align="center" gutterBottom sx={{ 
+                fontWeight: 600, 
+                background: 'linear-gradient(90deg, #1976d2, #2196f3)',
+                backgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                mb: 1
+              }}>
+                Appointment Confirmed!
               </Typography>
               
-              <Box sx={{ width: '100%', mt: 2 }}>
-                <Card variant="outlined" sx={{ mb: 2 }}>
-                  <CardContent>
-                    <Grid container spacing={2}>
-                      {/* <Grid item xs={12}>
-                        <Typography variant="subtitle2" color="text.secondary">
-                          Appointment ID
-                        </Typography>
-                        <Typography variant="body1" gutterBottom>
-                          {appointmentResponse.appointment_id}
-                        </Typography>
-                      </Grid> */}
-                      
-                      <Grid item xs={6}>
-                        <Typography variant="subtitle2" color="text.secondary">
-                          Patient Name
-                        </Typography>
-                        <Typography variant="body1" gutterBottom>
-                          {appointmentResponse.name}
-                        </Typography>
+              <Typography variant="body1" align="center" color="text.secondary" sx={{ mb: 3, maxWidth: 450, mx: 'auto' }}>
+                Your appointment has been successfully booked with Dr. {cabinInfo?.doctor?.name || "the doctor"}
+              </Typography>
+              
+              <Box sx={{ width: '100%', mt: 1, maxWidth: "500px", mx: "auto" }}>
+                {/* Token number card */}
+                <Card 
+                  elevation={3} 
+                  sx={{ 
+                    mb: 3, 
+                    borderRadius: 3,
+                    position: 'relative',
+                    overflow: 'visible',
+                  }}
+                >
+                  {/* Removed appointment details header */}
+                  
+                  <CardContent sx={{ pt: 3, pb: 3 }}>
+                    {/* Token number section - commented out
+                    <Box sx={{ 
+                      textAlign: 'center', 
+                      mb: 3, 
+                      mt: 1, 
+                      py: 1.5,
+                      bgcolor: 'rgba(25, 118, 210, 0.05)', 
+                      borderRadius: 2 
+                    }}>
+                      <Typography variant="body2" color="text.secondary" gutterBottom>
+                        YOUR TOKEN NUMBER
+                      </Typography>
+                      <Typography variant="h3" color="primary.main" sx={{ fontWeight: 'bold', letterSpacing: 1 }}>
+                        #{appointmentResponse.token}
+                      </Typography>
+                    </Box>
+                    
+                    <Divider sx={{ mb: 2.5 }} />
+                    */}
+                    
+                    <Grid container spacing={2.5}>
+                      <Grid item xs={12}>
+                        <Box sx={{ display: 'flex', alignItems: 'flex-start' }}>
+                          <PersonIcon sx={{ color: 'primary.main', mr: 1.5, mt: 0.3 }} />
+                          <Box>
+                            <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 0.3 }}>
+                              PATIENT
+                            </Typography>
+                            <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                              {appointmentResponse.name}
+                            </Typography>
+                          </Box>
+                        </Box>
                       </Grid>
                       
-                      <Grid item xs={6}>
-                        <Typography variant="subtitle2" color="text.secondary">
-                          Token Number
-                        </Typography>
-                        <Typography variant="h6" color="primary" sx={{ fontWeight: 'bold' }}>
-                          #{appointmentResponse.token}
-                        </Typography>
+                      <Grid item xs={12} sm={6}>
+                        <Box sx={{ display: 'flex', alignItems: 'flex-start' }}>
+                          <EventIcon sx={{ color: 'primary.main', mr: 1.5, mt: 0.3 }} />
+                          <Box>
+                            <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 0.3 }}>
+                              BOOKED SLOT
+                            </Typography>
+                            <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                              {formatSlotDateTime(appointmentResponse.cabinslot.slot)}
+                            </Typography>
+                          </Box>
+                        </Box>
                       </Grid>
                       
-                      <Grid item xs={6}>
-                        <Typography variant="subtitle2" color="text.secondary">
-                          Appointment Type
-                        </Typography>
-                        <Typography variant="body1" gutterBottom>
-                          {appointmentResponse.appointment_type}
-                        </Typography>
+                      <Grid item xs={12} sm={6}>
+                        <Box sx={{ display: 'flex', alignItems: 'flex-start' }}>
+                          <MedicalServicesIcon sx={{ color: 'primary.main', mr: 1.5, mt: 0.3 }} />
+                          <Box>
+                            <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 0.3 }}>
+                              APPOINTMENT TYPE
+                            </Typography>
+                            <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                              {appointmentResponse.appointment_type}
+                            </Typography>
+                          </Box>
+                        </Box>
                       </Grid>
-                      
-                      {/* <Grid item xs={6}>
-                        <Typography variant="subtitle2" color="text.secondary">
-                          Consultation Fee
-                        </Typography>
-                        <Typography variant="body1" gutterBottom>
-                          ₹{appointmentResponse.fees_paid}
-                        </Typography>
-                      </Grid> */}
-                      
-                      <Grid item xs={6}>
-                        <Typography variant="subtitle2" color="text.secondary">
-                          Appointment Slot
-                        </Typography>
-                        <Typography variant="body1" gutterBottom>
-                          {formatSlotDateTime(appointmentResponse.cabinslot.slot)}
-                        </Typography>
-                      </Grid>
-                      
-                      {/* <Grid item xs={12}>
-                        <Typography variant="subtitle2" color="text.secondary">
-                          Hospital
-                        </Typography>
-                        <Typography variant="body1" gutterBottom>
-                          {appointmentResponse.cabinslot.cabin.hospital.hospital_name}
-                        </Typography>
-                      </Grid> */}
                       
                       {appointmentResponse.disease && (
                         <Grid item xs={12}>
-                          <Typography variant="subtitle2" color="text.secondary">
-                            Health Issue
-                          </Typography>
-                          <Typography variant="body1" gutterBottom>
-                            {appointmentResponse.disease}
-                          </Typography>
+                          <Box sx={{ display: 'flex', alignItems: 'flex-start' }}>
+                            <HealthAndSafetyIcon sx={{ color: 'primary.main', mr: 1.5, mt: 0.3 }} />
+                            <Box>
+                              <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 0.3 }}>
+                                HEALTH ISSUE
+                              </Typography>
+                              <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                                {appointmentResponse.disease}
+                              </Typography>
+                            </Box>
+                          </Box>
                         </Grid>
                       )}
+                      
+                      <Grid item xs={12}>
+                        <Box sx={{ display: 'flex', alignItems: 'flex-start' }}>
+                          <LocationOnIcon sx={{ color: 'primary.main', mr: 1.5, mt: 0.3 }} />
+                          <Box>
+                            <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 0.3 }}>
+                              CLINIC
+                            </Typography>
+                            <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                              {doctor.clinic}
+                            </Typography>
+                          </Box>
+                        </Box>
+                      </Grid>
                     </Grid>
                   </CardContent>
                 </Card>
 
-                <Box sx={{ 
-                  bgcolor: 'primary.light', 
-                  p: 2, 
-                  borderRadius: 2,
-                  color: 'primary.contrastText'
-                }}>
-                  <Typography variant="body2" align="center">
-                    Please arrive at the clinic before your token number is called.
-                    {!appointmentResponse.queobj.paid && (
-                      " Remember to complete the payment at the reception."
-                    )}
-                  </Typography>
-                </Box>
+                {/* Instructions Card */}
+                <Card 
+                  variant="outlined" 
+                  sx={{ 
+                    mb: 2, 
+                    borderRadius: 3,
+                    borderColor: !appointmentResponse.queobj.paid ? 'warning.main' : 'primary.main',
+                    bgcolor: !appointmentResponse.queobj.paid ? 'warning.lighter' : 'primary.lighter',
+                    position: 'relative',
+                    overflow: 'hidden'
+                  }}
+                >
+                  <Box sx={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    width: 4,
+                    height: '100%',
+                    bgcolor: !appointmentResponse.queobj.paid ? 'warning.main' : 'primary.main'
+                  }} />
+                  
+                  <CardContent sx={{ pl: 3 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                      {!appointmentResponse.queobj.paid ? 
+                        <InfoIcon sx={{ color: 'warning.main', mr: 1 }} /> :
+                        <CheckCircleIcon sx={{ color: 'primary.main', mr: 1 }} />
+                      }
+                      <Typography variant="subtitle2" sx={{ 
+                        fontWeight: 600,
+                        color: !appointmentResponse.queobj.paid ? 'warning.dark' : 'primary.dark'
+                      }}>
+                        {!appointmentResponse.queobj.paid ? 'PAYMENT REQUIRED' : 'IMPORTANT INFORMATION'}
+                      </Typography>
+                    </Box>
+                    
+                    <Typography variant="body2" sx={{ 
+                      color: !appointmentResponse.queobj.paid ? 'warning.dark' : 'primary.dark',
+                      opacity: 0.9,
+                      pl: 4
+                    }}>
+                      Please arrive at the clinic on time.
+                      {!appointmentResponse.queobj.paid && (
+                        " Remember to complete the payment at the reception desk when you arrive."
+                      )}
+                    </Typography>
+                  </CardContent>
+                </Card>
+                
+                {/* Removed "details have been saved" message */}
               </Box>
             </Box>
           )}
-        </DialogContent>
+        </Box>
         
-        <DialogActions sx={{ px: 3, pb: 3 }}>
+        {/* Fixed bottom buttons */}
+        <Box 
+          sx={{ 
+            position: 'fixed', 
+            bottom: 0, 
+            left: 0, 
+            right: 0, 
+            p: 2, 
+            bgcolor: 'white', 
+            borderTop: '1px solid rgba(0,0,0,0.1)',
+            boxShadow: '0 -2px 10px rgba(0,0,0,0.05)',
+            zIndex: 1
+          }}
+        >
           {bookingStage === 0 && (
-            <Button 
-              variant="contained" 
-              onClick={handleConfirmBooking}
-              fullWidth
-              disabled={slots.length === 0}
-            >
-              {slots.length > 0 ? 'Complete Booking' : 'No Slots Available'}
-            </Button>
+            <Grid container spacing={2}>
+              <Grid item xs={4}>
+                <Button 
+                  variant="outlined" 
+                  fullWidth
+                  onClick={handleCloseDialog}
+                  sx={{ borderRadius: 2 }}
+                >
+                  Cancel
+                </Button>
+              </Grid>
+              <Grid item xs={8}>
+                <Button 
+                  variant="contained" 
+                  onClick={handleConfirmBooking}
+                  fullWidth
+                  disabled={slots.length === 0}
+                  sx={{ borderRadius: 2, py: 1.2 }}
+                >
+                  {slots.length > 0 ? 'Complete Booking' : 'No Slots Available'}
+                </Button>
+              </Grid>
+            </Grid>
           )}
           
           {bookingStage === 2 && (
-            <Button 
-              variant="contained" 
-              fullWidth
-              onClick={handleNavigateToHome}
-            >
-              Go to Home
-            </Button>
+            <Grid container spacing={2}>
+              <Grid item xs={12}>
+                <Button 
+                  variant="contained" 
+                  fullWidth
+                  onClick={handleNavigateToHome}
+                  sx={{ borderRadius: 2, py: 1.2 }}
+                >
+                  Go to Home
+                </Button>
+              </Grid>
+            </Grid>
           )}
-        </DialogActions>
+        </Box>
       </Dialog>
+      
+      {/* Sticky Book Appointment Button */}
+      {!showBookingDialog && slots.length > 0 && (
+        <Box
+          sx={{
+            position: 'fixed',
+            bottom: 0,
+            left: 0,
+            right: 0,
+            padding: '16px',
+            backgroundColor: 'transparent',
+            zIndex: 1000,
+            display: 'flex',
+            justifyContent: 'center',
+          }}
+        >
+          <Button 
+            variant="contained"
+            fullWidth 
+            sx={{
+                maxWidth: '500px',
+                py: 1.5,
+                borderRadius: 2,
+                boxShadow: "0 4px 12px rgba(25,118,210,0.3)",
+                "&:hover": {
+                    boxShadow: "0 6px 16px rgba(25,118,210,0.4)",
+                },
+                fontSize: '1rem',
+                fontWeight: 500
+            }}
+            onClick={handleBookNow}
+          >
+            Book Appointment
+          </Button>
+        </Box>
+      )}
       
       <Snackbar
         open={snackbar.open}

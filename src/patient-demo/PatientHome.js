@@ -1,17 +1,26 @@
 import AccessTimeIcon from "@mui/icons-material/AccessTime";
 import AddIcon from '@mui/icons-material/Add';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
+import CancelIcon from "@mui/icons-material/Cancel";
+import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
+import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import CloseIcon from "@mui/icons-material/Close";
 import DirectionsIcon from "@mui/icons-material/Directions";
 import EventBusyIcon from '@mui/icons-material/EventBusy';
+import InfoIcon from "@mui/icons-material/Info";
 import MedicalServicesIcon from "@mui/icons-material/MedicalServices";
+import PaymentIcon from "@mui/icons-material/Payment";
 import PersonIcon from "@mui/icons-material/Person";
 import PhoneIcon from "@mui/icons-material/Phone";
 import QueueIcon from "@mui/icons-material/Queue";
 import ReceiptIcon from '@mui/icons-material/Receipt';
 import RefreshIcon from '@mui/icons-material/Refresh';
+import WarningIcon from "@mui/icons-material/Warning";
 import { formatSecondsToHoursMinutes } from "../utils/timeUtils";
 import {
+    Alert,
     Avatar,
     Box,
     Button,
@@ -21,11 +30,14 @@ import {
     Dialog,
     DialogActions,
     DialogContent,
+    DialogContentText,
     DialogTitle,
     Divider,
     Grid,
     IconButton,
     Skeleton,
+    Slide,
+    Snackbar,
     Typography
 } from "@mui/material";
 import React, { useContext, useEffect, useState } from "react";
@@ -36,7 +48,7 @@ import 'swiper/css/pagination';
 import { Navigation, Pagination } from 'swiper/modules';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { AuthContext } from "../context/AuthContext";
-import { getAllAppointments, getAppointmentDetails } from "../services/api";
+import { getAllAppointments, getAppointmentDetails, removeAppointment } from "../services/api";
 
 const AppointmentSkeleton = () => (
     <Card elevation={1} sx={{
@@ -89,6 +101,11 @@ const AppointmentSkeleton = () => (
     </Card>
 );
 
+// Create Slide transition component for the Dialog
+const Transition = React.forwardRef(function Transition(props, ref) {
+    return <Slide direction="up" ref={ref} {...props} />;
+});
+
 const PatientHome = () => {
     const navigate = useNavigate();
     const location = useLocation();
@@ -103,12 +120,29 @@ const PatientHome = () => {
     const [currentAppointments, setCurrentAppointments] = useState([]);
     const [isWaitingRefreshing, setIsWaitingRefreshing] = useState(false);
     const [lastUpdatedTime, setLastUpdatedTime] = useState(new Date());
+    const [showCancelDialog, setShowCancelDialog] = useState(false);
+    const [isCanceling, setIsCanceling] = useState(false);
+    const [snackbar, setSnackbar] = useState({
+        open: false,
+        message: "",
+        severity: "success"
+    });
 
     const fetchCurrentAppointments = async () => {
         try {
             setLoading(true);
             const response = await getAllAppointments("upcoming");
-            const sortedAppointments = response.sort((a, b) => (a.waiting) - (b.waiting));
+            
+            // Sort appointments by waiting position, with non-late before late
+            const sortedAppointments = response.sort((a, b) => {
+                // First prioritize non-late appointments
+                if (a.queobj?.late !== b.queobj?.late) {
+                    return a.queobj?.late ? 1 : -1;
+                }
+                // Then sort by waiting position
+                return (a.queobj?.waiting || 0) - (b.queobj?.waiting || 0);
+            });
+            
             setCurrentAppointments(sortedAppointments);
             setLastUpdatedTime(new Date());
         } catch (error) {
@@ -137,15 +171,19 @@ const PatientHome = () => {
             setIsWaitingRefreshing(true);
             const response = await getAllAppointments("upcoming");
             
-            // Update only waiting and wait_time for existing appointments
+            // Update waiting, wait_time and late status for existing appointments
             setCurrentAppointments(prevAppointments => {
                 return prevAppointments.map(prevApp => {
                     const updatedApp = response.find(newApp => newApp.appointment_id === prevApp.appointment_id);
                     if (updatedApp) {
                         return {
                             ...prevApp,
-                            waiting: updatedApp.waiting,
-                            wait_time: updatedApp.wait_time
+                            queobj: {
+                                ...prevApp.queobj,
+                                waiting: updatedApp.queobj?.waiting,
+                                wait_time: updatedApp.queobj?.wait_time,
+                                late: updatedApp.queobj?.late
+                            }
                         };
                     }
                     return prevApp;
@@ -201,16 +239,16 @@ const PatientHome = () => {
         }
     }, [location, appointmentsList]);
 
-    // Add interval to update wait times every 5 minutes
+    // Add interval to update wait times every 2 minutes
     useEffect(() => {
-        // Set up interval to fetch fresh data every 5 minutes (300000 ms)
+        // Set up interval to fetch fresh data every 2 minutes (120000 ms)
         const interval = setInterval(() => {
             handleWaitingReload();
-        }, 300000);
+        }, 120000);
 
         // Clean up interval on component unmount
         return () => clearInterval(interval);
-    }, []); 
+    }, []);
     
     // Force UI update for the "last updated" time display every minute
     useEffect(() => {
@@ -243,7 +281,36 @@ const PatientHome = () => {
 
     const handleViewDetails = async (appointment_id) => {
         await fetchAppointmentdetails(appointment_id);
+        // Add to history stack when opening dialog
+        window.history.pushState({ showAppointmentDetails: true }, "");
         setShowAppointmentDetails(true);
+    };
+
+    // Handle browser back button/gesture
+    useEffect(() => {
+        const handlePopState = (event) => {
+            if (showAppointmentDetails) {
+                setShowAppointmentDetails(false);
+                // Also refresh data when closing via back button/gesture
+                handleWaitingReload();
+            }
+        };
+
+        window.addEventListener('popstate', handlePopState);
+        return () => {
+            window.removeEventListener('popstate', handlePopState);
+        };
+    }, [showAppointmentDetails]);
+
+    const handleCloseAppointmentDetails = () => {
+        // Go back in history when closing dialog with button
+        if (showAppointmentDetails) {
+            window.history.back();
+        }
+        setShowAppointmentDetails(false);
+        
+        // Refresh appointment data when modal is closed
+        handleWaitingReload();
     };
 
     const handleCall = () => {
@@ -275,6 +342,48 @@ const PatientHome = () => {
         } else {
             return `${diffMins} mins ago`;
         }
+    };
+
+    const handleCancelAppointment = () => {
+        setShowCancelDialog(true);
+    };
+    
+    const confirmCancelAppointment = async () => {
+        if (!selectedAppointment?.appointment_id) return;
+        
+        setIsCanceling(true);
+        try {
+            const payload = {
+                appointment_id: selectedAppointment.appointment_id
+            };
+            await removeAppointment(payload);
+            
+            // Close all dialogs
+            setShowCancelDialog(false);
+            setShowAppointmentDetails(false);
+            
+            // Show success message
+            setSnackbar({
+                open: true,
+                message: "Appointment cancelled successfully",
+                severity: "success"
+            });
+            
+            // Refresh appointments list
+            fetchCurrentAppointments();
+        } catch (error) {
+            setSnackbar({
+                open: true,
+                message: "Failed to cancel appointment",
+                severity: "error"
+            });
+        } finally {
+            setIsCanceling(false);
+        }
+    };
+    
+    const handleCloseSnackbar = () => {
+        setSnackbar(prev => ({ ...prev, open: false }));
     };
 
     return (
@@ -386,9 +495,30 @@ const PatientHome = () => {
                     <Typography variant="h6" fontWeight="600">
                         Current Appointments
                     </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                        {appointmentsList.length > 0 ? `${activeStep + 1}/${appointmentsList.length}` : ''}
-                    </Typography>
+                    <Box sx={{ 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        bgcolor: 'rgba(25, 118, 210, 0.08)', 
+                        borderRadius: 1.5,
+                        px: 1,
+                        py: 0.5
+                    }}>
+                        <ChevronLeftIcon sx={{ 
+                            fontSize: 18, 
+                            color: 'primary.main', 
+                            opacity: 0.7,
+                            mr: 0.5 
+                        }} />
+                        <Typography variant="body2" color="primary.main" fontWeight="medium">
+                            {appointmentsList.length > 0 ? `${activeStep + 1}/${appointmentsList.length}` : ''}
+                        </Typography>
+                        <ChevronRightIcon sx={{ 
+                            fontSize: 18, 
+                            color: 'primary.main', 
+                            opacity: 0.7,
+                            ml: 0.5 
+                        }} />
+                    </Box>
                 </Box>
                 {loading ? (
                     <AppointmentSkeleton />
@@ -404,158 +534,173 @@ const PatientHome = () => {
                             {appointmentsList.map((appointment, index) => (
                                 <SwiperSlide key={appointment.appointment_id}>
                                     <Box sx={{ px: 0.5, pb: 1 }}>
-                                        <Card elevation={1} sx={{
+                                        <Card elevation={2} sx={{
                                             borderRadius: 3,
                                             overflow: 'hidden',
                                             transition: 'transform 0.3s, box-shadow 0.3s',
                                             '&:hover': {
-                                                boxShadow: '0 8px 24px rgba(0,0,0,0.12)'
+                                                boxShadow: '0 12px 28px rgba(0,0,0,0.15)'
                                             }
                                         }}>
-                                            <Box sx={{ bgcolor: '#1976d2', color: 'white', p: 2, position: 'relative' }}>
-                                                <Typography variant="subtitle1" fontWeight="600">Dr. {appointment?.doctor}</Typography>
-                                                <Typography variant="body2" sx={{ opacity: 0.9, pr: 5 }}>
+                                            {/* Card Header */}
+                                            <Box sx={{ 
+                                                bgcolor: '#1976d2', 
+                                                color: 'white', 
+                                                p: 2, 
+                                                position: 'relative',
+                                                backgroundImage: 'linear-gradient(to right, #1976d2, #2196f3)'
+                                            }}>
+                                                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                                    <Box>
+                                                        <Typography variant="subtitle1" fontWeight="600" sx={{ fontSize: '1.1rem', mb: 0.5 }}>
+                                                            Dr. {appointment?.doctor}
+                                                        </Typography>
+                                                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                                            <MedicalServicesIcon sx={{ fontSize: 16, mr: 0.8, opacity: 0.8 }} />
+                                                <Typography variant="body2" sx={{ opacity: 0.9 }}>
                                                     {appointment?.hospital}
                                                 </Typography>
-                                                <IconButton 
-                                                    size="small"
-                                                    onClick={() => handleDirections(appointment.hospital_location)}
-                                                    sx={{ 
-                                                        position: 'absolute',
-                                                        right: 8,
-                                                        top: '50%',
-                                                        transform: 'translateY(-50%)',
-                                                        color: 'white',
-                                                        bgcolor: 'rgba(255,255,255,0.15)',
-                                                        '&:hover': {
-                                                            bgcolor: 'rgba(255,255,255,0.25)'
-                                                        }
-                                                    }}
-                                                >
-                                                    <DirectionsIcon fontSize="small" />
-                                                </IconButton>
                                             </Box>
+                                                        </Box>
+                                                    <IconButton 
+                                                        size="small"
+                                                        aria-label="Get directions"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            handleDirections(appointment.hospital_location);
+                                                        }}
+                                                        sx={{ 
+                                                            color: 'white',
+                                                            bgcolor: 'rgba(255,255,255,0.15)',
+                                                            '&:hover': {
+                                                                bgcolor: 'rgba(255,255,255,0.25)'
+                                                            }
+                                                        }}
+                                                    >
+                                                        <DirectionsIcon fontSize="small" />
+                                                    </IconButton>
+                                                        </Box>
+                                                        </Box>
 
-                                            <CardContent>
-                                                <Grid container spacing={1}>
-                                                    <Grid item xs={12}>
-                                                        <Box sx={{ display: "flex", alignItems: "center", mb: 0 }}>
-                                                            <CalendarTodayIcon sx={{ mr: 1, color: "primary.main" }} />
-                                                            <Typography variant="body2">
-                                                                <strong>Slot:</strong> {formatDate(appointment?.slot)}
-                                                            </Typography>
-                                                        </Box>
-                                                        <Box sx={{ display: "flex", alignItems: "center", mb: 1 }}>
-                                                            <PersonIcon sx={{ mr: 1, color: "primary.main" }} />
-                                                            <Typography variant="body2">
-                                                                <strong>Patient Name:</strong> {appointment?.patient_name}
-                                                            </Typography>
-                                                        </Box>
-                                                        <Box sx={{ display: "flex", alignItems: "center", mb: 1 }}>
-                                                            <PersonIcon sx={{ mr: 1, color: "primary.main" }} />
-                                                            <Typography variant="body2">
-                                                                <strong>PID:</strong> {appointment?.pid}
-                                                            </Typography>
-                                                        </Box>
-                                                        <Box sx={{ display: "flex", alignItems: "center", mb: 1 }}>
-                                                            <QueueIcon sx={{ mr: 1, color: "primary.main" }} />
-                                                            <Typography variant="body2">
-                                                                <strong>Token:</strong> #{appointment?.token}
-                                                            </Typography>
-                                                        </Box>
-                                                    </Grid>
-
+                                            <CardContent sx={{ p: 0 }}>
+                                                {/* Combined Info Section - Compact Layout */}
+                                                <Box sx={{ p: 2, borderBottom: '1px solid rgba(0,0,0,0.06)' }}>
+                                                    <Grid container spacing={2}>
+                                                        {/* Elevated Queue Information */}
                                                     <Grid item xs={12}>
                                                         <Box sx={{ 
-                                                            border: '1px solid #e5e7eb',
-                                                            borderRadius: 3,
-                                                            p: 2,
-                                                            position: 'relative',
-                                                            bgcolor: '#f8fafc'
-                                                        }}>
-                                                            <Grid container spacing={2}>
-                                                                <Grid item xs={6}>
-                                                                    <Box sx={{ display: 'flex', alignItems: 'center', height: '100%' }}>
-                                                                        <AccessTimeIcon color="primary" sx={{ mr: 1 }} />
-                                                                        <Box>
-                                                                            <Typography variant="body2" color="text.secondary">
-                                                                                Waiting
-                                                                            </Typography>
-                                                                            {isWaitingRefreshing ? (
-                                                                                <Box sx={{ display: 'flex', alignItems: 'center', mt: 0.5 }}>
-                                                                                    <CircularProgress size={20} />
+                                                                display: 'flex',
+                                                                justifyContent: 'space-between',
+                                                                alignItems: 'center',
+                                                                p: 2,
+                                                                borderRadius: 2,
+                                                                bgcolor: appointment?.queobj?.late ? '#fff7ed' : (appointment?.queobj?.waiting === 0 ? '#ecfdf5' : '#f0f9ff'),
+                                                                border: '1px solid',
+                                                                borderColor: appointment?.queobj?.late ? '#fdba74' : (appointment?.queobj?.waiting === 0 ? '#86efac' : '#bae6fd'),
+                                                                mb: 1
+                                                            }}>
+                                                                {appointment?.queobj?.late ? (
+                                                                    <>
+                                                                        <Box sx={{ display: 'flex', alignItems: 'center', width: '100%' }}>
+                                                                            <WarningIcon sx={{ color: '#ea580c', mr: 2, fontSize: 32 }} />
+                                                                            <Box sx={{ flexGrow: 1 }}>
+                                                                                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', width: '100%' }}>
+                                                                                    <Typography variant="h6" sx={{ color: '#ea580c', fontWeight: 700 }}>
+                                                                                        LATE
+                                                                                    </Typography>
+                                                                                    <IconButton 
+                                                                                        size="small" 
+                                                                                        onClick={(e) => {
+                                                                                            e.stopPropagation();
+                                                                                            handleWaitingReload();
+                                                                                        }}
+                                                                                        disabled={isWaitingRefreshing}
+                                                                                        sx={{ 
+                                                                                            bgcolor: '#ffedd5',
+                                                                                            width: 36,
+                                                                                            height: 36,
+                                                                                            '&:hover': {
+                                                                                                bgcolor: '#fed7aa'
+                                                                                            }
+                                                                                        }}
+                                                                                    >
+                                                                                        <RefreshIcon 
+                                                                                            sx={{
+                                                                                                fontSize: '1.2rem',
+                                                                                                color: '#ea580c',
+                                                                                                animation: isWaitingRefreshing ? 'spin 1s linear infinite' : 'none',
+                                                                                                '@keyframes spin': {
+                                                                                                    '0%': {
+                                                                                                        transform: 'rotate(0deg)',
+                                                                                                    },
+                                                                                                    '100%': {
+                                                                                                        transform: 'rotate(360deg)',
+                                                                                                    },
+                                                                                                },
+                                                                                            }}
+                                                                                        />
+                                                                                    </IconButton>
                                                                                 </Box>
-                                                                            ) : (
-                                                                                <Typography variant="h5" color="primary" fontWeight="bold">
-                                                                                    {appointment?.waiting}
+                                                                                <Typography variant="body2" sx={{ color: '#c2410c', display: 'block' }}>
+                                                                                    Visit reception after reaching the hospital
                                                                                 </Typography>
-                                                                            )}
+                                                                            </Box>
                                                                         </Box>
-                                                                    </Box>
-                                                                </Grid>
-
-                                                                <Grid item xs={6}>
-                                                                    <Box sx={{ display: 'flex', alignItems: 'center', height: '100%' }}>
-                                                                        <AccessTimeIcon color="primary" sx={{ mr: 1 }} />
-                                                                        <Box>
-                                                                            <Typography variant="body2" color="text.secondary">
-                                                                                Expected Time
+                                                                    </>
+                                                                ) : appointment?.queobj?.waiting === 0 ? (
+                                                                    <>
+                                                                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                                                            <CheckCircleIcon sx={{ color: '#15803d', mr: 2, fontSize: 32 }} />
+                                                                            <Box>
+                                                                                <Typography variant="h6" sx={{ color: '#15803d', fontWeight: 700 }}>
+                                                                                    YOUR TURN
+                                                                        </Typography>
+                                                                                <Typography variant="body2" sx={{ color: '#059669', display: 'block' }}>
+                                                                                    Ready to see doctor
                                                                             </Typography>
-                                                                            {isWaitingRefreshing ? (
-                                                                                <Box sx={{ display: 'flex', alignItems: 'center', mt: 0.5 }}>
-                                                                                    <CircularProgress size={20} />
-                                                                                </Box>
-                                                                            ) : (
-                                                                                <Typography variant="h5" color="primary" fontWeight="bold">
-                                                                                    {formatSecondsToHoursMinutes(appointment?.wait_time)}
-                                                                                </Typography>
-                                                                            )}
-                                                                        </Box>
                                                                     </Box>
-                                                                </Grid>
-                                                            </Grid>
-                                                        </Box>
-                                                    </Grid>
-                                                    
-                                                    {/* Last updated section - moved outside the border box */}
-                                                    <Grid item xs={12}>
-                                                        <Box sx={{ 
-                                                            display: 'flex', 
-                                                            justifyContent: 'flex-end', 
-                                                            alignItems: 'center',
-                                                            mt: 0.5,
-                                                            mb: 1
-                                                        }}>
-                                                            <Typography 
-                                                                variant="caption" 
-                                                                sx={{ 
-                                                                    color: 'text.secondary',
-                                                                    fontSize: '0.7rem',
-                                                                    fontStyle: 'italic',
-                                                                    mr: 1
-                                                                }}
-                                                            >
-                                                                Last updated: {formatLastUpdatedTime(lastUpdatedTime)}
-                                                            </Typography>
-                                                            
+                                                                            </Box>
+                                                                        <Box sx={{ 
+                                                                            bgcolor: '#15803d', 
+                                                                            color: 'white',
+                                                                            borderRadius: 1,
+                                                                            px: 1.5,
+                                                                            py: 0.5,
+                                                                            fontWeight: 600,
+                                                                            fontSize: '0.75rem'
+                                                                        }}>
+                                                                            NOW
+                                                                        </Box>
+                                                                    </>
+                                                                ) : (
+                                                                    <>
+                                                                        <Box sx={{ display: 'flex', alignItems: 'center', width: '100%' }}>
+                                                                            <QueueIcon sx={{ color: '#0284c7', mr: 2, fontSize: 32 }} />
+                                                                            <Box sx={{ flexGrow: 1 }}>
+                                                                                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', width: '100%' }}>
+                                                                                    <Typography variant="h6" sx={{ color: '#0284c7', fontWeight: 700 }}>
+                                                                                        Waiting: {appointment?.queobj?.waiting !== undefined ? appointment?.queobj?.waiting : '-'}
+                                                                            </Typography>
                                                             <IconButton 
                                                                 size="small" 
-                                                                onClick={handleWaitingReload}
+                                                                                        onClick={(e) => {
+                                                                                            e.stopPropagation();
+                                                                                            handleWaitingReload();
+                                                                                        }}
                                                                 disabled={isWaitingRefreshing}
                                                                 sx={{ 
-                                                                    bgcolor: 'white',
-                                                                    boxShadow: 1,
-                                                                    width: 24,
-                                                                    height: 24,
+                                                                                            bgcolor: '#e0f2fe',
+                                                                                            width: 36,
+                                                                                            height: 36,
                                                                     '&:hover': {
-                                                                        bgcolor: '#f1f5f9'
+                                                                                                bgcolor: '#bae6fd'
                                                                     }
                                                                 }}
                                                             >
                                                                 <RefreshIcon 
-                                                                    fontSize="small" 
                                                                     sx={{
-                                                                        fontSize: '0.875rem',
+                                                                                                fontSize: '1.2rem',
+                                                                                                color: '#0284c7',
                                                                         animation: isWaitingRefreshing ? 'spin 1s linear infinite' : 'none',
                                                                         '@keyframes spin': {
                                                                             '0%': {
@@ -569,21 +714,124 @@ const PatientHome = () => {
                                                                 />
                                                             </IconButton>
                                                         </Box>
+                                                                                <Typography variant="subtitle1" sx={{ color: '#0284c7', fontWeight: 600 }}>
+                                                                                    Wait time: {formatSecondsToHoursMinutes(appointment?.queobj?.wait_time)}
+                                                                                </Typography>
+                                                                                
+                                                                                {/* Urgency Message - Show if waiting <= 10 and not checked in */}
+                                                                                {!appointment?.queobj?.checkin && appointment?.queobj?.waiting <= 10 && appointment?.buffer && (
+                                                                                    <Typography variant="body2" sx={{
+                                                                                        color: '#f97316',
+                                                                                        fontWeight: 600,
+                                                                                        mt: 0.5,
+                                                                                        display: 'flex',
+                                                                                        alignItems: 'center'
+                                                                                    }}>
+                                                                                        <WarningIcon sx={{ fontSize: 16, mr: 0.5 }} />
+                                                                                        Check in required, You may be marked late after {Math.max(0, appointment.queobj.waiting - parseInt(appointment.buffer))} patient{Math.max(0, appointment.queobj.waiting - parseInt(appointment.buffer)) !== 1 ? 's' : ''}.
+                                                                                    </Typography>
+                                                                                )}
+                                                                            </Box>
+                                                                        </Box>
+                                                                    </>
+                                                                )}
+                                                            </Box>
+                                                            {/* Last updated displayed for both late and waiting situations */}
+                                                            {(appointment?.queobj?.waiting !== 0 || appointment?.queobj?.late) && (
+                                                                <Typography 
+                                                                    variant="caption" 
+                                                                    sx={{ 
+                                                                        color: 'text.secondary',
+                                                                        fontSize: '0.7rem',
+                                                                        display: 'block',
+                                                                        textAlign: 'right',
+                                                                        mb: 2
+                                                                    }}
+                                                                >
+                                                                    Last updated: {formatLastUpdatedTime(lastUpdatedTime)}
+                                                                </Typography>
+                                                            )}
                                                     </Grid>
 
-                                                    <Grid item xs={12}>
-                                                        <Button variant="contained" fullWidth sx={{
-                                                            mt: 1,
+                                                        {/* Secondary Information - Reduced prominence */}
+                                                        <Grid container spacing={2} sx={{ px: 1 }}>
+                                                            {/* SLOT DETAILS - Commented out
+                                                            <Grid item xs={12} sm={6}>
+                                                                <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                                                    <CalendarTodayIcon sx={{ color: '#94a3b8', mr: 1, fontSize: '0.875rem' }} />
+                                                                    <Box>
+                                                                        <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 500, display: 'block', fontSize: '0.6rem' }}>
+                                                                            SLOT DETAILS
+                                                                        </Typography>
+                                                                        <Typography variant="body2" sx={{ color: '#64748b', fontWeight: 500, fontSize: '0.8rem' }}>
+                                                                            {formatDate(appointment?.slot)}
+                                                                        </Typography>
+                                                                    </Box>
+                                                                </Box>
+                                                    </Grid>
+                                                            */}
+
+                                                            <Grid item xs={6} sm={3}>
+                                                                <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 500, display: 'block', fontSize: '0.6rem' }}>
+                                                                    PATIENT
+                                                                </Typography>
+                                                                <Typography variant="body2" sx={{ color: '#64748b', fontWeight: 500, fontSize: '0.8rem' }}>
+                                                                    {appointment?.patient_name}
+                                                                </Typography>
+                                                            </Grid>
+                                                            
+                                                            <Grid item xs={6} sm={3}>
+                                                                <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 500, display: 'block', fontSize: '0.6rem' }}>
+                                                                    PATIENT ID
+                                                                </Typography>
+                                                                <Typography variant="body2" sx={{ color: '#64748b', fontWeight: 500, fontSize: '0.8rem' }}>
+                                                                    {appointment?.pid || "—"}
+                                                                </Typography>
+                                                            </Grid>
+                                                            
+                                                            {/* <Grid item xs={6} sm={3}>
+                                                                <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 500, display: 'block', fontSize: '0.6rem' }}>
+                                                                    PHONE
+                                                                </Typography>
+                                                                <Typography variant="body2" sx={{ color: '#64748b', fontWeight: 500, fontSize: '0.8rem' }}>
+                                                                    {appointment?.phone_number || "—"}
+                                                                </Typography>
+                                                            </Grid> */}
+                                                            
+                                                            <Grid item xs={6} sm={3}>
+                                                                <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 500, display: 'block', fontSize: '0.6rem' }}>
+                                                                    TOKEN
+                                                                </Typography>
+                                                                <Typography variant="body2" fontWeight="600" sx={{ color: '#4f46e5', fontSize: '0.8rem' }}>
+                                                                    #{appointment?.token}
+                                                                </Typography>
+                                                            </Grid>
+                                                        </Grid>
+                                                    </Grid>
+                                                </Box>
+
+                                                {/* Action Button */}
+                                                <Box sx={{ p: 1.5 }}>
+                                                    <Button 
+                                                        variant="contained" 
+                                                        fullWidth 
+                                                        sx={{
                                                             borderRadius: 2,
+                                                            py: 1,
+                                                            fontWeight: 600,
+                                                            textTransform: 'none',
                                                             transition: 'all 0.2s',
+                                                            boxShadow: '0 4px 12px rgba(25, 118, 210, 0.2)',
                                                             '&:hover': {
-                                                                transform: 'translateX(4px)'
+                                                                transform: 'translateY(-2px)',
+                                                                boxShadow: '0 6px 16px rgba(25, 118, 210, 0.3)'
                                                             }
-                                                        }} onClick={() => handleViewDetails(appointment.appointment_id)}>
+                                                        }} 
+                                                        onClick={() => handleViewDetails(appointment.appointment_id)}
+                                                    >
                                                             View Details
                                                         </Button>
-                                                    </Grid>
-                                                </Grid>
+                                                </Box>
                                             </CardContent>
                                         </Card>
                                     </Box>
@@ -595,13 +843,13 @@ const PatientHome = () => {
                             {`
                             .swiper-pagination {
                                 position: relative !important;
-                                margin-top: 8px !important;
+                                margin-top: 0 !important;
                                 bottom: 0 !important;
                             }
                             .swiper-pagination-bullet {
                                 width: 8px;
                                 height: 8px;
-                                margin: 0 4px;
+                                margin: 0 2px;
                             }
                             .swiper-pagination-bullet-active {
                                 background: #1976d2;
@@ -677,209 +925,742 @@ const PatientHome = () => {
                 ))}
             </Grid> */}
 
-            {/* Appointment Details Dialog */}
-            <Dialog open={showAppointmentDetails} onClose={() => setShowAppointmentDetails(false)} fullWidth maxWidth="md" PaperProps={{
-                sx: {
-                    borderRadius: 3,
-                    overflow: 'hidden'
-                }
-            }}>
-                <Box sx={{ bgcolor: 'primary.main', color: 'white', py: 1.5, px: 3, position: 'relative' }}>
-                    <DialogTitle sx={{ p: 0, fontWeight: 600 }}>
-                        Appointment Details
-                    </DialogTitle>
-                    <IconButton aria-label="close" onClick={() => setShowAppointmentDetails(false)} sx={{
-                        position: 'absolute',
-                        right: 8,
-                        top: 8,
-                        color: 'white'
-                    }}>
-                        <CloseIcon />
+            {/* Appointment Details Slide-up Panel */}
+            <Dialog 
+                open={showAppointmentDetails} 
+                onClose={handleCloseAppointmentDetails} 
+                fullScreen
+                TransitionComponent={Transition}
+                PaperProps={{
+                    sx: {
+                        borderTopLeftRadius: 0,
+                        borderTopRightRadius: 0,
+                        overflow: 'hidden',
+                        boxShadow: '0 -8px 40px rgba(0,0,0,0.12)'
+                    }
+                }}
+            >
+                <Box sx={{ 
+                    bgcolor: 'primary.main', 
+                    color: 'white', 
+                    py: 2, 
+                    px: 2.5, 
+                    position: 'sticky',
+                    top: 0,
+                    zIndex: 10,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    boxShadow: '0 2px 12px rgba(0,0,0,0.08)'
+                }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                        <IconButton 
+                            aria-label="back" 
+                            onClick={handleCloseAppointmentDetails} 
+                            sx={{ 
+                                color: 'white', 
+                                mr: 1.5,
+                                bgcolor: 'rgba(255,255,255,0.12)',
+                                '&:hover': {
+                                    bgcolor: 'rgba(255,255,255,0.2)'
+                                }
+                            }}
+                        >
+                            <ArrowBackIcon />
                     </IconButton>
+                        <Typography variant="h6" fontWeight="600">
+                        Appointment Details
+                        </Typography>
                 </Box>
-                <DialogContent sx={{ py: 1 }}>
-                    <Grid container spacing={{ mt: 0 }}>
-                        <Grid item xs={12}>
-                            <Box sx={{ display: 'flex', alignItems: 'flex-start', mb: 1 }}>
-                                <PersonIcon color="primary" sx={{ mr: 1.5, mt: 0.5 }} />
+                </Box>
+
+                <DialogContent sx={{ 
+                    py: 3, 
+                    px: 3,
+                    bgcolor: '#f8fafc',
+                    background: 'linear-gradient(to bottom, #f1f5f9 0%, #f8fafc 100%)'
+                }}>
+                    {/* Important Information Banner - Only show if steps are incomplete */}
+                    {/* {(!selectedAppointment?.queobj?.paid || !selectedAppointment?.queobj?.checkin) && (
+                        <Box sx={{
+                            bgcolor: '#f0f9ff',
+                            border: '1px solid #bae6fd',
+                            borderLeft: '4px solid #0284c7',
+                            borderRadius: 2,
+                            p: 2.5,
+                            mb: 3,
+                            display: 'flex',
+                            alignItems: 'center',
+                            boxShadow: '0 4px 12px rgba(0,0,0,0.05)'
+                        }}>
+                            <InfoIcon sx={{ color: '#0284c7', mr: 2, flexShrink: 0 }} />
                                 <Box>
-                                    <Typography variant="subtitle2">Patient Information</Typography>
-                                    {selectedAppointment?.name && (
-                                        <Typography variant="body2" color="text.secondary">
-                                            Name: {selectedAppointment?.name}
+                                <Typography variant="subtitle1" sx={{ fontWeight: 600, color: '#0c4a6e', mb: 0.5 }}>
+                                    Important: Next Steps for Your Appointment
                                         </Typography>
-                                    )}
-                                    {selectedAppointment?.patient?.patient_id && (
-                                        <Typography variant="body2" color="text.secondary">
-                                            Patient ID: {selectedAppointment?.patient?.patient_id}
+                                <Typography variant="body2" sx={{ color: '#0c4a6e' }}>
+                                    You must both check in <strong>and</strong> complete payment at the reception desk before your number will be called for your appointment.
                                         </Typography>
-                                    )}
-                                    {selectedAppointment?.token && (
-                                        <Typography variant="body2" color="text.secondary">
-                                            Token: {selectedAppointment?.token}
+                            </Box>
+                        </Box>
+                    )} */}
+
+                    {/* Appointment Progress Status */}
+                    <Typography variant="h6" fontWeight="600" sx={{ mb: 2, px: 0.5 }}>
+                        Appointment Status
                                         </Typography>
-                                    )}
-                                    <Typography variant="body2" color="text.secondary">
-                                        {selectedAppointment?.patient?.age && `Age: ${selectedAppointment.patient.age}`} {selectedAppointment?.patient?.gender && selectedAppointment?.patient?.age && `, `} {selectedAppointment?.patient?.gender && `Gender: ${selectedAppointment.patient.gender === 'M' ? 'Male' : selectedAppointment.patient.gender === 'F' ? 'Female' : selectedAppointment.patient.gender}`}
+                    <Card elevation={0} sx={{ 
+                        borderRadius: 3,
+                        border: '1px solid #e5e7eb',
+                        bgcolor: 'white',
+                        boxShadow: '0 4px 20px rgba(0,0,0,0.05)',
+                        mb: 3
+                    }}>
+                        <CardContent sx={{ p: 2 }}>
+                            <Grid container spacing={2}>
+                                {/* Payment Status - Now Step 1 */}
+                                <Grid item xs={12} sm={6}>
+                                    <Box sx={{ 
+                                        display: 'flex', 
+                                        alignItems: 'center',
+                                        mb: 1
+                                    }}>
+                                        <Box sx={{ 
+                                            width: 36, 
+                                            height: 36, 
+                                            borderRadius: '50%',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            bgcolor: selectedAppointment?.queobj?.paid ? 'rgba(21, 128, 61, 0.1)' : 'rgba(234, 179, 8, 0.1)',
+                                            mr: 2,
+                                            flexShrink: 0
+                                        }}>
+                                            {selectedAppointment?.queobj?.paid ? (
+                                                <ReceiptIcon sx={{ color: '#15803d' }} />
+                                            ) : (
+                                                <PaymentIcon sx={{ color: '#eab308' }} />
+                                            )}
+                                        </Box>
+                                        <Box>
+                                            <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 500 }}>
+                                                Step 1: Payment
                                     </Typography>
-                                    {selectedAppointment?.patient?.phone_numer && (
-                                        <Typography variant="body2" color="text.secondary">
-                                            Phone: {selectedAppointment?.patient?.phone_numer}
+                                            <Typography variant="subtitle1" sx={{ 
+                                                fontWeight: 'bold',
+                                                color: selectedAppointment?.queobj?.paid ? '#15803d' : '#eab308',
+                                                mt: 0.5
+                                            }}>
+                                                {selectedAppointment?.queobj?.paid ? "Completed" : "Action Required"}
                                         </Typography>
-                                    )}
-                                    {selectedAppointment?.patient?.guardian && selectedAppointment?.patient?.guardian !== "N/A" && (
-                                        <Typography variant="body2" color="text.secondary">
-                                            Guardian: {selectedAppointment?.patient?.guardian}
+                                            {!selectedAppointment?.queobj?.paid ? (
+                                                <Box sx={{ 
+                                                    mt: 1,
+                                                    p: 1,
+                                                    borderRadius: 2,
+                                                    bgcolor: 'rgba(234, 179, 8, 0.08)',
+                                                    border: '1px solid',
+                                                    borderColor: 'rgba(234, 179, 8, 0.3)'
+                                                }}>
+                                                    <Typography variant="body2" sx={{ color: '#854d0e', fontWeight: 500 }}>
+                                                        {selectedAppointment?.fees_paid > 0 ? 
+                                                            `Please pay ₹${selectedAppointment.fees_paid} at the reception desk` : 
+                                                            'Please complete payment at the reception desk'}
                                         </Typography>
-                                    )}
-                                    {selectedAppointment?.patient?.allergies && (
-                                        <Typography variant="body2" color="text.secondary">
-                                            Allergies: {selectedAppointment.patient.allergies}
+                                                </Box>
+                                            ) : (
+                                                selectedAppointment?.fees_paid > 0 && (
+                                                    <Typography variant="body2" sx={{ 
+                                                        display: 'block', 
+                                                        mt: 1,
+                                                        fontWeight: 500,
+                                                        color: '#15803d'
+                                                    }}>
+                                                        Amount Paid: ₹{selectedAppointment.fees_paid}
                                         </Typography>
+                                                )
                                     )}
                                 </Box>
                             </Box>
                         </Grid>
 
-                        <Grid item xs={12}>
-                            <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                                <CalendarTodayIcon color="primary" sx={{ mr: 1.5 }} />
+                                {/* Check-in Status - Now Step 2 */}
+                                <Grid item xs={12} sm={6}>
+                                    <Box sx={{ 
+                                        display: 'flex', 
+                                        alignItems: 'center',
+                                        mb: 1
+                                    }}>
+                                        <Box sx={{ 
+                                            width: 36, 
+                                            height: 36, 
+                                            borderRadius: '50%',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            bgcolor: selectedAppointment?.queobj?.checkin ? 'rgba(21, 128, 61, 0.1)' : 'rgba(234, 179, 8, 0.1)',
+                                            mr: 2,
+                                            flexShrink: 0
+                                        }}>
+                                            {selectedAppointment?.queobj?.checkin ? (
+                                                <CheckCircleIcon sx={{ color: '#15803d' }} />
+                                            ) : (
+                                                <WarningIcon sx={{ color: '#eab308' }} />
+                                            )}
+                                        </Box>
                                 <Box>
-                                    <Typography variant="subtitle2">Appointment Slot</Typography>
-                                    <Typography variant="body2" color="text.secondary">
-                                        {selectedAppointment?.cabinslot?.slot && formatDate(selectedAppointment?.cabinslot?.slot)}
+                                            <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 500 }}>
+                                                Step 2: Check-in
+                                            </Typography>
+                                            <Typography variant="subtitle1" sx={{ 
+                                                fontWeight: 'bold',
+                                                color: selectedAppointment?.queobj?.checkin ? '#15803d' : '#eab308',
+                                                mt: 0.5
+                                            }}>
+                                                {selectedAppointment?.queobj?.checkin ? "Completed" : "Action Required"}
+                                            </Typography>
+                                            {!selectedAppointment?.queobj?.checkin && (
+                                                <Box sx={{ 
+                                                    mt: 1,
+                                                    p: 1,
+                                                    borderRadius: 2,
+                                                    bgcolor: 'rgba(234, 179, 8, 0.08)',
+                                                    border: '1px solid',
+                                                    borderColor: 'rgba(234, 179, 8, 0.3)'
+                                                }}>
+                                                    <Typography variant="body2" sx={{ color: '#854d0e', fontWeight: 500 }}>
+                                                        Please visit the reception desk to check in for your appointment
                                     </Typography>
+                                                </Box>
+                                            )}
                                 </Box>
                             </Box>
                         </Grid>
 
-                        <Grid item xs={6}>
-                            <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                <AccessTimeIcon color="primary" sx={{ mr: 1 }} />
-                                <Box>
-                                    <Typography variant="subtitle2">Expected Time</Typography>
-                                    <Typography variant="body2" color="text.secondary">
+                                {/* Divider */}
+                                <Grid item xs={12}>
+                                    <Divider sx={{ my: 0.5 }} />
+                                </Grid>
+
+                                {/* Waiting Position & Time Combined - Smaller size now */}
+                                <Grid item xs={12}>
+                                    <Box sx={{
+                                        display: 'flex',
+                                        flexDirection: 'column',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        py: 1
+                                    }}>
+                                        <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 500, mb: 1 }}>
+                                            {selectedAppointment?.queobj?.checkin && selectedAppointment?.queobj?.paid ? 
+                                                '' : 
+                                                'Complete the steps above to join the queue'}
+                                        </Typography>
+                                        
+                                        <Box sx={{ 
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            gap: 4,
+                                            width: '100%'
+                                        }}>
+                                            {selectedAppointment?.queobj?.late ? (
+                                                <Box sx={{ 
+                                                    display: 'flex',
+                                                    flexDirection: 'column',
+                                                    alignItems: 'center',
+                                                    bgcolor: '#fff7ed',
+                                                    border: '1px solid #fdba74',
+                                                    borderRadius: 2,
+                                                    p: 2,
+                                                    width: '100%',
+                                                    maxWidth: 300
+                                                }}>
+                                                    <WarningIcon sx={{ color: '#ea580c', fontSize: 32 }} />
+                                                    <Typography variant="h5" sx={{ 
+                                                        fontWeight: 'bold',
+                                                        color: '#ea580c',
+                                                        mt: 1
+                                                    }}>
+                                                        LATE
+                                                    </Typography>
+                                                    <Typography variant="body1" sx={{ 
+                                                        color: '#c2410c',
+                                                        textAlign: 'center',
+                                                        mt: 1
+                                                    }}>
+                                                        Please visit reception after reaching the hospital
+                                                    </Typography>
+                                                </Box>
+                                            ) : selectedAppointment?.queobj?.waiting === 0 ? (
+                                                <Box sx={{ 
+                                                    display: 'flex',
+                                                    flexDirection: 'column',
+                                                    alignItems: 'center',
+                                                    bgcolor: '#ecfdf5',
+                                                    border: '1px solid #86efac',
+                                                    borderRadius: 2,
+                                                    p: 2,
+                                                    width: '100%',
+                                                    maxWidth: 300
+                                                }}>
+                                                    <CheckCircleIcon sx={{ color: '#15803d', fontSize: 32 }} />
+                                                    <Typography variant="h5" sx={{ 
+                                                        fontWeight: 'bold',
+                                                        color: '#15803d',
+                                                        mt: 1
+                                                    }}>
+                                                        YOUR TURN
+                                                    </Typography>
+                                                    <Typography variant="body1" sx={{ 
+                                                        color: '#047857',
+                                                        textAlign: 'center',
+                                                        mt: 1
+                                                    }}>
+                                                        Please proceed to the doctor's room
+                                    </Typography>
+                                </Box>
+                                            ) : (
+                                                <>
+                                                    <Box sx={{ 
+                                                        display: 'flex',
+                                                        flexDirection: 'column',
+                                                        alignItems: 'center'
+                                                    }}>
+                                                        <Typography variant="overline" sx={{ color: 'primary.main', fontWeight: 600 }}>
+                                                            Waiting
+                                                        </Typography>
+                                                        <Typography variant="h5" sx={{ 
+                                                            fontWeight: 'bold',
+                                                            color: 'primary.main'
+                                                        }}>
+                                                            {selectedAppointment?.queobj?.waiting !== undefined ? selectedAppointment?.queobj?.waiting : '-'}
+                                                        </Typography>
+                            </Box>
+                                                    
+                                                    <Box sx={{ 
+                                                        display: 'flex',
+                                                        flexDirection: 'column',
+                                                        alignItems: 'center'
+                                                    }}>
+                                                        <Typography variant="overline" sx={{ color: 'primary.main', fontWeight: 600 }}>
+                                                            Waiting Time
+                                                        </Typography>
+                                                        <Typography variant="h5" sx={{ 
+                                                            fontWeight: 'bold',
+                                                            color: 'primary.main'
+                                                        }}>
                                         {formatSecondsToHoursMinutes(selectedAppointment?.queobj?.wait_time)}
                                     </Typography>
                                 </Box>
-                            </Box>
-                        </Grid>
-                        <Grid item xs={6}>
-                            <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                <AccessTimeIcon color="primary" sx={{ mr: 1 }} />
-                                <Box>
-                                    <Typography variant="subtitle2">Waiting</Typography>
-                                    <Typography variant="body2" color="text.secondary">
-                                        {selectedAppointment?.queobj?.waiting}
-                                    </Typography>
-                                </Box>
-                            </Box>
-                        </Grid>
-
-                        <Grid item xs={12}>
-                            <Box sx={{ display: 'flex', alignItems: 'center', mb: 1, mt: 1 }}>
-                                <MedicalServicesIcon color="primary" sx={{ mr: 1.5 }} />
-                                <Box>
-                                    <Typography variant="subtitle2">Appointment Details</Typography>
-                                    {selectedAppointment?.appointmentType && (
-                                        <Typography variant="body2" color="text.secondary">
-                                            Type: {selectedAppointment.appointmentType}
-                                        </Typography>
-                                    )}
-                                    {selectedAppointment?.disease && selectedAppointment?.disease !== "Not specified" && (
-                                        <Typography variant="body2" color="text.secondary">
-                                            Issue: {selectedAppointment.disease}
-                                        </Typography>
-                                    )}
-                                    {selectedAppointment?.queobj?.status && (
-                                        <Typography variant="body2" color="text.secondary">
-                                            Status: {selectedAppointment?.queobj?.status}
-                                        </Typography>
-                                    )}
-                                    {selectedAppointment?.queobj?.checkin !== undefined && (
-                                        <>
-                                            <Typography variant="body2" color="text.secondary">
-                                                Check-in Status: <Box component="span" sx={{ 
-                                                    color: selectedAppointment.queobj.checkin ? '#15803d' : '#dc2626',
-                                                    fontWeight: 'bold'
-                                                }}>
-                                                    {selectedAppointment.queobj.checkin ? "Checked In" : "Not Checked In"}
-                                                </Box>
-                                            </Typography>
-                                            {!selectedAppointment.queobj.checkin && (
-                                                <Typography variant="body2" sx={{ 
-                                                    color: '#dc2626',
-                                                    fontSize: '0.8rem',
-                                                    mt: 0.5,
-                                                    fontStyle: 'italic'
-                                                }}>
-                                                    Please visit reception desk for check-in process
-                                                </Typography>
+                                                </>
                                             )}
-                                        </>
-                                    )}
-                                </Box>
-                            </Box>
-                        </Grid>
+                                        </Box>
 
-                        <Grid item xs={12}>
-                            <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                                <ReceiptIcon color="primary" sx={{ mr: 1.5 }} />
-                                <Box>
-                                    <Typography variant="subtitle2">Payment Information</Typography>
-                                        <Typography variant="body2" color="text.secondary">
-                                            Payment Status: <Box component="span" sx={{ 
-                                                color: selectedAppointment?.queobj?.paid ? '#15803d' : '#dc2626',
-                                                fontWeight: 'bold'
+                                        {!selectedAppointment?.queobj?.checkin || !selectedAppointment?.queobj?.paid ? (
+                                            <Typography variant="body2" sx={{
+                                                color: '#dc2626',
+                                                fontWeight: 600,
+                                                mt: 2,
+                                                textAlign: 'center'
                                             }}>
-                                                {selectedAppointment?.queobj?.paid ? "Paid" : "Not Paid"}
+                                                Your number will be called only after payment and check-in
+                                            </Typography>
+                                        ) : null}
+                                        
+                                        {/* Urgency Message in Details View */}
+                                        {!selectedAppointment?.queobj?.checkin && 
+                                          selectedAppointment?.queobj?.waiting <= 10 && 
+                                          selectedAppointment?.buffer && 
+                                          selectedAppointment?.queobj?.waiting > 0 &&
+                                          !selectedAppointment?.queobj?.late && (
+                                            <Typography variant="body2" sx={{
+                                                color: '#f97316',
+                                                fontWeight: 600,
+                                                mt: 2,
+                                                textAlign: 'center',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'center'
+                                            }}>
+                                                <WarningIcon sx={{ fontSize: 18, mr: 0.8 }} />
+                                                Check in required, You may be marked late after {Math.max(0, selectedAppointment.queobj.waiting - parseInt(selectedAppointment.buffer))} patient{Math.max(0, selectedAppointment.queobj.waiting - parseInt(selectedAppointment.buffer)) !== 1 ? 's' : ''}.
+                                            </Typography>
+                                        )}
+                            </Box>
+                        </Grid>
+                            </Grid>
+                        </CardContent>
+                    </Card>
+
+                    {/* Primary Appointment Information */}
+                    <Typography variant="h6" fontWeight="600" sx={{ mb: 2, px: 0.5 }}>
+                        Appointment Details
+                    </Typography>
+                    <Card elevation={0} sx={{ 
+                        borderRadius: 3, 
+                        bgcolor: 'white',
+                        border: '1px solid #e5e7eb',
+                        boxShadow: '0 4px 20px rgba(0,0,0,0.05)',
+                        p: 2.5,
+                        mb: 3
+                    }}>
+                        <Grid container spacing={3}>
+                        <Grid item xs={6}>
+                                <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 500 }}>
+                                    Date
+                                    </Typography>
+                                <Typography variant="body1" fontWeight="600" sx={{ mt: 0.5 }}>
+                                    {selectedAppointment?.cabinslot?.slot && formatDate(selectedAppointment?.cabinslot?.slot).split(',')[0]}
+                                </Typography>
+                            </Grid>
+                            <Grid item xs={6}>
+                                <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 500 }}>
+                                    Time
+                                </Typography>
+                                <Typography variant="body1" fontWeight="600" sx={{ mt: 0.5 }}>
+                                    {selectedAppointment?.cabinslot?.slot && formatDate(selectedAppointment?.cabinslot?.slot).split(',')[1]}
+                                </Typography>
+                        </Grid>
+
+                            {selectedAppointment?.token && (
+                                <Grid item xs={6}>
+                                    <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 500 }}>
+                                        Token Number
+                                    </Typography>
+                                    <Typography variant="body1" fontWeight="600" sx={{ mt: 0.5 }}>
+                                        #{selectedAppointment?.token}
+                                    </Typography>
+                                </Grid>
+                            )}
+
+                                    {selectedAppointment?.appointmentType && (
+                                <Grid item xs={6}>
+                                    <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 500 }}>
+                                        Appointment Type
+                                        </Typography>
+                                    <Typography variant="body1" fontWeight="600" sx={{ mt: 0.5 }}>
+                                        {selectedAppointment.appointmentType}
+                                    </Typography>
+                                </Grid>
+                                    )}
+                            
+                                    {selectedAppointment?.disease && selectedAppointment?.disease !== "Not specified" && (
+                                <Grid item xs={6}>
+                                    <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 500 }}>
+                                        Health Issue
+                                        </Typography>
+                                    <Typography variant="body1" fontWeight="600" sx={{ mt: 0.5 }}>
+                                        {selectedAppointment.disease}
+                                    </Typography>
+                                </Grid>
+                                    )}
+                            
+                                    {selectedAppointment?.queobj?.status && (
+                                <Grid item xs={6}>
+                                    <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 500 }}>
+                                        Status
+                                        </Typography>
+                                    <Typography variant="body1" fontWeight="600" sx={{ mt: 0.5 }}>
+                                        {selectedAppointment?.queobj?.status}
+                                    </Typography>
+                                </Grid>
+                            )}
+                            
+                            {selectedAppointment?.mode && (
+                                <Grid item xs={6}>
+                                    <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 500 }}>
+                                        Payment Mode
+                                            </Typography>
+                                    <Typography variant="body1" fontWeight="600" sx={{ mt: 0.5 }}>
+                                        {selectedAppointment.mode}
+                                                </Typography>
+                                </Grid>
+                                            )}
+                        </Grid>
+                    </Card>
+
+                    {/* Accordion Sections for Patient and Doctor Info */}
+                    <Card elevation={0} sx={{ 
+                        borderRadius: 3, 
+                        bgcolor: 'white',
+                        border: '1px solid #e5e7eb',
+                        boxShadow: '0 4px 20px rgba(0,0,0,0.05)',
+                        overflow: 'hidden',
+                        mb: 3
+                    }}>
+                        {/* Patient Information Section */}
+                        <Box sx={{ p: 2.5, borderBottom: '1px solid #e5e7eb' }}>
+                            <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                                <Avatar sx={{ 
+                                    bgcolor: 'primary.main', 
+                                    width: 40, 
+                                    height: 40,
+                                    mr: 2
+                                }}>
+                                    <PersonIcon />
+                                </Avatar>
+                                <Typography variant="subtitle1" fontWeight="600">
+                                    Patient Information
+                                </Typography>
                                             </Box>
+                            
+                            <Grid container spacing={2}>
+                                <Grid item xs={6}>
+                                    <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 500 }}>
+                                        Name
                                         </Typography>
-                                    {selectedAppointment?.mode && (
-                                        <Typography variant="body2" color="text.secondary">
-                                            Payment Mode: {selectedAppointment.mode}
+                                    <Typography variant="body1" fontWeight="500" sx={{ mt: 0.5 }}>
+                                        {selectedAppointment?.name}
                                         </Typography>
-                                    )}
-                                    {selectedAppointment?.fees_paid && (
-                                        <Typography variant="body2" color="text.secondary">
-                                            Fees Paid: {selectedAppointment.fees_paid}
+                                </Grid>
+
+                                <Grid item xs={6}>
+                                    <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 500 }}>
+                                        Phone
                                         </Typography>
-                                    )}
-                                </Box>
-                            </Box>
+                                    <Typography variant="body1" fontWeight="500" sx={{ mt: 0.5 }}>
+                                        {selectedAppointment?.patient?.phone_number || "Not provided"}
+                                    </Typography>
                         </Grid>
 
-                        <Grid item xs={12}>
-                            <Divider sx={{ my: 0.5 }} />
+                                <Grid item xs={6}>
+                                    <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 500 }}>
+                                        Patient ID
+                                    </Typography>
+                                    <Typography variant="body1" fontWeight="500" sx={{ mt: 0.5 }}>
+                                        {selectedAppointment?.patient?.patient_id}
+                                    </Typography>
                         </Grid>
 
+                                <Grid item xs={6}>
+                                    <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 500 }}>
+                                        Age
+                                    </Typography>
+                                    <Typography variant="body1" fontWeight="500" sx={{ mt: 0.5 }}>
+                                        {selectedAppointment?.patient?.age}
+                                    </Typography>
+                                </Grid>
+
+                                <Grid item xs={6}>
+                                    <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 500 }}>
+                                        Gender
+                                    </Typography>
+                                    <Typography variant="body1" fontWeight="500" sx={{ mt: 0.5 }}>
+                                        {selectedAppointment?.patient?.gender === 'M' ? 'Male' : 
+                                         selectedAppointment?.patient?.gender === 'F' ? 'Female' : 
+                                         selectedAppointment?.patient?.gender}
+                                    </Typography>
+                                </Grid>
+                                
+                                {selectedAppointment?.patient?.allergies && (
                         <Grid item xs={12}>
-                            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1 }}>
-                                <Box sx={{ display: 'flex', alignItems: 'flex-start' }}>
-                                    <PhoneIcon color="primary" sx={{ mr: 1.5, mt: 0.5 }} />
-                                    <Box>
-                                        <Typography variant="subtitle2">Doctor Information</Typography>
-                                        <Typography variant="body2" color="text.secondary">
-                                            Dr. {selectedAppointment?.cabin?.doctor?.name}
+                                        <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 500 }}>
+                                            Allergies
                                         </Typography>
-                                        <Typography variant="body2" color="text.secondary">
-                                            Clinic: {selectedAppointment?.cabin?.hospital?.hospital_name}
+                                        <Typography variant="body1" fontWeight="500" sx={{ mt: 0.5 }}>
+                                            {selectedAppointment.patient.allergies}
                                         </Typography>
+                                    </Grid>
+                                )}
+                            </Grid>
                                     </Box>
+
+                        {/* Doctor Information Section */}
+                        <Box sx={{ p: 2.5 }}>
+                            <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                                <Avatar sx={{ 
+                                    bgcolor: 'primary.main', 
+                                    width: 40, 
+                                    height: 40,
+                                    mr: 2
+                                }}>
+                                    <MedicalServicesIcon />
+                                </Avatar>
+                                <Typography variant="subtitle1" fontWeight="600">
+                                    Clinic & Doctor
+                                </Typography>
                                 </Box>
+                            
+                            <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 500 }}>
+                                Clinic
+                            </Typography>
+                            <Typography variant="body1" fontWeight="500" sx={{ mb: 2 }}>
+                                {selectedAppointment?.cabin?.hospital?.hospital_name}
+                            </Typography>
+                            
+                            <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 500 }}>
+                                Doctor
+                            </Typography>
+                            <Typography variant="body1" fontWeight="500" sx={{ mb: 2 }}>
+                                Dr. {selectedAppointment?.cabin?.doctor?.name}
+                            </Typography>
+                            
+                            <Box sx={{
+                                display: 'flex',
+                                mt: 2
+                            }}>
+                                <Button
+                                    variant="outlined"
+                                    startIcon={<DirectionsIcon />}
+                                    onClick={() => {
+                                        if (selectedAppointment?.cabin?.hospital?.location) {
+                                            handleDirections(selectedAppointment.cabin.hospital.location);
+                                        }
+                                    }}
+                                    size="small"
+                                    sx={{
+                                        borderRadius: 2,
+                                        mr: 2,
+                                        textTransform: 'none'
+                                    }}
+                                >
+                                    Get Directions
+                                </Button>
+                                <Button
+                                    variant="outlined"
+                                    startIcon={<PhoneIcon />}
+                                    onClick={handleCall}
+                                    size="small"
+                                    sx={{
+                                        borderRadius: 2,
+                                        textTransform: 'none'
+                                    }}
+                                >
+                                    Call Clinic
+                                </Button>
                             </Box>
-                        </Grid>
-                    </Grid>
-                </DialogContent>
-                <DialogActions sx={{ p: 2, pt: 0 }}>
-                    <Button onClick={() => {
+                        </Box>
+                    </Card>
+
+                    <Box sx={{ mt: 2 }}>
+                        <Button 
+                            onClick={() => {
                         setShowAppointmentDetails(false);
                         navigate("/doctor/2");
-                    }} variant="contained" size="small" fullWidth sx={{ borderRadius: 2 }}>
-                        View Doctor
+                            }} 
+                            variant="contained" 
+                            fullWidth
+                            sx={{ 
+                                borderRadius: 3, 
+                                py: 1.5, 
+                                fontWeight: 600,
+                                textTransform: 'none',
+                                fontSize: '1rem',
+                                boxShadow: '0 4px 12px rgba(25, 118, 210, 0.2)',
+                                '&:hover': {
+                                    boxShadow: '0 6px 16px rgba(25, 118, 210, 0.3)',
+                                    transform: 'translateY(-2px)'
+                                },
+                                transition: 'all 0.2s',
+                                mb: 2
+                            }}
+                        >
+                            View Doctor Profile
+                    </Button>
+                        
+                        <Button
+                            onClick={handleCancelAppointment}
+                            fullWidth
+                            variant="outlined"
+                            color="error"
+                            startIcon={<CancelIcon />}
+                            sx={{
+                                borderRadius: 3,
+                                py: 1.5,
+                                fontWeight: 600,
+                                textTransform: 'none',
+                                fontSize: '1rem',
+                                mb: 2,
+                                borderColor: 'error.main',
+                                '&:hover': {
+                                    backgroundColor: 'error.50',
+                                    borderColor: 'error.dark'
+                                }
+                            }}
+                        >
+                            Cancel Appointment
+                        </Button>
+                        
+                        <Button
+                            onClick={handleCloseAppointmentDetails}
+                            fullWidth
+                            variant="outlined"
+                            sx={{
+                                borderRadius: 3,
+                                py: 1.5,
+                                fontWeight: 600,
+                                textTransform: 'none',
+                                fontSize: '1rem',
+                            }}
+                        >
+                            Close
+                        </Button>
+                    </Box>
+                </DialogContent>
+            </Dialog>
+            
+            {/* Cancel Appointment Confirmation Dialog */}
+            <Dialog
+                open={showCancelDialog}
+                onClose={() => setShowCancelDialog(false)}
+                PaperProps={{
+                    sx: {
+                        borderRadius: 3,
+                        maxWidth: 400
+                    }
+                }}
+            >
+                <DialogTitle sx={{ pb: 1 }}>
+                    Cancel Appointment
+                </DialogTitle>
+                <DialogContent>
+                    <DialogContentText>
+                        Are you sure you want to cancel this appointment? This action cannot be undone.
+                    </DialogContentText>
+                </DialogContent>
+                <DialogActions sx={{ px: 3, pb: 3 }}>
+                    <Button 
+                        onClick={() => setShowCancelDialog(false)}
+                        variant="outlined"
+                        sx={{ borderRadius: 2 }}
+                    >
+                        No, Keep It
+                    </Button>
+                    <Button
+                        onClick={confirmCancelAppointment}
+                        color="error"
+                        variant="contained"
+                        disabled={isCanceling}
+                        sx={{ 
+                            borderRadius: 2,
+                            minWidth: 100
+                        }}
+                    >
+                        {isCanceling ? (
+                            <CircularProgress size={24} color="inherit" />
+                        ) : (
+                            "Yes, Cancel"
+                        )}
                     </Button>
                 </DialogActions>
             </Dialog>
+            
+            {/* Snackbar for notifications */}
+            <Snackbar
+                open={snackbar.open}
+                autoHideDuration={5000}
+                onClose={handleCloseSnackbar}
+                anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+            >
+                <Alert
+                    onClose={handleCloseSnackbar}
+                    severity={snackbar.severity}
+                    sx={{ width: '100%' }}
+                >
+                    {snackbar.message}
+                </Alert>
+            </Snackbar>
         </Box>
     );
 };

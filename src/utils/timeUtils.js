@@ -1,11 +1,11 @@
 /**
  * Formats seconds into a human-readable string showing hours and minutes
  * @param {number} seconds - The number of seconds to format
- * @returns {string} Formatted string in the format "x hrs y min"
+ * @returns {string} Formatted string in the format "x hrs y min" for times > 60 min, or "y min" for shorter times
  */
 export const formatSecondsToHoursMinutes = (seconds) => {
-    if (isNaN(seconds) || seconds < 0) {
-        return '0 hrs 0 min';
+    if (!seconds || isNaN(seconds) || seconds < 0) {
+        return '0 min';
     }
 
     const hours = Math.floor(seconds / 3600);
