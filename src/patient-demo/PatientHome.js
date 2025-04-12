@@ -329,18 +329,25 @@ const PatientHome = () => {
     const formatLastUpdatedTime = (date) => {
         if (!date) return "";
         
-        // Get current time and calculate time difference in minutes
+        // Get current time and calculate time difference in seconds
         const now = new Date();
         const diffMs = now - date;
-        const diffMins = Math.floor(diffMs / 60000);
+        const diffSecs = Math.floor(diffMs / 1000);
         
-        // Show only time ago indicator
-        if (diffMins < 1) {
+        // Show time in 10-second intervals
+        if (diffSecs < 10) {
             return "just now";
-        } else if (diffMins === 1) {
-            return "1 min ago";
         } else {
-            return `${diffMins} mins ago`;
+            // Round down to nearest 10 seconds
+            const roundedSecs = Math.floor(diffSecs / 10) * 10;
+            
+            // Convert to minutes if more than 60 seconds
+            if (roundedSecs >= 60) {
+                const diffMins = Math.floor(diffSecs / 60);
+                return diffMins === 1 ? "1 min ago" : `${diffMins} mins ago`;
+            }
+            
+            return `${roundedSecs} seconds ago`;
         }
     };
 
@@ -715,21 +722,34 @@ const PatientHome = () => {
                                                             </IconButton>
                                                         </Box>
                                                                                 <Typography variant="subtitle1" sx={{ color: '#0284c7', fontWeight: 600 }}>
-                                                                                    Wait time: {formatSecondsToHoursMinutes(appointment?.queobj?.wait_time)}
+                                                                                    Wait time: ~{formatSecondsToHoursMinutes(appointment?.queobj?.wait_time)} <Typography component="span" variant="caption" sx={{ color: '#64748b', fontStyle: 'italic', fontSize: '0.7rem' }}>(Estimated)</Typography>
                                                                                 </Typography>
                                                                                 
                                                                                 {/* Urgency Message - Show if waiting <= 10 and not checked in */}
                                                                                 {!appointment?.queobj?.checkin && appointment?.queobj?.waiting <= 10 && appointment?.buffer && (
-                                                                                    <Typography variant="body2" sx={{
-                                                                                        color: '#f97316',
-                                                                                        fontWeight: 600,
-                                                                                        mt: 0.5,
+                                                                                    <Box sx={{
+                                                                                        bgcolor: 'rgba(249, 115, 22, 0.1)',
+                                                                                        borderRadius: 1.5,
+                                                                                        p: 1,
+                                                                                        mt: 1,
                                                                                         display: 'flex',
                                                                                         alignItems: 'center'
                                                                                     }}>
-                                                                                        <WarningIcon sx={{ fontSize: 16, mr: 0.5 }} />
-                                                                                        Check in required, You may be marked late after {Math.max(0, appointment.queobj.waiting - parseInt(appointment.buffer))} patient{Math.max(0, appointment.queobj.waiting - parseInt(appointment.buffer)) !== 1 ? 's' : ''}.
-                                                                                    </Typography>
+                                                                                        <WarningIcon sx={{ 
+                                                                                            fontSize: 18, 
+                                                                                            mr: 1,
+                                                                                            color: '#f97316' 
+                                                                                        }} />
+                                                                                        <Typography variant="body2" sx={{
+                                                                                            color: '#f97316',
+                                                                                            fontWeight: 600,
+                                                                                            lineHeight: 1.3
+                                                                                        }}>
+                                                                                            Please reach clinic and check-in at reception <Typography component="span" variant="caption" sx={{ fontWeight: 400 }}>
+                                                                                                (within {Math.max(0, appointment.queobj.waiting - parseInt(appointment.buffer))} patient{Math.max(0, appointment.queobj.waiting - parseInt(appointment.buffer)) !== 1 ? 's' : ''})
+                                                                                            </Typography>
+                                                                                        </Typography>
+                                                                                    </Box>
                                                                                 )}
                                                                             </Box>
                                                                         </Box>
@@ -980,31 +1000,6 @@ const PatientHome = () => {
                     bgcolor: '#f8fafc',
                     background: 'linear-gradient(to bottom, #f1f5f9 0%, #f8fafc 100%)'
                 }}>
-                    {/* Important Information Banner - Only show if steps are incomplete */}
-                    {/* {(!selectedAppointment?.queobj?.paid || !selectedAppointment?.queobj?.checkin) && (
-                        <Box sx={{
-                            bgcolor: '#f0f9ff',
-                            border: '1px solid #bae6fd',
-                            borderLeft: '4px solid #0284c7',
-                            borderRadius: 2,
-                            p: 2.5,
-                            mb: 3,
-                            display: 'flex',
-                            alignItems: 'center',
-                            boxShadow: '0 4px 12px rgba(0,0,0,0.05)'
-                        }}>
-                            <InfoIcon sx={{ color: '#0284c7', mr: 2, flexShrink: 0 }} />
-                                <Box>
-                                <Typography variant="subtitle1" sx={{ fontWeight: 600, color: '#0c4a6e', mb: 0.5 }}>
-                                    Important: Next Steps for Your Appointment
-                                        </Typography>
-                                <Typography variant="body2" sx={{ color: '#0c4a6e' }}>
-                                    You must both check in <strong>and</strong> complete payment at the reception desk before your number will be called for your appointment.
-                                        </Typography>
-                            </Box>
-                        </Box>
-                    )} */}
-
                     {/* Appointment Progress Status */}
                     <Typography variant="h6" fontWeight="600" sx={{ mb: 2, px: 0.5 }}>
                         Appointment Status
@@ -1176,14 +1171,21 @@ const PatientHome = () => {
                                                     width: '100%',
                                                     maxWidth: 300
                                                 }}>
-                                                    <WarningIcon sx={{ color: '#ea580c', fontSize: 32 }} />
-                                                    <Typography variant="h5" sx={{ 
-                                                        fontWeight: 'bold',
-                                                        color: '#ea580c',
-                                                        mt: 1
+                                                    <Box sx={{ 
+                                                        display: 'flex',
+                                                        flexDirection: 'row',
+                                                        alignItems: 'center',
+                                                        justifyContent: 'center',
+                                                        mb: 1
                                                     }}>
-                                                        LATE
-                                                    </Typography>
+                                                        <WarningIcon sx={{ color: '#ea580c', fontSize: 32, mr: 1.5 }} />
+                                                        <Typography variant="h5" sx={{ 
+                                                            fontWeight: 'bold',
+                                                            color: '#ea580c'
+                                                        }}>
+                                                            LATE
+                                                        </Typography>
+                                                    </Box>
                                                     <Typography variant="body1" sx={{ 
                                                         color: '#c2410c',
                                                         textAlign: 'center',
@@ -1250,42 +1252,42 @@ const PatientHome = () => {
                                                             fontWeight: 'bold',
                                                             color: 'primary.main'
                                                         }}>
-                                        {formatSecondsToHoursMinutes(selectedAppointment?.queobj?.wait_time)}
+                                        ~{formatSecondsToHoursMinutes(selectedAppointment?.queobj?.wait_time)} <Typography component="span" variant="caption" sx={{ color: '#64748b', fontStyle: 'italic', fontSize: '0.7rem' }}>(Estimated)</Typography>
                                     </Typography>
                                 </Box>
                                                 </>
                                             )}
                                         </Box>
 
-                                        {!selectedAppointment?.queobj?.checkin || !selectedAppointment?.queobj?.paid ? (
-                                            <Typography variant="body2" sx={{
-                                                color: '#dc2626',
-                                                fontWeight: 600,
-                                                mt: 2,
-                                                textAlign: 'center'
-                                            }}>
-                                                Your number will be called only after payment and check-in
-                                            </Typography>
-                                        ) : null}
-                                        
                                         {/* Urgency Message in Details View */}
                                         {!selectedAppointment?.queobj?.checkin && 
                                           selectedAppointment?.queobj?.waiting <= 10 && 
                                           selectedAppointment?.buffer && 
                                           selectedAppointment?.queobj?.waiting > 0 &&
                                           !selectedAppointment?.queobj?.late && (
-                                            <Typography variant="body2" sx={{
-                                                color: '#f97316',
-                                                fontWeight: 600,
-                                                mt: 2,
-                                                textAlign: 'center',
+                                            <Box sx={{
+                                                bgcolor: 'rgba(249, 115, 22, 0.1)',
+                                                borderRadius: 1.5,
+                                                p: 1,
+                                                mt: 1,
                                                 display: 'flex',
-                                                alignItems: 'center',
-                                                justifyContent: 'center'
+                                                alignItems: 'center'
                                             }}>
-                                                <WarningIcon sx={{ fontSize: 18, mr: 0.8 }} />
-                                                Check in required, You may be marked late after {Math.max(0, selectedAppointment.queobj.waiting - parseInt(selectedAppointment.buffer))} patient{Math.max(0, selectedAppointment.queobj.waiting - parseInt(selectedAppointment.buffer)) !== 1 ? 's' : ''}.
-                                            </Typography>
+                                                <WarningIcon sx={{ 
+                                                    fontSize: 18, 
+                                                    mr: 1,
+                                                    color: '#f97316' 
+                                                }} />
+                                                <Typography variant="body2" sx={{
+                                                    color: '#f97316',
+                                                    fontWeight: 600,
+                                                    lineHeight: 1.3
+                                                }}>
+                                                    Please reach clinic and check-in at reception <Typography component="span" variant="caption" sx={{ fontWeight: 400 }}>
+                                                        (within {Math.max(0, selectedAppointment.queobj.waiting - parseInt(selectedAppointment.buffer))} patient{Math.max(0, selectedAppointment.queobj.waiting - parseInt(selectedAppointment.buffer)) !== 1 ? 's' : ''})
+                                                    </Typography>
+                                                </Typography>
+                                            </Box>
                                         )}
                             </Box>
                         </Grid>
@@ -1306,22 +1308,14 @@ const PatientHome = () => {
                         mb: 3
                     }}>
                         <Grid container spacing={3}>
-                        <Grid item xs={6}>
+                        <Grid item xs={12}>
                                 <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 500 }}>
-                                    Date
+                                    Slot
                                     </Typography>
                                 <Typography variant="body1" fontWeight="600" sx={{ mt: 0.5 }}>
-                                    {selectedAppointment?.cabinslot?.slot && formatDate(selectedAppointment?.cabinslot?.slot).split(',')[0]}
+                                    {selectedAppointment?.cabinslot?.slot && formatDate(selectedAppointment?.cabinslot?.slot)}
                                 </Typography>
                             </Grid>
-                            <Grid item xs={6}>
-                                <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 500 }}>
-                                    Time
-                                </Typography>
-                                <Typography variant="body1" fontWeight="600" sx={{ mt: 0.5 }}>
-                                    {selectedAppointment?.cabinslot?.slot && formatDate(selectedAppointment?.cabinslot?.slot).split(',')[1]}
-                                </Typography>
-                        </Grid>
 
                             {selectedAppointment?.token && (
                                 <Grid item xs={6}>

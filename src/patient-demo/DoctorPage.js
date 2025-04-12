@@ -12,6 +12,7 @@ import PersonIcon from "@mui/icons-material/Person";
 import PhoneIcon from "@mui/icons-material/Phone";
 import SchoolIcon from "@mui/icons-material/School";
 import StarIcon from "@mui/icons-material/Star";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import {
   Alert,
   Autocomplete,
@@ -43,7 +44,10 @@ import {
   TableRow,
   Tabs,
   TextField,
-  Typography
+  Typography,
+  Accordion,
+  AccordionSummary,
+  AccordionDetails
 } from "@mui/material";
 import React, { useContext, useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
@@ -77,7 +81,7 @@ const DoctorPage = () => {
   const [formData, setFormData] = useState({
     name: "",
     age: "",
-    gender: "M",
+    gender: "",
     guardian: "",
     location: "",
     healthIssue: "",
@@ -229,14 +233,14 @@ const DoctorPage = () => {
             name: "",
             relation: "",
             age: "",
-            gender: "M",
+            gender: "",
         });
         
         // Reset all form data
         setFormData({
             name: "",
             age: "",
-            gender: "M",
+            gender: "",
             guardian: "",
             location: "",
             healthIssue: "",
@@ -302,7 +306,7 @@ const DoctorPage = () => {
             ...prev,
             name: "",
             age: "",
-            gender: "M",
+            gender: "",
             guardian: "",
             location: "",
             patientId: null
@@ -333,6 +337,15 @@ const DoctorPage = () => {
         const formattedHours = (hours % 12 || 12).toString().padStart(2, '0');
 
         return `${day}/${month}/${year}, ${formattedHours}:${minutes} ${ampm}`;
+    };
+
+    // Check if a date is today
+    const isToday = (dateString) => {
+        const date = new Date(dateString);
+        const today = new Date();
+        return date.getDate() === today.getDate() &&
+               date.getMonth() === today.getMonth() &&
+               date.getFullYear() === today.getFullYear();
     };
 
   const handleConfirmBooking = async () => {
@@ -612,7 +625,13 @@ const DoctorPage = () => {
         <Typography variant="caption" color="text.secondary" display="block">
         Doctor Availability
         </Typography>
-        <Typography variant="body2" fontWeight="medium" color="primary">
+        <Typography 
+          variant="body2" 
+          fontWeight="medium" 
+          sx={{ 
+            color: doctor.currentStatus === "Available" ? "success.main" : "error.main"
+          }}
+        >
         {doctor.currentStatus}
         </Typography>
         </Box>
@@ -855,7 +874,16 @@ const DoctorPage = () => {
           }
         }}
       >
-        <Box sx={{ bgcolor: 'primary.main', color: 'white', py: 2, px: 3, position: 'relative', boxShadow: "0 2px 10px rgba(0,0,0,0.1)" }}>
+        <Box sx={{ 
+          bgcolor: 'primary.main', 
+          color: 'white', 
+          py: 2, 
+          px: 3, 
+          position: 'sticky', 
+          top: 0, 
+          zIndex: 10,
+          boxShadow: "0 2px 10px rgba(0,0,0,0.1)" 
+        }}>
           <Typography variant="h6" sx={{ textAlign: 'center', fontWeight: 600 }}>
             {bookingStage === 0 && "Book Appointment"}
             {bookingStage === 1 && "Processing"}
@@ -866,92 +894,8 @@ const DoctorPage = () => {
         <Box sx={{ p: 3, mb: 10 }}>
           {bookingStage === 0 && (
             <>
-              <Card elevation={0} sx={{ mb: 3, borderRadius: 2, border: "1px solid rgba(0,0,0,0.08)", overflow: "hidden" }}>
-                <CardContent sx={{ p: 2 }}>
-                  <Grid container spacing={2}>
-                    <Grid item xs={3}>
-                      <Avatar sx={{
-                        bgcolor: "primary.main",
-                        width: 60,
-                        height: 60,
-                        fontSize: "1.5rem"
-                      }}>
-                        {doctor.name.charAt(0)}
-                      </Avatar>
-                    </Grid>
-                    <Grid item xs={9}>
-                      <Typography variant="h6" sx={{ fontWeight: 600, mb: 0.5 }}>
-                        Dr. {doctor.name}
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        {doctor.specialty}
-                      </Typography>
-                      <Box sx={{ display: "flex", alignItems: "center", mt: 1 }}>
-                        <LocationOnIcon fontSize="small" sx={{ color: "text.disabled", mr: 0.5 }} />
-                        <Typography variant="body2" color="text.secondary" noWrap>
-                          {doctor.clinic}
-                        </Typography>
-                      </Box>
-                    </Grid>
-                  </Grid>
-                </CardContent>
-                <Divider />
-                <Box sx={{ px: 2, py: 1.5, bgcolor: "rgba(0,0,0,0.02)" }}>
-                  <Grid container>
-                    <Grid item xs={6}>
-                      <Typography variant="body2" color="text.secondary">
-                        Consultation Fee
-                      </Typography>
-                      <Typography variant="body1" fontWeight={500}>
-                        {doctor.fees}
-                      </Typography>
-                    </Grid>
-                    <Grid item xs={6} sx={{ textAlign: 'right' }}>
-                      <Typography variant="body2" color="text.secondary">
-                        Payment
-                      </Typography>
-                      <Typography variant="body1" fontWeight={500}>
-                        Pay at clinic
-                      </Typography>
-                    </Grid>
-                  </Grid>
-                </Box>
-              </Card>
-              
               <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>
-                Select Appointment Slot
-              </Typography>
-
-              <Grid container spacing={2}>
-                <Grid item xs={12}>
-                  <TextField
-                    fullWidth
-                    label="Select Slot"
-                    value={formData.selectedSlot}
-                    onChange={(e) => handleFormChange('selectedSlot', e.target.value)}
-                    required
-                    size="small"
-                    select
-                    error={!formData.selectedSlot && formData.formSubmitted}
-                    helperText={!formData.selectedSlot && formData.formSubmitted ? "Please select a slot" : ""}
-                  >
-                    {slots.length > 0 ? (
-                      slots.map((slot, index) => (
-                        <MenuItem key={index} value={slot.slot}>
-                          {formatSlotDateTime(slot.slot)}
-                        </MenuItem>
-                      ))
-                    ) : (
-                      <MenuItem disabled>No slots available currently</MenuItem>
-                    )}
-                  </TextField>
-                </Grid>
-              </Grid>
-
-              <Divider sx={{ my: 3 }} />
-              
-              <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>
-                Patient Information
+                Booking Details
               </Typography>
 
               <Grid container spacing={2}>
@@ -988,7 +932,42 @@ const DoctorPage = () => {
                   />
                 </Grid>
 
-                <Grid item xs={12} sm={6}>
+                <Grid item xs={12}>
+                  <TextField
+                    fullWidth
+                    label="Select Slot"
+                    value={formData.selectedSlot}
+                    onChange={(e) => handleFormChange('selectedSlot', e.target.value)}
+                    required
+                    size="small"
+                    select
+                    error={!formData.selectedSlot && formData.formSubmitted}
+                    helperText={!formData.selectedSlot && formData.formSubmitted ? "Please select a slot" : ""}
+                  >
+                    {slots.length > 0 ? (
+                      slots.map((slot, index) => (
+                        <MenuItem key={index} value={slot.slot}>
+                          {slot.is_active && isToday(slot.slot) ? (
+                            <Box sx={{ 
+                              display: 'flex', 
+                              alignItems: 'center',
+                              color: 'success.main',
+                              fontWeight: 'bold'
+                            }}>
+                              Current Slot ({formatSlotDateTime(slot.slot)})
+                            </Box>
+                          ) : (
+                            formatSlotDateTime(slot.slot)
+                          )}
+                        </MenuItem>
+                      ))
+                    ) : (
+                      <MenuItem disabled>No slots available currently</MenuItem>
+                    )}
+                  </TextField>
+                </Grid>
+
+                <Grid item xs={6} sm={6}>
                   <TextField
                     fullWidth
                     label="Age"
@@ -1002,7 +981,7 @@ const DoctorPage = () => {
                   />
                 </Grid>
 
-                <Grid item xs={12} sm={6}>
+                <Grid item xs={6} sm={6}>
                   <TextField
                     fullWidth
                     label="Gender"
@@ -1014,50 +993,13 @@ const DoctorPage = () => {
                     error={!formData.gender && formData.formSubmitted}
                     helperText={!formData.gender && formData.formSubmitted ? "Gender is required" : ""}
                   >
+                    <MenuItem value="" disabled>Select Gender</MenuItem>
                     <MenuItem value="M">Male</MenuItem>
                     <MenuItem value="F">Female</MenuItem>
                     <MenuItem value="O">Other</MenuItem>
                   </TextField>
                 </Grid>
-
-             <Grid item xs={12}>
-             <TextField 
-                 fullWidth 
-                 label="Guardian Name" 
-                 value={formData.guardian} 
-                 onChange={(e) => handleFormChange('guardian', e.target.value)} 
-                 size="small"
-                 InputProps={{
-                   style: { textTransform: 'uppercase' }
-                 }}
-             />
-             </Grid>
-
-             <Grid item xs={12}>
-             <TextField 
-                 fullWidth 
-                 label="Address" 
-                 value={formData.location} 
-                 onChange={(e) => handleFormChange('location', e.target.value)} 
-                 size="small"
-                 InputProps={{
-                   style: { textTransform: 'uppercase' }
-                 }}
-             />
-             </Grid>
-
-             <Grid item xs={12}>
-             <TextField 
-                 fullWidth 
-                 label="Health Issue" 
-                 value={formData.healthIssue} 
-                 onChange={(e) => handleFormChange('healthIssue', e.target.value)} 
-                 multiline 
-                 rows={2} 
-                 size="small" 
-             />
-             </Grid>
-
+                
                 <Grid item xs={12}>
                   <TextField
                     fullWidth
@@ -1074,7 +1016,95 @@ const DoctorPage = () => {
                     <MenuItem value="Follow-up">Follow-up</MenuItem>
                   </TextField>
                 </Grid>
+
+                <Grid item xs={12}>
+                  <Accordion 
+                    elevation={0}
+                    sx={{ 
+                      mt: 1, 
+                      '&:before': { display: 'none' },
+                      border: '1px solid rgba(0, 0, 0, 0.08)',
+                      borderRadius: '8px',
+                      overflow: 'hidden'
+                    }}
+                  >
+                    <AccordionSummary
+                      expandIcon={<ExpandMoreIcon />}
+                      sx={{ 
+                        backgroundColor: 'rgba(0, 0, 0, 0.02)',
+                        borderBottom: '1px solid rgba(0, 0, 0, 0.08)'
+                      }}
+                    >
+                      <Typography sx={{ fontWeight: 500 }}>Additional Information (Optional)</Typography>
+                    </AccordionSummary>
+                    <AccordionDetails>
+                      <Grid container spacing={2}>
+                        <Grid item xs={12}>
+                          <TextField 
+                            fullWidth 
+                            label="Guardian Name" 
+                            value={formData.guardian} 
+                            onChange={(e) => handleFormChange('guardian', e.target.value)} 
+                            size="small"
+                            InputProps={{
+                              style: { textTransform: 'uppercase' }
+                            }}
+                          />
+                        </Grid>
+
+                        <Grid item xs={12}>
+                          <TextField 
+                            fullWidth 
+                            label="Address" 
+                            value={formData.location} 
+                            onChange={(e) => handleFormChange('location', e.target.value)} 
+                            size="small"
+                            InputProps={{
+                              style: { textTransform: 'uppercase' }
+                            }}
+                          />
+                        </Grid>
+
+                        <Grid item xs={12}>
+                          <TextField 
+                            fullWidth 
+                            label="Health Issue" 
+                            value={formData.healthIssue} 
+                            onChange={(e) => handleFormChange('healthIssue', e.target.value)} 
+                            multiline 
+                            rows={2} 
+                            size="small" 
+                          />
+                        </Grid>
+                      </Grid>
+                    </AccordionDetails>
+                  </Accordion>
+                </Grid>
               </Grid>
+
+              <Typography variant="h6" sx={{ fontWeight: 600, mb: 2, mt: 4 }}>
+                Doctor Details
+              </Typography>
+              
+              <Card elevation={0} sx={{ mb: 3, borderRadius: 2, border: "1px solid rgba(0,0,0,0.08)", overflow: "hidden" }}>
+                <CardContent sx={{ p: 2 }}>
+                  <Grid container spacing={2}>
+                    <Grid item xs={12}>
+                      <Typography variant="body1" sx={{ fontWeight: 500, mb: 1 }}>
+                        <Box component="span" sx={{ color: "text.secondary", fontWeight: 400 }}>Doctor Name:</Box> Dr. {doctor.name}
+                      </Typography>
+                      
+                      <Typography variant="body1" sx={{ fontWeight: 500, mb: 1 }}>
+                        <Box component="span" sx={{ color: "text.secondary", fontWeight: 400 }}>Doctor Specialty:</Box> {doctor.specialty}
+                      </Typography>
+                      
+                      <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                        <Box component="span" sx={{ color: "text.secondary", fontWeight: 400 }}>Clinic Name:</Box> {doctor.clinic}
+                      </Typography>
+                    </Grid>
+                  </Grid>
+                </CardContent>
+              </Card>
 
               <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 2 }}>
                 By confirming this appointment, you agree to our terms and conditions.

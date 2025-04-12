@@ -557,7 +557,7 @@ const Login = () => {
                       value={credential.password}
                       onChange={handleOtpChange}
                       numInputs={4}
-                      renderInput={(props) => <input {...props} aria-label="OTP digit input" />}
+                      renderInput={(props) => <input {...props} inputMode="numeric" pattern="[0-9]*" aria-label="OTP digit input" />}
                       containerStyle={{ justifyContent: "center", margin: "0 auto" }}
                       inputStyle={{
                         width: "45px",
