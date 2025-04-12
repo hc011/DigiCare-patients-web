@@ -1,22 +1,25 @@
-import { useContext, useState, useEffect } from "react";
+import { Box } from "@mui/material";
+import { useContext, useEffect, useState } from "react";
 import {
+  Navigate,
+  Route,
   BrowserRouter as Router,
   Routes,
-  Route,
-  Navigate,
 } from "react-router-dom";
-import { Box } from "@mui/material";
-import { AuthContext } from "./context/AuthContext";
-import Header from "./components/Header";
-import BottomNavigator from "./patient-demo/BottomNavigator";
-import PatientHome from "./patient-demo/PatientHome";
-import SearchDoctors from "./patient-demo/SearchDoctors";
-import DoctorPage from "./patient-demo/DoctorPage";
-import AppointmentsList from "./patient-demo/AppointmentsList";
-import AppointmentBooking from "./patient-demo/AppointmentBooking";
-import ProfilePage from "./patient-demo/ProfilePage";
 import Login from "./Pages/Login";
+import Header from "./components/Header";
 import PrivateRoute from "./components/PrivateRoute";
+import { AuthContext } from "./context/AuthContext";
+import AppointmentBooking from "./patient-demo/AppointmentBooking";
+import AppointmentsList from "./patient-demo/AppointmentsList";
+import BottomNavigator from "./patient-demo/BottomNavigator";
+import DoctorPage from "./patient-demo/DoctorPage";
+import PatientHome from "./patient-demo/PatientHome";
+import ProfilePage from "./patient-demo/ProfilePage";
+import SearchDoctors from "./patient-demo/SearchDoctors";
+import Register from './Pages/Register';
+import PrivacyPolicy from './Pages/PrivacyPolicy';
+import TermsAndConditions from './Pages/TermsAndConditions';
 
 const App = () => {
   const { user } = useContext(AuthContext);
@@ -24,12 +27,16 @@ const App = () => {
 
   // Mock data - replace with real data management
   const [appointments, setAppointments] = useState([]);
+
+  const [maxToken, setMaxToken] = useState(0);
+  const [refreshToken, setRefreshToken] = useState(0);
+
   const [doctors] = useState([
     {
       id: 1,
-      name: "Dr. Rajesh Sharma",
-      specialty: "General Physician",
-      clinic: "Alwar City Clinic",
+      name: "Dr. Rahul Gupta",
+      specialty: "Skin Specialist",
+      clinic: "Gupta Skin and dental clinic",
       address: "Station Road, Alwar, Rajasthan",
       rating: 4.7,
       experience: "15 years",
@@ -199,14 +206,25 @@ const App = () => {
     setAppointments([
       {
         id: 1,
-        doctor: "Dr. Sarah Smith",
+        doctor: "Dr. Rahul Gupta",
         date: "2024-03-20 09:00",
         status: "upcoming",
-        clinic: "City Health Clinic",
+        clinic: "Gupta Skin and dental clinic",
         specialty: "Cardiology",
       },
     ]);
   }, []);
+
+
+  // useEffect(() => {
+  //   const getAppointments = async () => {
+  //     const response = await fetchAppointments(1, "2025-03-18T12:01:00Z");
+  //     let maxtoken = 0;
+  //     maxtoken = Math.max(0, ...response.map(item => item.token || 0));
+  //     setMaxToken(maxtoken+1);
+  //   };
+  //   getAppointments();
+  // }, [refreshToken]);
 
   return (
     <Router>
@@ -215,12 +233,24 @@ const App = () => {
         <Box sx={{ display: "flex", height: "100%" }}>
           <Box
             component="main"
-            sx={{ flexGrow: 1, padding: "6px", height: "100%", width: "100%" }}
+            sx={{ flexGrow: 1, height: "100%", width: "100%" }}
           >
             <Routes>
               <Route
                 path="/login"
                 element={user ? <Navigate to="/patient" replace /> : <Login />}
+              />
+              <Route
+                path="/register"
+                element={<Register />}
+              />
+              <Route
+                path="/privacy-policy"
+                element={<PrivacyPolicy />}
+              />
+              <Route
+                path="/terms-and-conditions"
+                element={<TermsAndConditions />}
               />
 
               {/* Patient Routes */}
@@ -246,7 +276,7 @@ const App = () => {
                 path="/doctor/:doctorId"
                 element={
                   <PrivateRoute>
-                    <DoctorPage doctors={doctors} />
+                    <DoctorPage doctors={doctors} maxToken={maxToken} refreshTokenFn={setRefreshToken} />
                   </PrivateRoute>
                 }
               />
@@ -284,7 +314,7 @@ const App = () => {
             </Routes>
           </Box>
         </Box>
-        {user !== null && isMobile && <BottomNavigator />}
+        {/* {user !== null && isMobile && <BottomNavigator />} */}
       </div>
     </Router>
   );
