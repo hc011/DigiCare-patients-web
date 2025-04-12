@@ -56,7 +56,7 @@ function Header({ closeEventSource }) {
         onClick={handleLogoClick}
       />
 
-      {/* Mobile Logout Button */}
+      {/* Mobile Logout Button - Commented out 
       {isMobile && (
         <IconButton
           color="primary"
@@ -67,8 +67,9 @@ function Header({ closeEventSource }) {
           <LogoutIcon />
         </IconButton>
       )}
+      */}
 
-      {/* Desktop Logout Button */}
+      {/* Desktop Logout Button - Commented out
       {!isMobile && (
         <div className="logout-button">
           <Button 
@@ -81,6 +82,7 @@ function Header({ closeEventSource }) {
           </Button>
         </div>
       )}
+      */}
 
       {/* Logout Confirmation Dialog */}
       <Dialog
