@@ -26,7 +26,7 @@ import { Navigate, useNavigate } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 import UserDetailForm from "../patient-demo/UserDetailForm";
 import { login as loginService } from "../services/authService";
-import { updateUser } from "../services/api";
+import { updateUser, sendOtp } from "../services/api";
 import OtpInput from 'react-otp-input';
 import DigiCareLogo from '../assets/DigiCare__logo.png';
 
@@ -40,7 +40,7 @@ const Login = () => {
   const navigate = useNavigate();
   const [showUserDetailForm, setShowUserDetailForm] = useState(false);
   const [userData, setUserData] = useState(null);
-  const [timer, setTimer] = useState(45);
+  const [timer, setTimer] = useState(120);
   const [canResend, setCanResend] = useState(false);
   const [otpFilled, setOtpFilled] = useState(false);
   const formRef = useRef(null);
@@ -94,7 +94,9 @@ const Login = () => {
           signal: abortController.signal
         }).then(otp => {
           if (otp && otp.code) {
-            setCredential(prev => ({...prev, password: otp.code}));
+            // If the OTP is longer than 4 digits, only take the first 4
+            const fourDigitOtp = otp.code.slice(0, 4);
+            setCredential(prev => ({...prev, password: fourDigitOtp}));
             setOtpFilled(true);
             
             // Auto submit after a short delay to show the filled OTP
@@ -142,7 +144,7 @@ const Login = () => {
 
     try {
       setLoading(true);
-      //await sendOtp(credential.mobileNumber);
+      await sendOtp({ phone_number: credential.mobileNumber });
       
       // Add haptic feedback if available
       if (navigator.vibrate) {
@@ -151,12 +153,20 @@ const Login = () => {
       
       setIsMobNum(true);
       // Reset timer when OTP is sent
-      setTimer(45);
+      setTimer(120);
       setCanResend(false);
     } catch (error) {
+      console.error("Error in sending OTP:", error);
+      let errorMessage = "Failed to send OTP. Please try again after a few minutes.";
+      
+      // If there's a specific error message from the server
+      if (error.response && error.response.data && error.response.data.message) {
+        errorMessage = `${error.response.data.message}. Please try again after a few minutes.`;
+      }
+      
       setSnackbar({
         open: true,
-        message: "Failed to send OTP. Try again.",
+        message: errorMessage,
         severity: "error",
       });
     } finally {
@@ -167,8 +177,12 @@ const Login = () => {
   const handleResendOtp = async () => {
     try {
       setLoading(true);
-      // Reset the timer
-      setTimer(45);
+      
+      // Call the sendOtp API
+      await sendOtp({ phone_number: credential.mobileNumber });
+      
+      // Reset the timer after successful API call
+      setTimer(120);
       setCanResend(false);
       
       // Add haptic feedback if available
@@ -176,18 +190,23 @@ const Login = () => {
         navigator.vibrate(50);
       }
       
-      // Mock API call for now
-      // await sendOtp(credential.mobileNumber);
-      
       setSnackbar({
         open: true,
         message: "OTP has been resent successfully",
         severity: "success",
       });
     } catch (error) {
+      console.error("Error in resending OTP:", error);
+      let errorMessage = "Failed to resend OTP. Please try again after a few minutes.";
+      
+      // If there's a specific error message from the server
+      if (error.response && error.response.data && error.response.data.message) {
+        errorMessage = `${error.response.data.message}. Please try again after a few minutes.`;
+      }
+      
       setSnackbar({
         open: true,
-        message: "Failed to resend OTP. Try again.",
+        message: errorMessage,
         severity: "error",
       });
     } finally {
@@ -225,7 +244,7 @@ const Login = () => {
     setCredential((prev) => ({ ...prev, password: otp }));
     
     // Add animation class when OTP is filled
-    if (otp.length === 6) {
+    if (otp.length === 4) {
       setOtpFilled(true);
       
       // Add haptic feedback if available
@@ -247,10 +266,10 @@ const Login = () => {
   const handleLogin = async (e) => {
     e.preventDefault();
     
-    if (credential.password.length !== 6) {
+    if (credential.password.length !== 4) {
       setSnackbar({
         open: true,
-        message: "Please enter a valid 6-digit OTP",
+        message: "Please enter a valid 4-digit OTP",
         severity: "error",
       });
       return;
@@ -279,24 +298,45 @@ const Login = () => {
         navigate("/patient", { state: { freshLogin: true } }, { replace: true });
       }
     } catch (error) {
+      console.error("Login failed:", error);
       let errorMessage = "Login failed. Please try again.";
+      
       if (error.response) {
-        switch (error.response.status) {
-          case 401:
-            errorMessage = "Invalid credentials";
-            break;
-          case 403:
-            errorMessage = "Account locked";
-            break;
-          case 500:
-            errorMessage = "Server error";
-            break;
-          default:
-            errorMessage = error.response.data?.message || "Login failed. Please try again.";
+        // If there's a specific error message from the server, use it
+        if (error.response.data) {
+          if (error.response.data.message) {
+            errorMessage = error.response.data.message;
+          } else if (error.response.data.error) {
+            // Handle {"error":"Invalid OTP"} format
+            errorMessage = error.response.data.error;
+          }
+        } else {
+          // Otherwise, use status-based messages as fallback
+          switch (error.response.status) {
+            case 401:
+              errorMessage = "Invalid OTP. Please check and try again.";
+              break;
+            case 403:
+              errorMessage = "Account locked. Please contact support.";
+              break;
+            case 404:
+              errorMessage = "User not found. Please register first.";
+              break;
+            case 500:
+              // For 500 status with specific error message, it's already handled above
+              if (!error.response.data || (!error.response.data.message && !error.response.data.error)) {
+                errorMessage = "Server error. Please try again later.";
+              }
+              break;
+            default:
+              // Keep the default message
+              break;
+          }
         }
-      } else if (error.message.includes("Network Error")) {
-        errorMessage = "Network error";
+      } else if (error.message && error.message.includes("Network Error")) {
+        errorMessage = "Network error. Please check your connection and try again.";
       }
+      
       setSnackbar({
         open: true,
         message: errorMessage,
@@ -509,21 +549,19 @@ const Login = () => {
 
               <form onSubmit={handleLogin} ref={formRef}>
                 <Box sx={{ mb: 3, mt: 2 }}>
-                  {/* <SecurityIcon sx={{ color: '#1976d2', fontSize: 18, mr: 1 }} /> */}
                   <Typography variant="body2" sx={{ color: "#666", mb: 2, textAlign: "left" }}>
-                    Enter 6-digit OTP
+                    Enter 4-digit OTP
                   </Typography>
                   <div className={`otp-container ${otpFilled ? 'otp-input-filled' : ''}`}>
                     <OtpInput
                       value={credential.password}
                       onChange={handleOtpChange}
-                      numInputs={6}
-                      renderSeparator={<span style={{ width: "6px" }}></span>}
+                      numInputs={4}
                       renderInput={(props) => <input {...props} aria-label="OTP digit input" />}
-                      containerStyle={{ justifyContent: "space-between", margin: "0 auto" }}
+                      containerStyle={{ justifyContent: "center", margin: "0 auto" }}
                       inputStyle={{
-                        width: "42px",
-                        height: "42px",
+                        width: "45px",
+                        height: "45px",
                         fontSize: "1.2rem",
                         borderRadius: "8px",
                         border: "1px solid #ccc",
@@ -543,7 +581,7 @@ const Login = () => {
                 <Box className="resend-timer">
                   {!canResend ? (
                     <Typography variant="body2" sx={{ color: "#666" }}>
-                      Didn't get the OTP? Resend in <strong>{timer}</strong> seconds
+                      Didn't get the OTP? Resend in <strong>{Math.floor(timer / 60)}:{(timer % 60).toString().padStart(2, '0')}</strong>
                     </Typography>
                   ) : (
                     <Typography 
@@ -560,7 +598,7 @@ const Login = () => {
                   type="submit"
                   variant="contained"
                   fullWidth
-                  disabled={loading || credential.password.length !== 6}
+                  disabled={loading || credential.password.length !== 4}
                   className="custom-button"
                   aria-label="Login button"
                   sx={{
@@ -573,7 +611,7 @@ const Login = () => {
                     "&:hover": {
                       bgcolor: "#1565c0",
                     },
-                    opacity: credential.password.length === 6 ? 1 : 0.8,
+                    opacity: credential.password.length === 4 ? 1 : 0.8,
                   }}
                 >
                   {loading ? (

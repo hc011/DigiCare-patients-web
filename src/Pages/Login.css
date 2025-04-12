@@ -98,11 +98,14 @@ h1 {
 .otp-container {
   margin: 0 auto;
   max-width: 100%;
+  display: flex;
+  justify-content: center;
+  gap: 8px;
 }
 
 .otp-container input {
-  width: 42px !important;
-  height: 42px !important;
+  width: 45px !important;
+  height: 45px !important;
   font-size: 1.2rem !important;
   border-radius: 8px !important;
   border: 1px solid #e0e0e0 !important;
@@ -110,6 +113,7 @@ h1 {
   color: #333 !important;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04) !important;
   transition: all 0.2s ease-in-out !important;
+  margin: 0 2px;
 }
 
 .otp-container input:focus {
@@ -182,15 +186,23 @@ h1 {
   }
   
   .otp-container input {
-    width: 38px !important;
-    height: 38px !important;
+    width: 42px !important;
+    height: 42px !important;
+  }
+  
+  .otp-container {
+    gap: 6px;
   }
 }
 
 @media (max-width: 380px) {
   .otp-container input {
-    width: 32px !important;
-    height: 36px !important;
+    width: 36px !important;
+    height: 38px !important;
     font-size: 1rem !important;
+  }
+  
+  .otp-container {
+    gap: 4px;
   }
 }
