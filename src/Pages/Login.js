@@ -519,7 +519,7 @@ const Login = () => {
                       onChange={handleOtpChange}
                       numInputs={6}
                       renderSeparator={<span style={{ width: "6px" }}></span>}
-                      renderInput={(props) => <input {...props} aria-label="OTP digit input" />}
+                      renderInput={(props) => <input {...props} inputMode="numeric" pattern="[0-9]*" aria-label="OTP digit input" />}
                       containerStyle={{ justifyContent: "space-between", margin: "0 auto" }}
                       inputStyle={{
                         width: "42px",
