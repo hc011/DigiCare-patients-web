@@ -3,6 +3,7 @@ import PersonOutlineIcon from "@mui/icons-material/PersonOutline";
 import Visibility from "@mui/icons-material/Visibility";
 import VisibilityOff from "@mui/icons-material/VisibilityOff";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import SecurityIcon from '@mui/icons-material/Security';
 import {
   Alert,
   Button,
@@ -17,13 +18,17 @@ import {
   Typography,
   Box,
   Slide,
+  Fade,
+  Paper,
 } from "@mui/material";
-import React, { useContext, useState } from "react";
+import React, { useContext, useState, useEffect, useRef } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 import UserDetailForm from "../patient-demo/UserDetailForm";
 import { login as loginService } from "../services/authService";
 import { updateUser } from "../services/api";
+import OtpInput from 'react-otp-input';
+import DigiCareLogo from '../assets/DigiCare__logo.png';
 
 import "./Login.css";
 
@@ -35,6 +40,12 @@ const Login = () => {
   const navigate = useNavigate();
   const [showUserDetailForm, setShowUserDetailForm] = useState(false);
   const [userData, setUserData] = useState(null);
+  const [timer, setTimer] = useState(45);
+  const [canResend, setCanResend] = useState(false);
+  const [otpFilled, setOtpFilled] = useState(false);
+  const formRef = useRef(null);
+  const mobileInputRef = useRef(null);
+  const containerRef = useRef(null);
 
   const [credential, setCredential] = useState({
     mobileNumber: "",
@@ -46,6 +57,65 @@ const Login = () => {
     message: "",
     severity: "error",
   });
+
+  // Modify the useEffect for auto-focus mobile input to add delay
+  useEffect(() => {
+    if (mobileInputRef.current && !isMoBNum) {
+      // Delay focus to avoid transition stutter
+      const timer = setTimeout(() => {
+        mobileInputRef.current.focus();
+      }, 600); // Delay longer than the transition duration
+      return () => clearTimeout(timer);
+    }
+  }, [isMoBNum]);
+
+  // Timer effect - moved above the conditional return
+  useEffect(() => {
+    let interval = null;
+    if (isMoBNum && timer > 0) {
+      interval = setInterval(() => {
+        setTimer((prevTimer) => prevTimer - 1);
+      }, 1000);
+    } else if (timer === 0) {
+      setCanResend(true);
+    }
+    return () => clearInterval(interval);
+  }, [isMoBNum, timer]);
+  
+  // Modify the SMS OTP Auto-capture using Web OTP API to add delay
+  useEffect(() => {
+    if (isMoBNum && 'OTPCredential' in window) {
+      // Delay OTP capture to avoid transition stutter
+      const captureTimer = setTimeout(() => {
+        const abortController = new AbortController();
+        
+        navigator.credentials.get({
+          otp: { transport: ['sms'] },
+          signal: abortController.signal
+        }).then(otp => {
+          if (otp && otp.code) {
+            setCredential(prev => ({...prev, password: otp.code}));
+            setOtpFilled(true);
+            
+            // Auto submit after a short delay to show the filled OTP
+            setTimeout(() => {
+              if (formRef.current) {
+                formRef.current.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
+              }
+            }, 800);
+          }
+        }).catch(err => {
+          console.log('OTP Credential API error:', err);
+        });
+        
+        return () => {
+          abortController.abort();
+        };
+      }, 600); // Delay longer than the transition duration
+      
+      return () => clearTimeout(captureTimer);
+    }
+  }, [isMoBNum]);
 
   if (user) {
     return <Navigate to="/" replace />;
@@ -73,7 +143,16 @@ const Login = () => {
     try {
       setLoading(true);
       //await sendOtp(credential.mobileNumber);
+      
+      // Add haptic feedback if available
+      if (navigator.vibrate) {
+        navigator.vibrate(50);
+      }
+      
       setIsMobNum(true);
+      // Reset timer when OTP is sent
+      setTimer(45);
+      setCanResend(false);
     } catch (error) {
       setSnackbar({
         open: true,
@@ -85,8 +164,48 @@ const Login = () => {
     }
   };
 
+  const handleResendOtp = async () => {
+    try {
+      setLoading(true);
+      // Reset the timer
+      setTimer(45);
+      setCanResend(false);
+      
+      // Add haptic feedback if available
+      if (navigator.vibrate) {
+        navigator.vibrate(50);
+      }
+      
+      // Mock API call for now
+      // await sendOtp(credential.mobileNumber);
+      
+      setSnackbar({
+        open: true,
+        message: "OTP has been resent successfully",
+        severity: "success",
+      });
+    } catch (error) {
+      setSnackbar({
+        open: true,
+        message: "Failed to resend OTP. Try again.",
+        severity: "error",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleGoBack = () => {
     setIsMobNum(false);
+    setCredential(prev => ({...prev, password: ""}));
+    
+    // Reset OTP state
+    setOtpFilled(false);
+    
+    // Add haptic feedback if available
+    if (navigator.vibrate) {
+      navigator.vibrate(50);
+    }
   };
 
   const handleClickShowPassword = () => setShowPassword((show) => !show);
@@ -102,12 +221,50 @@ const Login = () => {
     }
   };
 
+  const handleOtpChange = (otp) => {
+    setCredential((prev) => ({ ...prev, password: otp }));
+    
+    // Add animation class when OTP is filled
+    if (otp.length === 6) {
+      setOtpFilled(true);
+      
+      // Add haptic feedback if available
+      if (navigator.vibrate) {
+        navigator.vibrate([30, 30, 30]);
+      }
+      
+      // Auto submit after a longer delay to show the filled OTP
+      setTimeout(() => {
+        if (formRef.current) {
+          formRef.current.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
+        }
+      }, 800);
+    } else {
+      setOtpFilled(false);
+    }
+  };
+
   const handleLogin = async (e) => {
     e.preventDefault();
+    
+    if (credential.password.length !== 6) {
+      setSnackbar({
+        open: true,
+        message: "Please enter a valid 6-digit OTP",
+        severity: "error",
+      });
+      return;
+    }
+    
     setLoading(true);
     try {
       const data = await loginService(credential.mobileNumber, credential.password);
       console.log('User object:', data.user);
+      
+      // Add haptic feedback if available
+      if (navigator.vibrate) {
+        navigator.vibrate([30, 50, 100]);
+      }
       
       // Store the user data and appointments list in local storage
       localStorage.setItem("user", JSON.stringify(data));
@@ -192,25 +349,43 @@ const Login = () => {
 
   return (
     <div className="login-page-background">
-      <div className="desktop-content">
-        <Typography
-          variant="h3"
-          sx={{
-            fontWeight: 700,
-            color: "#1976d2",
-            mt: 4,
-            marginBottom: "50px",
-          }}
-        >
-          Welcome Back!
-        </Typography>
-      </div>
+      <Fade in={true} timeout={800}>
+        <div className="desktop-content">
+          <Box className="logo-container">
+            <img 
+              src={DigiCareLogo} 
+              alt="DigiCare Logo" 
+              className="logo"
+              style={{ height: '72px', marginBottom: '24px' }} 
+            />
+          </Box>
+        </div>
+      </Fade>
 
-      <div className="login-container">
+      <div className="login-container" ref={containerRef} style={{ 
+        maxWidth: '380px',  // Reduce max width from 420px
+        width: '85%',       // Slightly reduced from 90%
+      }}>
         <Box sx={{ position: 'relative', width: '100%', overflow: 'hidden' }}>
-          <Slide direction="right" in={!isMoBNum} mountOnEnter unmountOnExit timeout={300}>
+          <Fade 
+            in={!isMoBNum} 
+            timeout={500} 
+            mountOnEnter 
+            unmountOnExit
+          >
             <Box sx={{ width: '100%' }}>
               <div className="mobile-header">
+                <Typography
+                  variant="h6"
+                  sx={{
+                    color: "#333",
+                    mb: 1,
+                    fontWeight: 600,
+                    fontSize: "1.1rem",
+                  }}
+                >
+                  Login to Your Account
+                </Typography>
                 <Typography
                   variant="body2"
                   sx={{
@@ -219,7 +394,7 @@ const Login = () => {
                     fontSize: "0.9rem",
                   }}
                 >
-                  Enter your mobile number
+                  Enter your mobile number to receive an OTP
                 </Typography>
               </div>
 
@@ -232,16 +407,22 @@ const Login = () => {
                   required
                   value={credential.mobileNumber}
                   onChange={handleChange}
+                  inputRef={mobileInputRef}
+                  autoComplete="tel-national"
+                  inputProps={{
+                    maxLength: 10,
+                    inputMode: "numeric",
+                    pattern: "[0-9]*",
+                    "aria-label": "Mobile number"
+                  }}
                   sx={{
-                    mb: 3,
+                    mb: 4,
                     "& .MuiOutlinedInput-root": {
-                      borderRadius: "8px",
+                      borderRadius: "10px",
                       backgroundColor: "#f8f9fa",
                     },
                   }}
                   InputProps={{
-                    maxLength: 10,
-                    type: 'number',
                     startAdornment: (
                       <InputAdornment position="start">
                         <PersonOutlineIcon sx={{ color: "#1976d2" }} />
@@ -260,9 +441,10 @@ const Login = () => {
                   fullWidth
                   disabled={loading}
                   className="custom-button"
+                  aria-label="Get OTP button"
                   sx={{
                     py: 1.5,
-                    borderRadius: "8px",
+                    borderRadius: "10px",
                     fontSize: "1rem",
                     fontWeight: 600,
                     textTransform: "none",
@@ -275,80 +457,115 @@ const Login = () => {
                   {loading ? (
                     <CircularProgress size={24} color="inherit" />
                   ) : (
-                    "Send OTP"
+                    "Get Verification Code"
                   )}
                 </Button>
               </form>
             </Box>
-          </Slide>
+          </Fade>
 
-          <Slide direction="left" in={isMoBNum} mountOnEnter unmountOnExit timeout={300}>
+          <Fade 
+            in={isMoBNum} 
+            timeout={500} 
+            mountOnEnter 
+            unmountOnExit
+          >
             <Box sx={{ width: '100%' }}>
               <div className="mobile-header">
-                <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                <Box sx={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  mb: 2,
+                  width: '100%'
+                }}>
                   <IconButton 
                     onClick={handleGoBack}
-                    sx={{ mr: 1, color: '#1976d2' }}
+                    sx={{ 
+                      mr: 2, 
+                      color: '#1976d2',
+                      ml: -1 // Move button slightly left
+                    }}
+                    aria-label="Go back to mobile number input"
                   >
                     <ArrowBackIcon />
                   </IconButton>
-                  <Typography
-                    variant="body2"
-                    sx={{
-                      color: "#666",
-                      fontSize: "0.9rem",
-                    }}
-                  >
-                    Enter OTP sent to {credential.mobileNumber}
-                  </Typography>
+                  
+                  <Box sx={{ display: 'flex', alignItems: 'center', flexGrow: 1 }}>
+                    <Typography 
+                      variant="body2" 
+                      sx={{ 
+                        color: '#666', 
+                        fontSize: '0.8rem',
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis'
+                      }}
+                    >
+                      SMS verification code sent to {credential.mobileNumber}
+                    </Typography>
+                  </Box>
                 </Box>
               </div>
 
-              <form onSubmit={handleLogin}>
-                <FormControl fullWidth sx={{ mb: 3 }}>
-                  <InputLabel style={{ color: "#666" }}>Enter OTP</InputLabel>
-                  <OutlinedInput
-                    required
-                    name="password"
-                    inputProps={{ type: 'number' }}
-                    value={credential.password}
-                    onChange={handleChange}
-                    // endAdornment={
-                    //   <InputAdornment position="end">
-                    //     <IconButton
-                    //       onClick={handleClickShowPassword}
-                    //       onMouseDown={(e) => e.preventDefault()}
-                    //       edge="end"
-                    //     >
-                    //       {showPassword ? <Visibility /> : <VisibilityOff />}
-                    //     </IconButton>
-                    //   </InputAdornment>
-                    // }
-                    // startAdornment={
-                    //   <InputAdornment position="start">
-                    //     <LockIcon sx={{ color: "#1976d2" }} />
-                    //   </InputAdornment>
-                    // }
-                    sx={{
-                      borderRadius: "8px",
-                      backgroundColor: "#f8f9fa",
-                      "&:hover fieldset": {
-                        borderColor: "#1976d2 !important",
-                      },
-                    }}
-                    label="Password"
-                  />
-                </FormControl>
+              <form onSubmit={handleLogin} ref={formRef}>
+                <Box sx={{ mb: 3, mt: 2 }}>
+                  {/* <SecurityIcon sx={{ color: '#1976d2', fontSize: 18, mr: 1 }} /> */}
+                  <Typography variant="body2" sx={{ color: "#666", mb: 2, textAlign: "left" }}>
+                    Enter 6-digit OTP
+                  </Typography>
+                  <div className={`otp-container ${otpFilled ? 'otp-input-filled' : ''}`}>
+                    <OtpInput
+                      value={credential.password}
+                      onChange={handleOtpChange}
+                      numInputs={6}
+                      renderSeparator={<span style={{ width: "6px" }}></span>}
+                      renderInput={(props) => <input {...props} aria-label="OTP digit input" />}
+                      containerStyle={{ justifyContent: "space-between", margin: "0 auto" }}
+                      inputStyle={{
+                        width: "42px",
+                        height: "42px",
+                        fontSize: "1.2rem",
+                        borderRadius: "8px",
+                        border: "1px solid #ccc",
+                        backgroundColor: "#f8f9fa",
+                      }}
+                      focusStyle={{
+                        border: "1px solid #1976d2",
+                        outline: "none",
+                        boxShadow: "0 0 0 3px rgba(25, 118, 210, 0.1)"
+                      }}
+                      shouldAutoFocus
+                    />
+                  </div>
+                </Box>
+                
+                {/* Resend OTP Timer */}
+                <Box className="resend-timer">
+                  {!canResend ? (
+                    <Typography variant="body2" sx={{ color: "#666" }}>
+                      Didn't get the OTP? Resend in <strong>{timer}</strong> seconds
+                    </Typography>
+                  ) : (
+                    <Typography 
+                      className="resend-link"
+                      variant="body2" 
+                      onClick={handleResendOtp}
+                    >
+                      Resend OTP
+                    </Typography>
+                  )}
+                </Box>
 
                 <Button
                   type="submit"
                   variant="contained"
                   fullWidth
-                  disabled={loading}
+                  disabled={loading || credential.password.length !== 6}
                   className="custom-button"
+                  aria-label="Login button"
                   sx={{
                     py: 1.5,
-                    borderRadius: "8px",
+                    borderRadius: "10px",
                     fontSize: "1rem",
                     fontWeight: 600,
                     textTransform: "none",
@@ -356,17 +573,18 @@ const Login = () => {
                     "&:hover": {
                       bgcolor: "#1565c0",
                     },
+                    opacity: credential.password.length === 6 ? 1 : 0.8,
                   }}
                 >
                   {loading ? (
                     <CircularProgress size={24} sx={{ color: "white" }} />
                   ) : (
-                    "Login"
+                    "Verify & Login"
                   )}
                 </Button>
               </form>
             </Box>
-          </Slide>
+          </Fade>
         </Box>
       </div>
 
@@ -374,12 +592,19 @@ const Login = () => {
         open={snackbar.open}
         autoHideDuration={5000}
         onClose={() => setSnackbar((prev) => ({ ...prev, open: false }))}
-        anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+        sx={{ mb: 2 }}
       >
         <Alert
           severity={snackbar.severity}
           onClose={() => setSnackbar((prev) => ({ ...prev, open: false }))}
-          sx={{ width: "100%" }}
+          sx={{ 
+            width: "100%",
+            boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
+            borderRadius: "8px",
+            alignItems: "center"
+          }}
+          variant="filled"
         >
           {snackbar.message}
         </Alert>
