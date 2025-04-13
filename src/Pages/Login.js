@@ -3,7 +3,7 @@ import PersonOutlineIcon from "@mui/icons-material/PersonOutline";
 import Visibility from "@mui/icons-material/Visibility";
 import VisibilityOff from "@mui/icons-material/VisibilityOff";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
-import SecurityIcon from '@mui/icons-material/Security';
+import SecurityIcon from "@mui/icons-material/Security";
 import {
   Alert,
   Button,
@@ -26,10 +26,10 @@ import { Navigate, useNavigate } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 import UserDetailForm from "../patient-demo/UserDetailForm";
 import { login as loginService } from "../services/authService";
-import { updateUser, sendOtp } from "../services/api";
-import OtpInput from 'react-otp-input';
-import DigiCareLogo from '../assets/DigiCare__logo.png';
-
+import { updateUser } from "../services/api";
+import OtpInput from "react-otp-input";
+import DigiCareLogo from "../assets/DigiCare__logo.png";
+import { sendOtp } from "../services/api";
 import "./Login.css";
 
 const Login = () => {
@@ -81,40 +81,39 @@ const Login = () => {
     }
     return () => clearInterval(interval);
   }, [isMoBNum, timer]);
-  
+
   // Modify the SMS OTP Auto-capture using Web OTP API to add delay
   useEffect(() => {
-    if (isMoBNum && 'OTPCredential' in window) {
+    if (isMoBNum && "OTPCredential" in window) {
       // Delay OTP capture to avoid transition stutter
       const captureTimer = setTimeout(() => {
         const abortController = new AbortController();
-        
-        navigator.credentials.get({
-          otp: { transport: ['sms'] },
-          signal: abortController.signal
-        }).then(otp => {
-          if (otp && otp.code) {
-            // If the OTP is longer than 4 digits, only take the first 4
-            const fourDigitOtp = otp.code.slice(0, 4);
-            setCredential(prev => ({...prev, password: fourDigitOtp}));
-            setOtpFilled(true);
-            
-            // Auto submit after a short delay to show the filled OTP
-            setTimeout(() => {
-              if (formRef.current) {
-                formRef.current.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
+
+        navigator.credentials
+          .get({
+            otp: { transport: ["sms"] },
+            signal: abortController.signal,
+          })
+          .then((otp) => {
+            if (otp && otp.code) {
+              setCredential((prev) => ({ ...prev, password: otp.code }));
+              setOtpFilled(true);
+
+              // Add haptic feedback if available
+              if (navigator.vibrate) {
+                navigator.vibrate([30, 30, 30]);
               }
-            }, 800);
-          }
-        }).catch(err => {
-          console.log('OTP Credential API error:', err);
-        });
-        
+            }
+          })
+          .catch((err) => {
+            console.log("OTP Credential API error:", err);
+          });
+
         return () => {
           abortController.abort();
         };
       }, 600); // Delay longer than the transition duration
-      
+
       return () => clearTimeout(captureTimer);
     }
   }, [isMoBNum]);
@@ -144,26 +143,32 @@ const Login = () => {
 
     try {
       setLoading(true);
+      // Call the sendOtp API
       await sendOtp({ phone_number: credential.mobileNumber });
-      
+
       // Add haptic feedback if available
       if (navigator.vibrate) {
         navigator.vibrate(50);
       }
-      
+
       setIsMobNum(true);
       // Reset timer when OTP is sent
       setTimer(120);
       setCanResend(false);
     } catch (error) {
       console.error("Error in sending OTP:", error);
-      let errorMessage = "Failed to send OTP. Please try again after a few minutes.";
-      
+      let errorMessage =
+        "Failed to send OTP. Please try again after a few minutes.";
+
       // If there's a specific error message from the server
-      if (error.response && error.response.data && error.response.data.message) {
+      if (
+        error.response &&
+        error.response.data &&
+        error.response.data.message
+      ) {
         errorMessage = `${error.response.data.message}. Please try again after a few minutes.`;
       }
-      
+
       setSnackbar({
         open: true,
         message: errorMessage,
@@ -177,19 +182,22 @@ const Login = () => {
   const handleResendOtp = async () => {
     try {
       setLoading(true);
-      
+
       // Call the sendOtp API
       await sendOtp({ phone_number: credential.mobileNumber });
-      
+
       // Reset the timer after successful API call
       setTimer(120);
       setCanResend(false);
-      
+
       // Add haptic feedback if available
       if (navigator.vibrate) {
         navigator.vibrate(50);
       }
-      
+
+      // Mock API call for now
+      // await sendOtp(credential.mobileNumber);
+
       setSnackbar({
         open: true,
         message: "OTP has been resent successfully",
@@ -197,13 +205,18 @@ const Login = () => {
       });
     } catch (error) {
       console.error("Error in resending OTP:", error);
-      let errorMessage = "Failed to resend OTP. Please try again after a few minutes.";
-      
+      let errorMessage =
+        "Failed to resend OTP. Please try again after a few minutes.";
+
       // If there's a specific error message from the server
-      if (error.response && error.response.data && error.response.data.message) {
+      if (
+        error.response &&
+        error.response.data &&
+        error.response.data.message
+      ) {
         errorMessage = `${error.response.data.message}. Please try again after a few minutes.`;
       }
-      
+
       setSnackbar({
         open: true,
         message: errorMessage,
@@ -216,11 +229,11 @@ const Login = () => {
 
   const handleGoBack = () => {
     setIsMobNum(false);
-    setCredential(prev => ({...prev, password: ""}));
-    
+    setCredential((prev) => ({ ...prev, password: "" }));
+
     // Reset OTP state
     setOtpFilled(false);
-    
+
     // Add haptic feedback if available
     if (navigator.vibrate) {
       navigator.vibrate(50);
@@ -232,8 +245,8 @@ const Login = () => {
   const handleChange = (e) => {
     const { name, value } = e.target;
     // Only allow numbers and limit to 10 digits
-    if (name === 'mobileNumber') {
-      const numericValue = value.replace(/[^0-9]/g, '').slice(0, 10);
+    if (name === "mobileNumber") {
+      const numericValue = value.replace(/[^0-9]/g, "").slice(0, 10);
       setCredential((prev) => ({ ...prev, [name]: numericValue }));
     } else {
       setCredential((prev) => ({ ...prev, [name]: value }));
@@ -242,22 +255,15 @@ const Login = () => {
 
   const handleOtpChange = (otp) => {
     setCredential((prev) => ({ ...prev, password: otp }));
-    
+
     // Add animation class when OTP is filled
     if (otp.length === 4) {
       setOtpFilled(true);
-      
+
       // Add haptic feedback if available
       if (navigator.vibrate) {
         navigator.vibrate([30, 30, 30]);
       }
-      
-      // Auto submit after a longer delay to show the filled OTP
-      setTimeout(() => {
-        if (formRef.current) {
-          formRef.current.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
-        }
-      }, 800);
     } else {
       setOtpFilled(false);
     }
@@ -265,7 +271,7 @@ const Login = () => {
 
   const handleLogin = async (e) => {
     e.preventDefault();
-    
+
     if (credential.password.length !== 4) {
       setSnackbar({
         open: true,
@@ -274,69 +280,60 @@ const Login = () => {
       });
       return;
     }
-    
+
     setLoading(true);
     try {
-      const data = await loginService(credential.mobileNumber, credential.password);
-      console.log('User object:', data.user);
-      
+      const data = await loginService(
+        credential.mobileNumber,
+        credential.password
+      );
+      console.log("User object:", data.user);
+
       // Add haptic feedback if available
       if (navigator.vibrate) {
         navigator.vibrate([30, 50, 100]);
       }
-      
+
       // Store the user data and appointments list in local storage
       localStorage.setItem("user", JSON.stringify(data));
-      
+
       if (data.user && data.user.created_user === true) {
-        console.log('User needs to complete registration');
+        console.log("User needs to complete registration");
         setUserData(data);
-        navigate('/register', { state: { userData: data } });
+        navigate("/register", { state: { userData: data } });
       } else {
-        console.log('User already registered, proceeding to patient home');
+        console.log("User already registered, proceeding to patient home");
         setUser(data);
-        navigate("/patient", { state: { freshLogin: true } }, { replace: true });
+        navigate(
+          "/patient",
+          { state: { freshLogin: true } },
+          { replace: true }
+        );
       }
     } catch (error) {
       console.error("Login failed:", error);
       let errorMessage = "Login failed. Please try again.";
-      
+
       if (error.response) {
-        // If there's a specific error message from the server, use it
-        if (error.response.data) {
-          if (error.response.data.message) {
-            errorMessage = error.response.data.message;
-          } else if (error.response.data.error) {
-            // Handle {"error":"Invalid OTP"} format
-            errorMessage = error.response.data.error;
-          }
-        } else {
-          // Otherwise, use status-based messages as fallback
-          switch (error.response.status) {
-            case 401:
-              errorMessage = "Invalid OTP. Please check and try again.";
-              break;
-            case 403:
-              errorMessage = "Account locked. Please contact support.";
-              break;
-            case 404:
-              errorMessage = "User not found. Please register first.";
-              break;
-            case 500:
-              // For 500 status with specific error message, it's already handled above
-              if (!error.response.data || (!error.response.data.message && !error.response.data.error)) {
-                errorMessage = "Server error. Please try again later.";
-              }
-              break;
-            default:
-              // Keep the default message
-              break;
-          }
+        switch (error.response.status) {
+          case 401:
+            errorMessage = "Invalid credentials";
+            break;
+          case 403:
+            errorMessage = "Account locked";
+            break;
+          case 500:
+            errorMessage = "Server error";
+            break;
+          default:
+            errorMessage =
+              error.response.data?.message || "Login failed. Please try again.";
         }
       } else if (error.message && error.message.includes("Network Error")) {
-        errorMessage = "Network error. Please check your connection and try again.";
+        errorMessage =
+          "Network error. Please check your connection and try again.";
       }
-      
+
       setSnackbar({
         open: true,
         message: errorMessage,
@@ -355,20 +352,20 @@ const Login = () => {
         first_name: formData.firstName || "",
         last_name: formData.lastName || "Chauhan",
         email: formData.email || "",
-        password: formData.password || "123456789"
+        password: formData.password || "123456789",
       };
-      
+
       // Call the updateUser API
       const response = await updateUser(updatePayload);
       console.log("User update response:", response);
-      
+
       // Update the user data with the form information
       const updatedUserData = {
         ...userData,
         user: {
           ...userData.user,
-          ...formData
-        }
+          ...formData,
+        },
       };
 
       localStorage.setItem("user", JSON.stringify(updatedUserData));
@@ -392,28 +389,27 @@ const Login = () => {
       <Fade in={true} timeout={800}>
         <div className="desktop-content">
           <Box className="logo-container">
-            <img 
-              src={DigiCareLogo} 
-              alt="DigiCare Logo" 
+            <img
+              src={DigiCareLogo}
+              alt="DigiCare Logo"
               className="logo"
-              style={{ height: '72px', marginBottom: '24px' }} 
+              style={{ height: "72px", marginBottom: "24px" }}
             />
           </Box>
         </div>
       </Fade>
 
-      <div className="login-container" ref={containerRef} style={{ 
-        maxWidth: '380px',  // Reduce max width from 420px
-        width: '85%',       // Slightly reduced from 90%
-      }}>
-        <Box sx={{ position: 'relative', width: '100%', overflow: 'hidden' }}>
-          <Fade 
-            in={!isMoBNum} 
-            timeout={500} 
-            mountOnEnter 
-            unmountOnExit
-          >
-            <Box sx={{ width: '100%' }}>
+      <div
+        className="login-container"
+        ref={containerRef}
+        style={{
+          maxWidth: "380px", // Reduce max width from 420px
+          width: "85%", // Slightly reduced from 90%
+        }}
+      >
+        <Box sx={{ position: "relative", width: "100%", overflow: "hidden" }}>
+          <Fade in={!isMoBNum} timeout={500} mountOnEnter unmountOnExit>
+            <Box sx={{ width: "100%" }}>
               <div className="mobile-header">
                 <Typography
                   variant="h6"
@@ -438,7 +434,12 @@ const Login = () => {
                 </Typography>
               </div>
 
-              <form onSubmit={(e) => {e.preventDefault(); handleClickToGetOtp();}}>
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  handleClickToGetOtp();
+                }}
+              >
                 <TextField
                   name="mobileNumber"
                   label="Mobile Number"
@@ -453,7 +454,7 @@ const Login = () => {
                     maxLength: 10,
                     inputMode: "numeric",
                     pattern: "[0-9]*",
-                    "aria-label": "Mobile number"
+                    "aria-label": "Mobile number",
                   }}
                   sx={{
                     mb: 4,
@@ -504,41 +505,40 @@ const Login = () => {
             </Box>
           </Fade>
 
-          <Fade 
-            in={isMoBNum} 
-            timeout={500} 
-            mountOnEnter 
-            unmountOnExit
-          >
-            <Box sx={{ width: '100%' }}>
+          <Fade in={isMoBNum} timeout={500} mountOnEnter unmountOnExit>
+            <Box sx={{ width: "100%" }}>
               <div className="mobile-header">
-                <Box sx={{ 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  mb: 2,
-                  width: '100%'
-                }}>
-                  <IconButton 
+                <Box
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    mb: 2,
+                    width: "100%",
+                  }}
+                >
+                  <IconButton
                     onClick={handleGoBack}
-                    sx={{ 
-                      mr: 2, 
-                      color: '#1976d2',
-                      ml: -1 // Move button slightly left
+                    sx={{
+                      mr: 2,
+                      color: "#1976d2",
+                      ml: -1, // Move button slightly left
                     }}
                     aria-label="Go back to mobile number input"
                   >
                     <ArrowBackIcon />
                   </IconButton>
-                  
-                  <Box sx={{ display: 'flex', alignItems: 'center', flexGrow: 1 }}>
-                    <Typography 
-                      variant="body2" 
-                      sx={{ 
-                        color: '#666', 
-                        fontSize: '0.8rem',
-                        whiteSpace: 'nowrap',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis'
+
+                  <Box
+                    sx={{ display: "flex", alignItems: "center", flexGrow: 1 }}
+                  >
+                    <Typography
+                      variant="body2"
+                      sx={{
+                        color: "#666",
+                        fontSize: "0.8rem",
+                        whiteSpace: "nowrap",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
                       }}
                     >
                       SMS verification code sent to {credential.mobileNumber}
@@ -549,16 +549,35 @@ const Login = () => {
 
               <form onSubmit={handleLogin} ref={formRef}>
                 <Box sx={{ mb: 3, mt: 2 }}>
-                  <Typography variant="body2" sx={{ color: "#666", mb: 2, textAlign: "left" }}>
+                  {/* <SecurityIcon sx={{ color: '#1976d2', fontSize: 18, mr: 1 }} /> */}
+                  <Typography
+                    variant="body2"
+                    sx={{ color: "#666", mb: 2, textAlign: "left" }}
+                  >
                     Enter 4-digit OTP
                   </Typography>
-                  <div className={`otp-container ${otpFilled ? 'otp-input-filled' : ''}`}>
+                  <div
+                    className={`otp-container ${
+                      otpFilled ? "otp-input-filled" : ""
+                    }`}
+                  >
                     <OtpInput
                       value={credential.password}
                       onChange={handleOtpChange}
                       numInputs={4}
-                      renderInput={(props) => <input {...props} inputMode="numeric" pattern="[0-9]*" aria-label="OTP digit input" />}
-                      containerStyle={{ justifyContent: "center", margin: "0 auto" }}
+                      renderSeparator={<span style={{ width: "6px" }}></span>}
+                      renderInput={(props) => (
+                        <input
+                          {...props}
+                          inputMode="numeric"
+                          pattern="[0-9]*"
+                          aria-label="OTP digit input"
+                        />
+                      )}
+                      containerStyle={{
+                        justifyContent: "space-between",
+                        margin: "0 auto",
+                      }}
                       inputStyle={{
                         width: "45px",
                         height: "45px",
@@ -570,23 +589,24 @@ const Login = () => {
                       focusStyle={{
                         border: "1px solid #1976d2",
                         outline: "none",
-                        boxShadow: "0 0 0 3px rgba(25, 118, 210, 0.1)"
+                        boxShadow: "0 0 0 3px rgba(25, 118, 210, 0.1)",
                       }}
                       shouldAutoFocus
                     />
                   </div>
                 </Box>
-                
+
                 {/* Resend OTP Timer */}
                 <Box className="resend-timer">
                   {!canResend ? (
                     <Typography variant="body2" sx={{ color: "#666" }}>
-                      Didn't get the OTP? Resend in <strong>{Math.floor(timer / 60)}:{(timer % 60).toString().padStart(2, '0')}</strong>
+                      Didn't get the OTP? Resend in <strong>{timer}</strong>{" "}
+                      seconds
                     </Typography>
                   ) : (
-                    <Typography 
+                    <Typography
                       className="resend-link"
-                      variant="body2" 
+                      variant="body2"
                       onClick={handleResendOtp}
                     >
                       Resend OTP
@@ -636,11 +656,11 @@ const Login = () => {
         <Alert
           severity={snackbar.severity}
           onClose={() => setSnackbar((prev) => ({ ...prev, open: false }))}
-          sx={{ 
+          sx={{
             width: "100%",
             boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
             borderRadius: "8px",
-            alignItems: "center"
+            alignItems: "center",
           }}
           variant="filled"
         >
