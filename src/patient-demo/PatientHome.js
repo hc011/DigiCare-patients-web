@@ -802,8 +802,8 @@ const PatientHome = () => {
                                           mt: 1,
                                         }}
                                       >
-                                        Don't worry - we'll still see you. Just
-                                        check in at reception when you arrive
+                                        Don't worry, just pay at the clinic when
+                                        you arrive to join the queue
                                       </Typography>
                                     </Box>
                                   </>
@@ -1121,7 +1121,7 @@ const PatientHome = () => {
                                                                 </Typography>
                                                             </Grid> */}
 
-                              <Grid item xs={6} sm={3}>
+                              {/* <Grid item xs={6} sm={3}>
                                 <Typography
                                   variant="caption"
                                   color="text.secondary"
@@ -1143,7 +1143,7 @@ const PatientHome = () => {
                                 >
                                   {appointment?.token}
                                 </Typography>
-                              </Grid>
+                              </Grid> */}
                             </Grid>
                           </Grid>
                         </Box>
@@ -1590,8 +1590,8 @@ const PatientHome = () => {
                               mt: 1,
                             }}
                           >
-                            Don't worry - we'll still see you. Just check in at
-                            reception when you arrive
+                            Don't worry, just pay at the clinic when you arrive
+                            to join the queue
                           </Typography>
                         </Box>
                       ) : selectedAppointment?.queobj?.waiting === 0 ? (
