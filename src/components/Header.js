@@ -115,7 +115,7 @@ function Header({ closeEventSource }) {
         )}
 
         {/* Mobile Logout Button */}
-        {isMobile && (
+        {/* {isMobile && (
           <IconButton
             color="primary"
             onClick={handleClickOpen}
@@ -123,10 +123,10 @@ function Header({ closeEventSource }) {
           >
             <LogoutIcon />
           </IconButton>
-        )}
+        )} */}
 
         {/* Desktop Logout Button */}
-        {!isMobile && (
+        {/* {!isMobile && (
           <Button
             variant="contained"
             color="primary"
@@ -135,7 +135,7 @@ function Header({ closeEventSource }) {
           >
             Logout
           </Button>
-        )}
+        )} */}
       </div>
 
       {/* Logout Confirmation Dialog */}
