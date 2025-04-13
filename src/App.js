@@ -17,9 +17,10 @@ import DoctorPage from "./patient-demo/DoctorPage";
 import PatientHome from "./patient-demo/PatientHome";
 import ProfilePage from "./patient-demo/ProfilePage";
 import SearchDoctors from "./patient-demo/SearchDoctors";
-import Register from './Pages/Register';
-import PrivacyPolicy from './Pages/PrivacyPolicy';
-import TermsAndConditions from './Pages/TermsAndConditions';
+import Register from "./Pages/Register";
+import PrivacyPolicy from "./Pages/PrivacyPolicy";
+import TermsAndConditions from "./Pages/TermsAndConditions";
+import InstallPrompt from "./components/InstallPrompt";
 
 const App = () => {
   const { user } = useContext(AuthContext);
@@ -215,7 +216,6 @@ const App = () => {
     ]);
   }, []);
 
-
   // useEffect(() => {
   //   const getAppointments = async () => {
   //     const response = await fetchAppointments(1, "2025-03-18T12:01:00Z");
@@ -240,14 +240,8 @@ const App = () => {
                 path="/login"
                 element={user ? <Navigate to="/patient" replace /> : <Login />}
               />
-              <Route
-                path="/register"
-                element={<Register />}
-              />
-              <Route
-                path="/privacy-policy"
-                element={<PrivacyPolicy />}
-              />
+              <Route path="/register" element={<Register />} />
+              <Route path="/privacy-policy" element={<PrivacyPolicy />} />
               <Route
                 path="/terms-and-conditions"
                 element={<TermsAndConditions />}
@@ -276,7 +270,11 @@ const App = () => {
                 path="/doctor/:doctorId"
                 element={
                   <PrivateRoute>
-                    <DoctorPage doctors={doctors} maxToken={maxToken} refreshTokenFn={setRefreshToken} />
+                    <DoctorPage
+                      doctors={doctors}
+                      maxToken={maxToken}
+                      refreshTokenFn={setRefreshToken}
+                    />
                   </PrivateRoute>
                 }
               />
@@ -315,6 +313,7 @@ const App = () => {
           </Box>
         </Box>
         {/* {user !== null && isMobile && <BottomNavigator />} */}
+        <InstallPrompt isLoggedIn={user !== null} />
       </div>
     </Router>
   );
