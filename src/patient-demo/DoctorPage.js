@@ -1528,7 +1528,29 @@ const DoctorPage = () => {
                 {cabinInfo?.doctor?.name || "the doctor"}
               </Typography>
 
-              <Box sx={{ width: "100%", mt: 1, maxWidth: "500px", mx: "auto" }}>
+              {/* Payment alert - Moved up and redesigned */}
+              {!appointmentResponse.queobj.paid && (
+                <Box
+                  sx={{ width: "100%", mb: 1, maxWidth: "500px", mx: "auto" }}
+                >
+                  <Alert
+                    severity="warning"
+                    icon={false}
+                    sx={{
+                      borderRadius: 2,
+                      boxShadow: "0px 2px 8px rgba(0,0,0,0.05)",
+                      mb: 2,
+                    }}
+                  >
+                    <Typography variant="body2">
+                      Please complete the payment at the reception desk when you
+                      arrive at the clinic.
+                    </Typography>
+                  </Alert>
+                </Box>
+              )}
+
+              <Box sx={{ width: "100%", maxWidth: "500px", mx: "auto" }}>
                 {/* Token number card */}
                 <Card
                   elevation={3}
@@ -1539,29 +1561,13 @@ const DoctorPage = () => {
                     overflow: "visible",
                   }}
                 >
-                  {/* Removed appointment details header */}
-
                   <CardContent sx={{ pt: 3, pb: 3 }}>
-                    {/* Token number section - commented out
-                    <Box sx={{ 
-                      textAlign: 'center', 
-                      mb: 3, 
-                      mt: 1, 
-                      py: 1.5,
-                      bgcolor: 'rgba(25, 118, 210, 0.05)', 
-                      borderRadius: 2 
-                    }}>
-                      <Typography variant="body2" color="text.secondary" gutterBottom>
-                        YOUR TOKEN NUMBER
-                      </Typography>
-                      <Typography variant="h3" color="primary.main" sx={{ fontWeight: 'bold', letterSpacing: 1 }}>
-                        #{appointmentResponse.token}
-                      </Typography>
-                    </Box>
-                    
-                    <Divider sx={{ mb: 2.5 }} />
-                    */}
-
+                    <Typography
+                      variant="subtitle1"
+                      sx={{ fontWeight: 600, mb: 2 }}
+                    >
+                      Appointment Details
+                    </Typography>
                     <Grid container spacing={2.5}>
                       <Grid item xs={12}>
                         <Box sx={{ display: "flex", alignItems: "flex-start" }}>
@@ -1687,77 +1693,28 @@ const DoctorPage = () => {
                   </CardContent>
                 </Card>
 
-                {/* Instructions Card */}
-                <Card
-                  variant="outlined"
-                  sx={{
-                    mb: 2,
-                    borderRadius: 3,
-                    borderColor: !appointmentResponse.queobj.paid
-                      ? "warning.main"
-                      : "primary.main",
-                    bgcolor: !appointmentResponse.queobj.paid
-                      ? "warning.lighter"
-                      : "primary.lighter",
-                    position: "relative",
-                    overflow: "hidden",
-                  }}
-                >
-                  <Box
+                {/* Important information message - Redesigned */}
+                {appointmentResponse.queobj.paid && (
+                  <Alert
+                    severity="info"
+                    icon={<InfoIcon sx={{ color: "primary.main" }} />}
                     sx={{
-                      position: "absolute",
-                      top: 0,
-                      left: 0,
-                      width: 4,
-                      height: "100%",
-                      bgcolor: !appointmentResponse.queobj.paid
-                        ? "warning.main"
-                        : "primary.main",
+                      borderRadius: 2,
+                      mb: 2,
+                      boxShadow: "0px 2px 8px rgba(0,0,0,0.05)",
                     }}
-                  />
-
-                  <CardContent sx={{ pl: 3 }}>
-                    <Box sx={{ display: "flex", alignItems: "center", mb: 1 }}>
-                      {!appointmentResponse.queobj.paid ? (
-                        <InfoIcon sx={{ color: "warning.main", mr: 1 }} />
-                      ) : (
-                        <CheckCircleIcon
-                          sx={{ color: "primary.main", mr: 1 }}
-                        />
-                      )}
-                      <Typography
-                        variant="subtitle2"
-                        sx={{
-                          fontWeight: 600,
-                          color: !appointmentResponse.queobj.paid
-                            ? "warning.dark"
-                            : "primary.dark",
-                        }}
-                      >
-                        {!appointmentResponse.queobj.paid
-                          ? "PAYMENT REQUIRED"
-                          : "IMPORTANT INFORMATION"}
-                      </Typography>
-                    </Box>
-
+                  >
                     <Typography
-                      variant="body2"
-                      sx={{
-                        color: !appointmentResponse.queobj.paid
-                          ? "warning.dark"
-                          : "primary.dark",
-                        opacity: 0.9,
-                        pl: 4,
-                      }}
+                      variant="subtitle2"
+                      sx={{ fontWeight: 600, color: "primary.main" }}
                     >
-                      Please arrive at the clinic on time.
-                      {!appointmentResponse.queobj.paid &&
-                        " Remember to complete the payment at the reception desk when you arrive."}
+                      Important Information
                     </Typography>
-                  </CardContent>
-                </Card>
-
-                {/* Removed "details have been saved" message */}
+                    <Typography variant="body2">
+                      Please arrive at the clinic on time for your appointment.
+                    </Typography>
+                  </Alert>
+                )}
               </Box>
             </Box>
           )}
