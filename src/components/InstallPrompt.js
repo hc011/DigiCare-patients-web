@@ -181,18 +181,21 @@ const InstallPrompt = ({ isLoggedIn }) => {
     localStorage.setItem("dismissCount", dismissCount);
 
     let nextDelay;
-    // Set next delay based on dismissal count
+    // Set next delay based on dismissal count with more realistic intervals
     if (dismissCount === 1) {
-      nextDelay = 10 * 1000; // 10 seconds
+      nextDelay = 10 * 60 * 1000; // 10 minutes
     } else if (dismissCount === 2) {
-      nextDelay = 20 * 1000; // 20 seconds
+      nextDelay = 30 * 60 * 1000; // 30 minutes
     } else if (dismissCount === 3) {
-      nextDelay = 60 * 1000; // 1 minute
-    } else {
-      // After 3 dismissals, permanently dismiss
-      setUserDismissed(true);
-      localStorage.setItem("installPromptDismissed", "true");
-      return;
+      nextDelay = 60 * 60 * 1000; // 1 hour
+    } else if (dismissCount === 4) {
+      nextDelay = 90 * 60 * 1000; // 1.5 hours
+    } else if (dismissCount === 5) {
+      nextDelay = 3 * 60 * 60 * 1000; // 3 hours
+    } else if (dismissCount === 6) {
+      nextDelay = 8 * 60 * 60 * 1000; // 8 hours
+    } else if (dismissCount >= 7) {
+      nextDelay = 16 * 60 * 60 * 1000; // 16 hours (and reset to this for all subsequent times)
     }
 
     // Set the next time to show the prompt
