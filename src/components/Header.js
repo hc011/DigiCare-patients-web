@@ -25,6 +25,31 @@ function Header({ closeEventSource }) {
   const navigate = useNavigate();
   const [deferredPrompt, setDeferredPrompt] = useState(null);
   const [isStandalone, setIsStandalone] = useState(false);
+  const [appDismissed, setAppDismissed] = useState(false);
+
+  // Check if app was previously installed or dismissed
+  useEffect(() => {
+    const dismissed = localStorage.getItem("installPromptDismissed") === "true";
+    setAppDismissed(dismissed);
+
+    // Check if the app is already installed using getInstalledRelatedApps if available
+    async function checkInstalledApps() {
+      if ("getInstalledRelatedApps" in navigator) {
+        try {
+          const relatedApps = await navigator.getInstalledRelatedApps();
+          if (relatedApps.length > 0) {
+            // PWA is installed, hide the Get App button
+            setAppDismissed(true);
+            localStorage.setItem("installPromptDismissed", "true");
+          }
+        } catch (error) {
+          console.error("Error checking installed apps:", error);
+        }
+      }
+    }
+
+    checkInstalledApps();
+  }, []);
 
   // Check for standalone mode
   useEffect(() => {
@@ -88,6 +113,8 @@ function Header({ closeEventSource }) {
         setDeferredPrompt(null);
         // Store in localStorage that app was installed
         localStorage.setItem("installPromptDismissed", "true");
+        // Update state to hide the button immediately
+        setAppDismissed(true);
       }
     } else {
       alert("Installation not available right now. Please try again later.");
@@ -104,8 +131,8 @@ function Header({ closeEventSource }) {
       />
 
       <div className="header-buttons">
-        {/* Get App Button - Only show if not standalone and the user is logged in */}
-        {!isStandalone && user && (
+        {/* Get App Button - Only show if not standalone, user hasn't installed the app, and the user is logged in */}
+        {!isStandalone && !appDismissed && user && (
           <button
             onClick={handleInstallClick}
             className="install-button header-install-button"
