@@ -50,7 +50,6 @@ const InstallPrompt = ({ isLoggedIn }) => {
     if (isStandalone) return;
 
     const handler = (e) => {
-      console.log("beforeinstallprompt event fired!");
       e.preventDefault();
       setDeferredPrompt(e);
       setHasPromptEventFired(true);
@@ -58,13 +57,11 @@ const InstallPrompt = ({ isLoggedIn }) => {
     };
 
     const handleAppInstalled = () => {
-      console.log("appinstalled event fired!");
       setShowPrompt(false);
       setDeferredPrompt(null);
       // When app is installed, permanently dismiss
       setUserDismissed(true);
       localStorage.setItem("installPromptDismissed", "true");
-      console.log("PWA was successfully installed");
     };
 
     window.addEventListener("beforeinstallprompt", handler);
@@ -100,21 +97,13 @@ const InstallPrompt = ({ isLoggedIn }) => {
       return;
     }
 
-    console.log("Setting up interval to check next prompt time");
     const checkTime = setInterval(() => {
       const now = Date.now();
       const storedTime = parseInt(
         localStorage.getItem("nextPromptTime") || "0"
       );
 
-      console.log(
-        `Checking time: current=${now}, nextPrompt=${storedTime}, diff=${
-          now - storedTime
-        }ms`
-      );
-
       if (storedTime > 0 && now >= storedTime) {
-        console.log("Time to show prompt again!");
         localStorage.removeItem("nextPromptTime");
         setNextPromptTime(0);
         setShowPrompt(true);
@@ -128,22 +117,6 @@ const InstallPrompt = ({ isLoggedIn }) => {
   // Show prompt after login with delay or based on dismissal timing
   useEffect(() => {
     let timer;
-
-    // Add debugging to identify why prompt isn't showing
-    console.log("InstallPrompt conditions:", {
-      isLoggedIn,
-      hasPromptEventFired,
-      isStandalone,
-      showPrompt,
-      userDismissed,
-      nextPromptTime: localStorage.getItem("nextPromptTime"),
-      isPastNextPromptTime:
-        !localStorage.getItem("nextPromptTime") ||
-        Date.now() > parseInt(localStorage.getItem("nextPromptTime") || "0"),
-      installPromptDismissed:
-        localStorage.getItem("installPromptDismissed") === "true",
-      dismissCount: localStorage.getItem("dismissCount") || "0",
-    });
 
     // Only show the prompt if:
     // 1. The user is logged in
@@ -162,10 +135,8 @@ const InstallPrompt = ({ isLoggedIn }) => {
       (!storedNextPromptTime || Date.now() > parseInt(storedNextPromptTime));
 
     if (canShowPrompt) {
-      console.log("Setting timer to show prompt after delay");
       // Delay showing the prompt (3 seconds)
       timer = setTimeout(() => {
-        console.log("Timer expired, showing prompt");
         setShowPrompt(true);
       }, 3000); // 3 second delay
     }
@@ -202,7 +173,6 @@ const InstallPrompt = ({ isLoggedIn }) => {
   };
 
   const handleClosePrompt = () => {
-    console.log("User dismissed the prompt");
     setShowPrompt(false);
 
     // Get current dismissal count
@@ -214,16 +184,12 @@ const InstallPrompt = ({ isLoggedIn }) => {
     // Set next delay based on dismissal count
     if (dismissCount === 1) {
       nextDelay = 10 * 1000; // 10 seconds
-      console.log("First dismissal - will show again in 10 seconds");
     } else if (dismissCount === 2) {
       nextDelay = 20 * 1000; // 20 seconds
-      console.log("Second dismissal - will show again in 20 seconds");
     } else if (dismissCount === 3) {
       nextDelay = 60 * 1000; // 1 minute
-      console.log("Third dismissal - will show again in 1 minute");
     } else {
       // After 3 dismissals, permanently dismiss
-      console.log("Fourth dismissal - permanently dismissing");
       setUserDismissed(true);
       localStorage.setItem("installPromptDismissed", "true");
       return;
@@ -231,11 +197,6 @@ const InstallPrompt = ({ isLoggedIn }) => {
 
     // Set the next time to show the prompt
     const newNextPromptTime = Date.now() + nextDelay;
-    console.log(
-      `Setting next prompt time: ${new Date(
-        newNextPromptTime
-      ).toLocaleTimeString()}`
-    );
     localStorage.setItem("nextPromptTime", newNextPromptTime);
     setNextPromptTime(newNextPromptTime);
   };
