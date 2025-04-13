@@ -14,6 +14,54 @@ header {
   padding: 0px 20px;
 }
 
+.header-buttons {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding-right: 40px;
+}
+
+.get-app-button {
+  margin-right: 10px;
+}
+
+/* Styles for the install button - copied from InstallPrompt.css */
+.install-button {
+  background: linear-gradient(135deg, #1976d2, #1565c0);
+  color: white;
+  border: none;
+  padding: 10px 24px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 1.05rem;
+  transition: all 0.3s;
+  box-shadow: 0 4px 8px rgba(25, 118, 210, 0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  letter-spacing: 0.3px;
+}
+
+.install-button:hover {
+  background: linear-gradient(135deg, #1565c0, #0d47a1);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(25, 118, 210, 0.35);
+}
+
+.install-button:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 4px rgba(25, 118, 210, 0.3);
+}
+
+/* Customization for header's install button */
+.header-install-button {
+  padding: 8px 16px;
+  font-size: 0.9rem;
+  margin-right: 15px;
+}
+
 .logout-button {
   width: 100%;
   display: flex;
@@ -26,6 +74,15 @@ header {
     display: flex;
     justify-content: space-between; /* Ensure space between logo and logout button */
     padding: 0 10px; /* Reduce padding for mobile */
+  }
+
+  .header-buttons {
+    padding-right: 10px;
+  }
+
+  .header-install-button {
+    padding: 6px 12px;
+    font-size: 0.8rem;
   }
 
   .logout-button {

@@ -135,10 +135,10 @@ const InstallPrompt = ({ isLoggedIn }) => {
       (!storedNextPromptTime || Date.now() > parseInt(storedNextPromptTime));
 
     if (canShowPrompt) {
-      // Delay showing the prompt (3 seconds)
+      // Delay showing the prompt (2 minutes)
       timer = setTimeout(() => {
         setShowPrompt(true);
-      }, 3000); // 3 second delay
+      }, 120000); // 2 minute delay
     }
 
     return () => {
@@ -175,31 +175,8 @@ const InstallPrompt = ({ isLoggedIn }) => {
   const handleClosePrompt = () => {
     setShowPrompt(false);
 
-    // Get current dismissal count
-    const dismissCount =
-      parseInt(localStorage.getItem("dismissCount") || "0") + 1;
-    localStorage.setItem("dismissCount", dismissCount);
-
-    let nextDelay;
-    // Set next delay based on dismissal count with more realistic intervals
-    if (dismissCount === 1) {
-      nextDelay = 10 * 60 * 1000; // 10 minutes
-    } else if (dismissCount === 2) {
-      nextDelay = 30 * 60 * 1000; // 30 minutes
-    } else if (dismissCount === 3) {
-      nextDelay = 60 * 60 * 1000; // 1 hour
-    } else if (dismissCount === 4) {
-      nextDelay = 90 * 60 * 1000; // 1.5 hours
-    } else if (dismissCount === 5) {
-      nextDelay = 3 * 60 * 60 * 1000; // 3 hours
-    } else if (dismissCount === 6) {
-      nextDelay = 8 * 60 * 60 * 1000; // 8 hours
-    } else if (dismissCount >= 7) {
-      nextDelay = 16 * 60 * 60 * 1000; // 16 hours (and reset to this for all subsequent times)
-    }
-
-    // Set the next time to show the prompt
-    const newNextPromptTime = Date.now() + nextDelay;
+    // Set next prompt time to 24 hours from now
+    const newNextPromptTime = Date.now() + 24 * 60 * 60 * 1000; // 24 hours
     localStorage.setItem("nextPromptTime", newNextPromptTime);
     setNextPromptTime(newNextPromptTime);
   };
@@ -222,7 +199,7 @@ const InstallPrompt = ({ isLoggedIn }) => {
         <p>
           For faster access and offline use.
           <br />
-          <strong>No download required!</strong>
+          <strong>No download required from playstore!</strong>
         </p>
         <div className="install-prompt-buttons">
           <button onClick={handleInstallClick} className="install-button">

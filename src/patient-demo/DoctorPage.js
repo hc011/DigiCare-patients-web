@@ -766,7 +766,7 @@ const DoctorPage = () => {
                   color="text.secondary"
                   display="block"
                 >
-                  Doctor Availability
+                  Next Available
                 </Typography>
                 <Typography
                   variant="body2"
@@ -775,26 +775,19 @@ const DoctorPage = () => {
                     color:
                       doctor.currentStatus === "Available"
                         ? "success.main"
-                        : "error.main",
+                        : cabinInfo?.next_active
+                        ? "success.main"
+                        : "text.secondary",
                   }}
                 >
-                  {doctor.currentStatus}
+                  {doctor.currentStatus === "Available"
+                    ? "Now"
+                    : cabinInfo?.next_active
+                    ? formatNextAvailable(cabinInfo?.next_active)
+                    : "-"}
                 </Typography>
               </Box>
             </Grid>
-
-            {/* Wait Time - commented out
-        <Grid item xs={6} sm={3}>
-        <Box sx={{ textAlign: "center" }}>
-        <Typography variant="caption" color="text.secondary" display="block">
-        Wait Time
-        </Typography>
-        <Typography variant="body2" fontWeight="medium" color="primary">
-        {doctor.estimatedWaitTime}
-        </Typography>
-        </Box>
-        </Grid>
-        */}
 
             <Grid item xs={6} sm={3}>
               <Box sx={{ textAlign: "center" }}>
@@ -808,33 +801,6 @@ const DoctorPage = () => {
                 <Typography variant="body2" fontWeight="medium" color="primary">
                   {doctor.fees} (pay at clinic)
                 </Typography>
-              </Box>
-            </Grid>
-
-            <Grid item xs={6} sm={3}>
-              <Box sx={{ textAlign: "center" }}>
-                <Typography
-                  variant="caption"
-                  color="text.secondary"
-                  display="block"
-                >
-                  Next Available Slot
-                </Typography>
-                <Box
-                  sx={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                >
-                  <Typography
-                    variant="body2"
-                    fontWeight="medium"
-                    color="primary.dark"
-                  >
-                    {formatNextAvailable(cabinInfo?.next_active)}
-                  </Typography>
-                </Box>
               </Box>
             </Grid>
           </Grid>
