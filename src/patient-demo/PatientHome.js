@@ -20,24 +20,24 @@ import RefreshIcon from "@mui/icons-material/Refresh";
 import WarningIcon from "@mui/icons-material/Warning";
 import { formatSecondsToHoursMinutes } from "../utils/timeUtils";
 import {
-    Alert,
-    Avatar,
-    Box,
-    Button,
-    Card,
-    CardContent,
-    CircularProgress,
-    Dialog,
-    DialogActions,
-    DialogContent,
-    DialogContentText,
-    DialogTitle,
-    Divider,
-    Grid,
-    IconButton,
-    Skeleton,
-    Slide,
-    Snackbar,
+  Alert,
+  Avatar,
+  Box,
+  Button,
+  Card,
+  CardContent,
+  CircularProgress,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
+  Divider,
+  Grid,
+  IconButton,
+  Skeleton,
+  Slide,
+  Snackbar,
   Typography,
 } from "@mui/material";
 import React, { useContext, useEffect, useState } from "react";
@@ -58,7 +58,7 @@ const AppointmentSkeleton = () => (
   <Card
     elevation={1}
     sx={{
-        borderRadius: 3,
+      borderRadius: 3,
       overflow: "hidden",
     }}
   >
@@ -75,39 +75,39 @@ const AppointmentSkeleton = () => (
         height={20}
         sx={{ bgcolor: "rgba(255, 255, 255, 0.2)" }}
       />
-        </Box>
-        <CardContent>
-            <Grid container spacing={1}>
-                <Grid item xs={12}>
-                    <Box sx={{ display: "flex", alignItems: "center", mb: 1 }}>
+    </Box>
+    <CardContent>
+      <Grid container spacing={1}>
+        <Grid item xs={12}>
+          <Box sx={{ display: "flex", alignItems: "center", mb: 1 }}>
             <Skeleton
               variant="circular"
               width={24}
               height={24}
               sx={{ mr: 1 }}
             />
-                        <Skeleton variant="text" width="70%" height={24} />
-                    </Box>
-                    <Box sx={{ display: "flex", alignItems: "center", mb: 1 }}>
+            <Skeleton variant="text" width="70%" height={24} />
+          </Box>
+          <Box sx={{ display: "flex", alignItems: "center", mb: 1 }}>
             <Skeleton
               variant="circular"
               width={24}
               height={24}
               sx={{ mr: 1 }}
             />
-                        <Skeleton variant="text" width="60%" height={24} />
-                    </Box>
-                    <Box sx={{ display: "flex", alignItems: "center", mb: 1 }}>
+            <Skeleton variant="text" width="60%" height={24} />
+          </Box>
+          <Box sx={{ display: "flex", alignItems: "center", mb: 1 }}>
             <Skeleton
               variant="circular"
               width={24}
               height={24}
               sx={{ mr: 1 }}
             />
-                        <Skeleton variant="text" width="40%" height={24} />
-                    </Box>
-                </Grid>
-                <Grid item xs={6}>
+            <Skeleton variant="text" width="40%" height={24} />
+          </Box>
+        </Grid>
+        <Grid item xs={6}>
           <Box sx={{ textAlign: "center", mb: 2 }}>
             <Skeleton
               variant="circular"
@@ -127,9 +127,9 @@ const AppointmentSkeleton = () => (
               height={32}
               sx={{ mx: "auto" }}
             />
-                    </Box>
-                </Grid>
-                <Grid item xs={6}>
+          </Box>
+        </Grid>
+        <Grid item xs={6}>
           <Box sx={{ textAlign: "center", mb: 2 }}>
             <Skeleton
               variant="circular"
@@ -149,8 +149,8 @@ const AppointmentSkeleton = () => (
               height={32}
               sx={{ mx: "auto" }}
             />
-                    </Box>
-                </Grid>
+          </Box>
+        </Grid>
         <Grid
           item
           xs={12}
@@ -168,339 +168,339 @@ const AppointmentSkeleton = () => (
             height={36}
             sx={{ borderRadius: 2 }}
           />
-                </Grid>
-                <Grid item xs={12}>
+        </Grid>
+        <Grid item xs={12}>
           <Skeleton
             variant="rectangular"
             width="100%"
             height={36}
             sx={{ borderRadius: 2, mt: 2 }}
           />
-                </Grid>
-            </Grid>
-        </CardContent>
-    </Card>
+        </Grid>
+      </Grid>
+    </CardContent>
+  </Card>
 );
 
 // Create Slide transition component for the Dialog
 const Transition = React.forwardRef(function Transition(props, ref) {
-    return <Slide direction="up" ref={ref} {...props} />;
+  return <Slide direction="up" ref={ref} {...props} />;
 });
 
 const PatientHome = () => {
-    const navigate = useNavigate();
-    const location = useLocation();
-    const [loading, setLoading] = useState(false);
-    const [showBookingSuccess, setShowBookingSuccess] = useState(false);
-    const [hasAppointment, setHasAppointment] = useState(false);
-    const [showAppointmentDetails, setShowAppointmentDetails] = useState(false);
-    const [selectedAppointment, setSelectedAppointment] = useState(null);
-    const [appointmentDetails, setAppointmentDetails] = useState(null);
-    const [activeStep, setActiveStep] = useState(0);
-    const { user } = useContext(AuthContext);
-    const [currentAppointments, setCurrentAppointments] = useState([]);
-    const [isWaitingRefreshing, setIsWaitingRefreshing] = useState(false);
-    const [lastUpdatedTime, setLastUpdatedTime] = useState(new Date());
-    const [showCancelDialog, setShowCancelDialog] = useState(false);
-    const [isCanceling, setIsCanceling] = useState(false);
-    const [snackbar, setSnackbar] = useState({
-        open: false,
-        message: "",
+  const navigate = useNavigate();
+  const location = useLocation();
+  const [loading, setLoading] = useState(false);
+  const [showBookingSuccess, setShowBookingSuccess] = useState(false);
+  const [hasAppointment, setHasAppointment] = useState(false);
+  const [showAppointmentDetails, setShowAppointmentDetails] = useState(false);
+  const [selectedAppointment, setSelectedAppointment] = useState(null);
+  const [appointmentDetails, setAppointmentDetails] = useState(null);
+  const [activeStep, setActiveStep] = useState(0);
+  const { user } = useContext(AuthContext);
+  const [currentAppointments, setCurrentAppointments] = useState([]);
+  const [isWaitingRefreshing, setIsWaitingRefreshing] = useState(false);
+  const [lastUpdatedTime, setLastUpdatedTime] = useState(new Date());
+  const [showCancelDialog, setShowCancelDialog] = useState(false);
+  const [isCanceling, setIsCanceling] = useState(false);
+  const [snackbar, setSnackbar] = useState({
+    open: false,
+    message: "",
     severity: "success",
-    });
+  });
 
-    const fetchCurrentAppointments = async () => {
-        try {
-            setLoading(true);
-            const response = await getAllAppointments("upcoming");
-            
-            // Sort appointments by waiting position, with non-late before late
-            const sortedAppointments = response.sort((a, b) => {
-                // First prioritize non-late appointments
-                if (a.queobj?.late !== b.queobj?.late) {
-                    return a.queobj?.late ? 1 : -1;
-                }
-                // Then sort by waiting position
-                return (a.queobj?.waiting || 0) - (b.queobj?.waiting || 0);
-            });
-            
-            setCurrentAppointments(sortedAppointments);
-            setLastUpdatedTime(new Date());
-        } catch (error) {
-            console.error("Error fetching current appointments:", error);
-        } finally {
-            setLoading(false);
+  const fetchCurrentAppointments = async () => {
+    try {
+      setLoading(true);
+      const response = await getAllAppointments("upcoming");
+
+      // Sort appointments by waiting position, with non-late before late
+      const sortedAppointments = response.sort((a, b) => {
+        // First prioritize non-late appointments
+        if (a.queobj?.late !== b.queobj?.late) {
+          return a.queobj?.late ? 1 : -1;
         }
-    };
+        // Then sort by waiting position
+        return (a.queobj?.waiting || 0) - (b.queobj?.waiting || 0);
+      });
 
-    useEffect(() => {       
-        fetchCurrentAppointments();
-    }, []);
-
-    const fetchAppointmentdetails = async (appointment_id) => {
-        try {
-            const response = await getAppointmentDetails(appointment_id);
-            setSelectedAppointment(response);
-        } catch (error) {
-            console.error("Error fetching current appointments:", error);
-        } finally {
-        }
+      setCurrentAppointments(sortedAppointments);
+      setLastUpdatedTime(new Date());
+    } catch (error) {
+      console.error("Error fetching current appointments:", error);
+    } finally {
+      setLoading(false);
+    }
   };
 
-    const handleWaitingReload = async () => {
-        try {
-            setIsWaitingRefreshing(true);
-            const response = await getAllAppointments("upcoming");
-            
-            // Update waiting, wait_time and late status for existing appointments
+  useEffect(() => {
+    fetchCurrentAppointments();
+  }, []);
+
+  const fetchAppointmentdetails = async (appointment_id) => {
+    try {
+      const response = await getAppointmentDetails(appointment_id);
+      setSelectedAppointment(response);
+    } catch (error) {
+      console.error("Error fetching current appointments:", error);
+    } finally {
+    }
+  };
+
+  const handleWaitingReload = async () => {
+    try {
+      setIsWaitingRefreshing(true);
+      const response = await getAllAppointments("upcoming");
+
+      // Update waiting, wait_time and late status for existing appointments
       setCurrentAppointments((prevAppointments) => {
         return prevAppointments.map((prevApp) => {
           const updatedApp = response.find(
             (newApp) => newApp.appointment_id === prevApp.appointment_id
           );
-                    if (updatedApp) {
-                        return {
-                            ...prevApp,
-                            queobj: {
-                                ...prevApp.queobj,
-                                waiting: updatedApp.queobj?.waiting,
-                                wait_time: updatedApp.queobj?.wait_time,
+          if (updatedApp) {
+            return {
+              ...prevApp,
+              queobj: {
+                ...prevApp.queobj,
+                waiting: updatedApp.queobj?.waiting,
+                wait_time: updatedApp.queobj?.wait_time,
                 late: updatedApp.queobj?.late,
               },
-                        };
-                    }
-                    return prevApp;
-                });
-            });
-            
-            // Update last updated time
-            setLastUpdatedTime(new Date());
-        } catch (error) {
-            console.error("Error refreshing waiting times:", error);
-        } finally {
-            setIsWaitingRefreshing(false);
-        }
-    };
-    
-    // Get patient details from localStorage
-    const getPatientDetails = (patientId) => {
-        try {
+            };
+          }
+          return prevApp;
+        });
+      });
+
+      // Update last updated time
+      setLastUpdatedTime(new Date());
+    } catch (error) {
+      console.error("Error refreshing waiting times:", error);
+    } finally {
+      setIsWaitingRefreshing(false);
+    }
+  };
+
+  // Get patient details from localStorage
+  const getPatientDetails = (patientId) => {
+    try {
       const userDataString = localStorage.getItem("user");
-            if (userDataString) {
-                const userData = JSON.parse(userDataString);
-                const patients = userData.patients || [];
+      if (userDataString) {
+        const userData = JSON.parse(userDataString);
+        const patients = userData.patients || [];
         return (
           patients.find((patient) => patient.patient_id === patientId) || null
         );
-            }
-        } catch (error) {
-            console.error("Error fetching patient data:", error);
-        }
-        return null;
-    };
-    const appointmentsList = currentAppointments;
+      }
+    } catch (error) {
+      console.error("Error fetching patient data:", error);
+    }
+    return null;
+  };
+  const appointmentsList = currentAppointments;
 
-    const handleStepChange = (step) => {
-        setActiveStep(step);
-    };
+  const handleStepChange = (step) => {
+    setActiveStep(step);
+  };
 
-    useEffect(() => {
-        // Check if we should show appointment based on URL param or existing appointments
-        const urlParams = new URLSearchParams(location.search);
+  useEffect(() => {
+    // Check if we should show appointment based on URL param or existing appointments
+    const urlParams = new URLSearchParams(location.search);
     if (
       urlParams.get("appointmentBooked") === "true" ||
       location.state?.bookingSuccess
     ) {
-            setHasAppointment(true);
-            setShowBookingSuccess(true);
+      setHasAppointment(true);
+      setShowBookingSuccess(true);
 
-            // Clear success message after some time
-            const successTimer = setTimeout(() => {
-                setShowBookingSuccess(false);
-            }, 4000);
+      // Clear success message after some time
+      const successTimer = setTimeout(() => {
+        setShowBookingSuccess(false);
+      }, 4000);
 
-            return () => {
-                clearTimeout(successTimer);
-            };
-        } else if (appointmentsList.length > 0) {
-            setHasAppointment(true);
-        }
-    }, [location, appointmentsList]);
+      return () => {
+        clearTimeout(successTimer);
+      };
+    } else if (appointmentsList.length > 0) {
+      setHasAppointment(true);
+    }
+  }, [location, appointmentsList]);
 
-    // Add interval to update wait times every 2 minutes
-    useEffect(() => {
-        // Set up interval to fetch fresh data every 2 minutes (120000 ms)
-        const interval = setInterval(() => {
-            handleWaitingReload();
-        }, 120000);
+  // Add interval to update wait times every 2 minutes
+  useEffect(() => {
+    // Set up interval to fetch fresh data every 2 minutes (120000 ms)
+    const interval = setInterval(() => {
+      handleWaitingReload();
+    }, 120000);
 
-        // Clean up interval on component unmount
-        return () => clearInterval(interval);
-    }, []);
-    
-    // Force UI update for the "last updated" time display every minute
-    useEffect(() => {
-        // Update the formatted time display every minute to show elapsed time
-        const timeDisplayInterval = setInterval(() => {
-            // This forces a component re-render to update the "time ago" display
+    // Clean up interval on component unmount
+    return () => clearInterval(interval);
+  }, []);
+
+  // Force UI update for the "last updated" time display every minute
+  useEffect(() => {
+    // Update the formatted time display every minute to show elapsed time
+    const timeDisplayInterval = setInterval(() => {
+      // This forces a component re-render to update the "time ago" display
       setLastUpdatedTime((prevTime) => new Date(prevTime.getTime()));
-        }, 60000);
-        
-        return () => clearInterval(timeDisplayInterval);
-    }, []);
+    }, 60000);
 
-    // Format date to DD/MM/YYYY
-    const formatDate = (dateStr) => {
-        if (!dateStr) return "Not specified";
-        const date = new Date(dateStr);
-        // Adjust for timezone offset
-        const userTimezoneOffset = date.getTimezoneOffset() * 60000;
-        const adjustedDate = new Date(date.getTime() + userTimezoneOffset);
+    return () => clearInterval(timeDisplayInterval);
+  }, []);
+
+  // Format date to DD/MM/YYYY
+  const formatDate = (dateStr) => {
+    if (!dateStr) return "Not specified";
+    const date = new Date(dateStr);
+    // Adjust for timezone offset
+    const userTimezoneOffset = date.getTimezoneOffset() * 60000;
+    const adjustedDate = new Date(date.getTime() + userTimezoneOffset);
 
     const day = adjustedDate.getDate().toString().padStart(2, "0");
     const month = (adjustedDate.getMonth() + 1).toString().padStart(2, "0");
-        const year = adjustedDate.getFullYear();
-        const hours = adjustedDate.getHours();
+    const year = adjustedDate.getFullYear();
+    const hours = adjustedDate.getHours();
     const minutes = adjustedDate.getMinutes().toString().padStart(2, "0");
     const ampm = hours >= 12 ? "PM" : "AM";
     const formattedHours = (hours % 12 || 12).toString().padStart(2, "0");
-        return `${day}/${month}/${year}, ${formattedHours}:${minutes} ${ampm}`;
-    };
+    return `${day}/${month}/${year}, ${formattedHours}:${minutes} ${ampm}`;
+  };
 
-    const handleViewDetails = async (appointment_id) => {
-        await fetchAppointmentdetails(appointment_id);
-        // Add to history stack when opening dialog
-        window.history.pushState({ showAppointmentDetails: true }, "");
-        setShowAppointmentDetails(true);
-    };
+  const handleViewDetails = async (appointment_id) => {
+    await fetchAppointmentdetails(appointment_id);
+    // Add to history stack when opening dialog
+    window.history.pushState({ showAppointmentDetails: true }, "");
+    setShowAppointmentDetails(true);
+  };
 
-    // Handle browser back button/gesture
-    useEffect(() => {
-        const handlePopState = (event) => {
-            if (showAppointmentDetails) {
-                setShowAppointmentDetails(false);
-                // Also refresh data when closing via back button/gesture
-                handleWaitingReload();
-            }
-        };
+  // Handle browser back button/gesture
+  useEffect(() => {
+    const handlePopState = (event) => {
+      if (showAppointmentDetails) {
+        setShowAppointmentDetails(false);
+        // Also refresh data when closing via back button/gesture
+        handleWaitingReload();
+      }
+    };
 
     window.addEventListener("popstate", handlePopState);
-        return () => {
+    return () => {
       window.removeEventListener("popstate", handlePopState);
-        };
-    }, [showAppointmentDetails]);
-
-    const handleCloseAppointmentDetails = () => {
-        // Go back in history when closing dialog with button
-        if (showAppointmentDetails) {
-            window.history.back();
-        }
-        setShowAppointmentDetails(false);
-        
-        // Refresh appointment data when modal is closed
-        handleWaitingReload();
     };
+  }, [showAppointmentDetails]);
 
-    const handleCall = () => {
-        window.open(`tel:${selectedAppointment?.doctorPhone}`);
-    };
+  const handleCloseAppointmentDetails = () => {
+    // Go back in history when closing dialog with button
+    if (showAppointmentDetails) {
+      window.history.back();
+    }
+    setShowAppointmentDetails(false);
 
-    const handleDirections = (location) => {
-        const coordinates = location.split(",");
-        const latitude = coordinates[0];
-        const longitude = coordinates[1]; 
+    // Refresh appointment data when modal is closed
+    handleWaitingReload();
+  };
+
+  const handleCall = () => {
+    window.open(`tel:${selectedAppointment?.doctorPhone}`);
+  };
+
+  const handleDirections = (location) => {
+    const coordinates = location.split(",");
+    const latitude = coordinates[0];
+    const longitude = coordinates[1];
     const address = `${latitude},${longitude}`;
     window.open(
       `https://www.google.com/maps/dir/?api=1&destination=${address}`
     );
-    };
+  };
 
-    // Format time for last updated display
-    const formatLastUpdatedTime = (date) => {
-        if (!date) return "";
-        
-        // Get current time and calculate time difference in seconds
-        const now = new Date();
-        const diffMs = now - date;
-        const diffSecs = Math.floor(diffMs / 1000);
-        
-        // Show time in 10-second intervals
-        if (diffSecs < 10) {
-            return "just now";
-        } else {
-            // Round down to nearest 10 seconds
-            const roundedSecs = Math.floor(diffSecs / 10) * 10;
-            
-            // Convert to minutes if more than 60 seconds
-            if (roundedSecs >= 60) {
-                const diffMins = Math.floor(diffSecs / 60);
-                return diffMins === 1 ? "1 min ago" : `${diffMins} mins ago`;
-            }
-            
-            return `${roundedSecs} seconds ago`;
-        }
-    };
+  // Format time for last updated display
+  const formatLastUpdatedTime = (date) => {
+    if (!date) return "";
 
-    const handleCancelAppointment = () => {
-        setShowCancelDialog(true);
-    };
-    
-    const confirmCancelAppointment = async () => {
-        if (!selectedAppointment?.appointment_id) return;
-        
-        setIsCanceling(true);
-        try {
-            const payload = {
+    // Get current time and calculate time difference in seconds
+    const now = new Date();
+    const diffMs = now - date;
+    const diffSecs = Math.floor(diffMs / 1000);
+
+    // Show time in 10-second intervals
+    if (diffSecs < 10) {
+      return "just now";
+    } else {
+      // Round down to nearest 10 seconds
+      const roundedSecs = Math.floor(diffSecs / 10) * 10;
+
+      // Convert to minutes if more than 60 seconds
+      if (roundedSecs >= 60) {
+        const diffMins = Math.floor(diffSecs / 60);
+        return diffMins === 1 ? "1 min ago" : `${diffMins} mins ago`;
+      }
+
+      return `${roundedSecs} seconds ago`;
+    }
+  };
+
+  const handleCancelAppointment = () => {
+    setShowCancelDialog(true);
+  };
+
+  const confirmCancelAppointment = async () => {
+    if (!selectedAppointment?.appointment_id) return;
+
+    setIsCanceling(true);
+    try {
+      const payload = {
         appointment_id: selectedAppointment.appointment_id,
-            };
-            await removeAppointment(payload);
-            
-            // Close all dialogs
-            setShowCancelDialog(false);
-            setShowAppointmentDetails(false);
-            
-            // Show success message
-            setSnackbar({
-                open: true,
-                message: "Appointment cancelled successfully",
-        severity: "success",
-            });
-            
-            // Refresh appointments list
-            fetchCurrentAppointments();
-        } catch (error) {
-            setSnackbar({
-                open: true,
-                message: "Failed to cancel appointment",
-        severity: "error",
-            });
-        } finally {
-            setIsCanceling(false);
-        }
-    };
-    
-    const handleCloseSnackbar = () => {
-    setSnackbar((prev) => ({ ...prev, open: false }));
-    };
+      };
+      await removeAppointment(payload);
 
-    return (
+      // Close all dialogs
+      setShowCancelDialog(false);
+      setShowAppointmentDetails(false);
+
+      // Show success message
+      setSnackbar({
+        open: true,
+        message: "Appointment cancelled successfully",
+        severity: "success",
+      });
+
+      // Refresh appointments list
+      fetchCurrentAppointments();
+    } catch (error) {
+      setSnackbar({
+        open: true,
+        message: "Failed to cancel appointment",
+        severity: "error",
+      });
+    } finally {
+      setIsCanceling(false);
+    }
+  };
+
+  const handleCloseSnackbar = () => {
+    setSnackbar((prev) => ({ ...prev, open: false }));
+  };
+
+  return (
     <Box
       sx={{ p: 2, pb: 16, height: "calc(100vh - 180px)", overflowY: "auto" }}
     >
-            {/* Success Message */}
-            {showBookingSuccess && (
+      {/* Success Message */}
+      {showBookingSuccess && (
         <Box
           sx={{
             position: "fixed",
-                    top: 20,
+            top: 20,
             left: "50%",
             transform: "translateX(-50%)",
             bgcolor: "#4caf50",
             color: "white",
-                    py: 2,
-                    px: 3,
-                    borderRadius: 2,
-                    zIndex: 9999,
+            py: 2,
+            px: 3,
+            borderRadius: 2,
+            zIndex: 9999,
             boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
             display: "flex",
             alignItems: "center",
@@ -517,15 +517,15 @@ const PatientHome = () => {
             },
           }}
         >
-                    <CalendarTodayIcon sx={{ mr: 1 }} />
+          <CalendarTodayIcon sx={{ mr: 1 }} />
           <Typography variant="body1" fontWeight="medium">
             Appointment booked successfully!
           </Typography>
-                </Box>
-            )}
+        </Box>
+      )}
 
-            {/* Header with greeting */}
-            {/* <Box sx={{ mb: 4 }}>
+      {/* Header with greeting */}
+      {/* <Box sx={{ mb: 4 }}>
                                         <Typography variant="h5" fontWeight="600" gutterBottom>
                                             Welcome back, {user?.username || 'Patient'}
                                         </Typography>
@@ -534,12 +534,12 @@ const PatientHome = () => {
                                         </Typography>
                                     </Box> */}
 
-            {/* Quick Actions */}
-            <Grid container spacing={2} sx={{ mb: 4 }}>
-                <Grid item xs={6}>
+      {/* Quick Actions */}
+      <Grid container spacing={2} sx={{ mb: 4 }}>
+        <Grid item xs={6}>
           <Card
             sx={{
-                        borderRadius: 3,
+              borderRadius: 3,
               cursor: "pointer",
               bgcolor: "#eef2ff",
               height: "100%",
@@ -556,18 +556,18 @@ const PatientHome = () => {
           >
             <CardContent sx={{ textAlign: "center", p: 2 }}>
               <Avatar sx={{ bgcolor: "#4f46e5", mx: "auto", mb: 1 }}>
-                                <AddIcon />
-                            </Avatar>
-                            <Typography variant="body1" fontWeight="medium">
-                                Book Appointment
-                            </Typography>
-                        </CardContent>
-                    </Card>
-                </Grid>
-                <Grid item xs={6}>
+                <AddIcon />
+              </Avatar>
+              <Typography variant="body1" fontWeight="medium">
+                Book Appointment
+              </Typography>
+            </CardContent>
+          </Card>
+        </Grid>
+        <Grid item xs={6}>
           <Card
             sx={{
-                        borderRadius: 3,
+              borderRadius: 3,
               cursor: "pointer",
               bgcolor: "#f0fdf4",
               height: "100%",
@@ -584,18 +584,18 @@ const PatientHome = () => {
           >
             <CardContent sx={{ textAlign: "center", p: 2 }}>
               <Avatar sx={{ bgcolor: "#15803d", mx: "auto", mb: 1 }}>
-                                <CalendarTodayIcon />
-                            </Avatar>
-                            <Typography variant="body1" fontWeight="medium">
-                                My Appointments
-                            </Typography>
-                        </CardContent>
-                    </Card>
-                </Grid>
-            </Grid>
+                <CalendarTodayIcon />
+              </Avatar>
+              <Typography variant="body1" fontWeight="medium">
+                My Appointments
+              </Typography>
+            </CardContent>
+          </Card>
+        </Grid>
+      </Grid>
 
-            {/* Current Appointment Section */}
-            <Box sx={{ mb: 4 }}>
+      {/* Current Appointment Section */}
+      <Box sx={{ mb: 4 }}>
         <Box
           sx={{
             display: "flex",
@@ -604,24 +604,24 @@ const PatientHome = () => {
             mb: 2,
           }}
         >
-                    <Typography variant="h6" fontWeight="600">
-                        Current Appointments
-                    </Typography>
+          <Typography variant="h6" fontWeight="600">
+            Current Appointments
+          </Typography>
           <Box
             sx={{
               display: "flex",
               alignItems: "center",
               bgcolor: "rgba(25, 118, 210, 0.08)",
-                        borderRadius: 1.5,
-                        px: 1,
+              borderRadius: 1.5,
+              px: 1,
               py: 0.5,
             }}
           >
             <ChevronLeftIcon
               sx={{
-                            fontSize: 18, 
+                fontSize: 18,
                 color: "primary.main",
-                            opacity: 0.7,
+                opacity: 0.7,
                 mr: 0.5,
               }}
             />
@@ -633,20 +633,20 @@ const PatientHome = () => {
               {appointmentsList.length > 0
                 ? `${activeStep + 1}/${appointmentsList.length}`
                 : ""}
-                        </Typography>
+            </Typography>
             <ChevronRightIcon
               sx={{
-                            fontSize: 18, 
+                fontSize: 18,
                 color: "primary.main",
-                            opacity: 0.7,
+                opacity: 0.7,
                 ml: 0.5,
               }}
             />
-                    </Box>
-                </Box>
-                {loading ? (
-                    <AppointmentSkeleton />
-                ) : appointmentsList.length > 0 ? (
+          </Box>
+        </Box>
+        {loading ? (
+          <AppointmentSkeleton />
+        ) : appointmentsList.length > 0 ? (
           <Box sx={{ position: "relative" }}>
             <Swiper
               modules={[Navigation, Pagination]}
@@ -658,18 +658,27 @@ const PatientHome = () => {
               }}
               onSlideChange={(swiper) => handleStepChange(swiper.activeIndex)}
               style={{
-                            borderRadius: 12,
-                overflow: "visible",
+                borderRadius: 12,
+                overflow: "hidden",
                 "--swiper-pagination-color": "#1976d2",
               }}
+              direction="horizontal"
+              touchEventsTarget="container"
+              touchRatio={1}
+              touchAngle={45}
+              grabCursor={true}
+              nested={true}
+              observer={true}
+              observeParents={true}
+              threshold={5}
             >
-                            {appointmentsList.map((appointment, index) => (
-                                <SwiperSlide key={appointment.appointment_id}>
-                                    <Box sx={{ px: 0.5, pb: 1 }}>
+              {appointmentsList.map((appointment, index) => (
+                <SwiperSlide key={appointment.appointment_id}>
+                  <Box sx={{ px: 0.5, pb: 1 }}>
                     <Card
                       elevation={2}
                       sx={{
-                                            borderRadius: 3,
+                        borderRadius: 3,
                         overflow: "hidden",
                         transition: "transform 0.3s, box-shadow 0.3s",
                         "&:hover": {
@@ -677,7 +686,7 @@ const PatientHome = () => {
                         },
                       }}
                     >
-                                            {/* Card Header */}
+                      {/* Card Header */}
                       <Box
                         sx={{
                           bgcolor: "#1976d2",
@@ -695,61 +704,61 @@ const PatientHome = () => {
                             alignItems: "center",
                           }}
                         >
-                                                    <Box>
+                          <Box>
                             <Typography
                               variant="subtitle1"
                               fontWeight="600"
                               sx={{ fontSize: "1.1rem", mb: 0.5 }}
                             >
-                                                            Dr. {appointment?.doctor}
-                                                        </Typography>
+                              Dr. {appointment?.doctor}
+                            </Typography>
                             <Box sx={{ display: "flex", alignItems: "center" }}>
                               <MedicalServicesIcon
                                 sx={{ fontSize: 16, mr: 0.8, opacity: 0.8 }}
                               />
-                                                <Typography variant="body2" sx={{ opacity: 0.9 }}>
-                                                    {appointment?.hospital}
-                                                </Typography>
-                                            </Box>
-                                                        </Box>
-                                                    <IconButton 
-                                                        size="small"
-                                                        aria-label="Get directions"
-                                                        onClick={(e) => {
-                                                            e.stopPropagation();
-                                                            handleDirections(appointment.hospital_location);
-                                                        }}
-                                                        sx={{ 
+                              <Typography variant="body2" sx={{ opacity: 0.9 }}>
+                                {appointment?.hospital}
+                              </Typography>
+                            </Box>
+                          </Box>
+                          <IconButton
+                            size="small"
+                            aria-label="Get directions"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDirections(appointment.hospital_location);
+                            }}
+                            sx={{
                               color: "white",
                               bgcolor: "rgba(255,255,255,0.15)",
                               "&:hover": {
                                 bgcolor: "rgba(255,255,255,0.25)",
                               },
-                                                        }}
-                                                    >
-                                                        <DirectionsIcon fontSize="small" />
-                                                    </IconButton>
-                                                        </Box>
-                                                        </Box>
+                            }}
+                          >
+                            <DirectionsIcon fontSize="small" />
+                          </IconButton>
+                        </Box>
+                      </Box>
 
-                                            <CardContent sx={{ p: 0 }}>
-                                                {/* Combined Info Section - Compact Layout */}
+                      <CardContent sx={{ p: 0 }}>
+                        {/* Combined Info Section - Compact Layout */}
                         <Box
                           sx={{
                             p: 2,
                             borderBottom: "1px solid rgba(0,0,0,0.06)",
                           }}
                         >
-                                                    <Grid container spacing={2}>
-                                                        {/* Elevated Queue Information */}
-                                                    <Grid item xs={12}>
+                          <Grid container spacing={2}>
+                            {/* Elevated Queue Information */}
+                            <Grid item xs={12}>
                               <Box
                                 sx={{
                                   display: "flex",
                                   justifyContent: "space-between",
                                   alignItems: "center",
-                                                                p: 2,
-                                                                borderRadius: 2,
+                                  p: 2,
+                                  borderRadius: 2,
                                   bgcolor: appointment?.queobj?.late
                                     ? "#fff7ed"
                                     : appointment?.queobj?.waiting === 0
@@ -764,8 +773,8 @@ const PatientHome = () => {
                                   mb: 1,
                                 }}
                               >
-                                                                {appointment?.queobj?.late ? (
-                                                                    <>
+                                {appointment?.queobj?.late ? (
+                                  <>
                                     <Box
                                       sx={{
                                         display: "flex",
@@ -780,7 +789,7 @@ const PatientHome = () => {
                                           fontSize: 32,
                                         }}
                                       />
-                                                                            <Box sx={{ flexGrow: 1 }}>
+                                      <Box sx={{ flexGrow: 1 }}>
                                         <Box
                                           sx={{
                                             display: "flex",
@@ -796,26 +805,26 @@ const PatientHome = () => {
                                               fontWeight: 700,
                                             }}
                                           >
-                                                                                        LATE
-                                                                                    </Typography>
-                                                                                    <IconButton 
-                                                                                        size="small" 
-                                                                                        onClick={(e) => {
-                                                                                            e.stopPropagation();
-                                                                                            handleWaitingReload();
-                                                                                        }}
-                                                                                        disabled={isWaitingRefreshing}
-                                                                                        sx={{ 
+                                            Running Late
+                                          </Typography>
+                                          <IconButton
+                                            size="small"
+                                            onClick={(e) => {
+                                              e.stopPropagation();
+                                              handleWaitingReload();
+                                            }}
+                                            disabled={isWaitingRefreshing}
+                                            sx={{
                                               bgcolor: "#ffedd5",
-                                                                                            width: 36,
-                                                                                            height: 36,
+                                              width: 36,
+                                              height: 36,
                                               "&:hover": {
                                                 bgcolor: "#fed7aa",
                                               },
-                                                                                        }}
-                                                                                    >
-                                                                                        <RefreshIcon 
-                                                                                            sx={{
+                                            }}
+                                          >
+                                            <RefreshIcon
+                                              sx={{
                                                 fontSize: "1.2rem",
                                                 color: "#ea580c",
                                                 animation: isWaitingRefreshing
@@ -827,12 +836,12 @@ const PatientHome = () => {
                                                   },
                                                   "100%": {
                                                     transform: "rotate(360deg)",
-                                                                                                    },
-                                                                                                },
-                                                                                            }}
-                                                                                        />
-                                                                                    </IconButton>
-                                                                                </Box>
+                                                  },
+                                                },
+                                              }}
+                                            />
+                                          </IconButton>
+                                        </Box>
                                         <Typography
                                           variant="body2"
                                           sx={{
@@ -840,14 +849,13 @@ const PatientHome = () => {
                                             display: "block",
                                           }}
                                         >
-                                          Visit reception after reaching the
-                                          hospital
-                                                                                </Typography>
-                                                                            </Box>
-                                                                        </Box>
-                                                                    </>
-                                                                ) : appointment?.queobj?.waiting === 0 ? (
-                                                                    <>
+                                          Please visit reception after reaching.
+                                        </Typography>
+                                      </Box>
+                                    </Box>
+                                  </>
+                                ) : appointment?.queobj?.waiting === 0 ? (
+                                  <>
                                     <Box
                                       sx={{
                                         display: "flex",
@@ -861,7 +869,7 @@ const PatientHome = () => {
                                           fontSize: 32,
                                         }}
                                       />
-                                                                            <Box>
+                                      <Box>
                                         <Typography
                                           variant="h6"
                                           sx={{
@@ -869,8 +877,8 @@ const PatientHome = () => {
                                             fontWeight: 700,
                                           }}
                                         >
-                                                                                    YOUR TURN
-                                                                        </Typography>
+                                          YOUR TURN
+                                        </Typography>
                                         <Typography
                                           variant="body2"
                                           sx={{
@@ -878,26 +886,26 @@ const PatientHome = () => {
                                             display: "block",
                                           }}
                                         >
-                                                                                    Ready to see doctor
-                                                                            </Typography>
-                                                                    </Box>
-                                                                            </Box>
+                                          Ready to see doctor
+                                        </Typography>
+                                      </Box>
+                                    </Box>
                                     <Box
                                       sx={{
                                         bgcolor: "#15803d",
                                         color: "white",
-                                                                            borderRadius: 1,
-                                                                            px: 1.5,
-                                                                            py: 0.5,
-                                                                            fontWeight: 600,
+                                        borderRadius: 1,
+                                        px: 1.5,
+                                        py: 0.5,
+                                        fontWeight: 600,
                                         fontSize: "0.75rem",
                                       }}
                                     >
-                                                                            NOW
-                                                                        </Box>
-                                                                    </>
-                                                                ) : (
-                                                                    <>
+                                      NOW
+                                    </Box>
+                                  </>
+                                ) : (
+                                  <>
                                     <Box
                                       sx={{
                                         display: "flex",
@@ -912,7 +920,7 @@ const PatientHome = () => {
                                           fontSize: 32,
                                         }}
                                       />
-                                                                            <Box sx={{ flexGrow: 1 }}>
+                                      <Box sx={{ flexGrow: 1 }}>
                                         <Box
                                           sx={{
                                             display: "flex",
@@ -933,25 +941,25 @@ const PatientHome = () => {
                                             undefined
                                               ? appointment?.queobj?.waiting
                                               : "-"}
-                                                                            </Typography>
-                                                            <IconButton 
-                                                                size="small" 
-                                                                                        onClick={(e) => {
-                                                                                            e.stopPropagation();
-                                                                                            handleWaitingReload();
-                                                                                        }}
-                                                                disabled={isWaitingRefreshing}
-                                                                sx={{ 
+                                          </Typography>
+                                          <IconButton
+                                            size="small"
+                                            onClick={(e) => {
+                                              e.stopPropagation();
+                                              handleWaitingReload();
+                                            }}
+                                            disabled={isWaitingRefreshing}
+                                            sx={{
                                               bgcolor: "#e0f2fe",
-                                                                                            width: 36,
-                                                                                            height: 36,
+                                              width: 36,
+                                              height: 36,
                                               "&:hover": {
                                                 bgcolor: "#bae6fd",
                                               },
-                                                                }}
-                                                            >
-                                                                <RefreshIcon 
-                                                                    sx={{
+                                            }}
+                                          >
+                                            <RefreshIcon
+                                              sx={{
                                                 fontSize: "1.2rem",
                                                 color: "#0284c7",
                                                 animation: isWaitingRefreshing
@@ -963,12 +971,12 @@ const PatientHome = () => {
                                                   },
                                                   "100%": {
                                                     transform: "rotate(360deg)",
-                                                                            },
-                                                                        },
-                                                                    }}
-                                                                />
-                                                            </IconButton>
-                                                        </Box>
+                                                  },
+                                                },
+                                              }}
+                                            />
+                                          </IconButton>
+                                        </Box>
                                         <Typography
                                           variant="subtitle1"
                                           sx={{
@@ -976,7 +984,7 @@ const PatientHome = () => {
                                             fontWeight: 600,
                                           }}
                                         >
-                                          Wait time: ~
+                                          {/* Wait time: ~
                                           {formatSecondsToHoursMinutes(
                                             appointment?.queobj?.wait_time
                                           )}{" "}
@@ -990,10 +998,10 @@ const PatientHome = () => {
                                             }}
                                           >
                                             (Estimated)
-                                          </Typography>
-                                                                                </Typography>
-                                                                                
-                                                                                {/* Urgency Message - Show if waiting <= 10 and not checked in */}
+                                          </Typography> */}
+                                        </Typography>
+
+                                        {/* Urgency Message - Show if waiting <= 10 and not checked in */}
                                         {!appointment?.queobj?.checkin &&
                                           appointment?.queobj?.waiting <= 10 &&
                                           appointment?.buffer && (
@@ -1001,17 +1009,17 @@ const PatientHome = () => {
                                               sx={{
                                                 bgcolor:
                                                   "rgba(249, 115, 22, 0.1)",
-                                                                                        borderRadius: 1.5,
-                                                                                        p: 1,
-                                                                                        mt: 1,
+                                                borderRadius: 1.5,
+                                                p: 1,
+                                                mt: 1,
                                                 display: "flex",
                                                 alignItems: "center",
                                               }}
                                             >
                                               <WarningIcon
                                                 sx={{
-                                                                                            fontSize: 18, 
-                                                                                            mr: 1,
+                                                  fontSize: 18,
+                                                  mr: 1,
                                                   color: "#f97316",
                                                 }}
                                               />
@@ -1019,7 +1027,7 @@ const PatientHome = () => {
                                                 variant="body2"
                                                 sx={{
                                                   color: "#f97316",
-                                                                                            fontWeight: 600,
+                                                  fontWeight: 600,
                                                   lineHeight: 1.3,
                                                 }}
                                               >
@@ -1049,21 +1057,21 @@ const PatientHome = () => {
                                                     ? "s"
                                                     : ""}
                                                   )
-                                                                                            </Typography>
-                                                                                        </Typography>
-                                                                                    </Box>
-                                                                                )}
-                                                                            </Box>
-                                                                        </Box>
-                                                                    </>
-                                                                )}
-                                                            </Box>
-                                                            {/* Last updated displayed for both late and waiting situations */}
+                                                </Typography>
+                                              </Typography>
+                                            </Box>
+                                          )}
+                                      </Box>
+                                    </Box>
+                                  </>
+                                )}
+                              </Box>
+                              {/* Last updated displayed for both late and waiting situations */}
                               {(appointment?.queobj?.waiting !== 0 ||
                                 appointment?.queobj?.late) && (
-                                                                <Typography 
-                                                                    variant="caption" 
-                                                                    sx={{ 
+                                <Typography
+                                  variant="caption"
+                                  sx={{
                                     color: "text.secondary",
                                     fontSize: "0.7rem",
                                     display: "block",
@@ -1073,21 +1081,21 @@ const PatientHome = () => {
                                 >
                                   Last updated:{" "}
                                   {formatLastUpdatedTime(lastUpdatedTime)}
-                                                                </Typography>
-                                                            )}
-                                                    </Grid>
+                                </Typography>
+                              )}
+                            </Grid>
 
-                                                        {/* Secondary Information - Reduced prominence */}
-                                                        <Grid 
-                                                            container 
-                                                            spacing={2} 
-                                                            sx={{ 
-                                                                px: 1,
-                                                                mx: 0, // Override negative margin
-                                                                width: '100%' // Ensure full width
-                                                            }}
-                                                        >
-                                                            {/* SLOT DETAILS - Commented out
+                            {/* Secondary Information - Reduced prominence */}
+                            <Grid
+                              container
+                              spacing={2}
+                              sx={{
+                                px: 1,
+                                mx: 0, // Override negative margin
+                                width: "100%", // Ensure full width
+                              }}
+                            >
+                              {/* SLOT DETAILS - Commented out
                                                             <Grid item xs={12} sm={6}>
                                                                 <Box sx={{ display: 'flex', alignItems: 'center' }}>
                                                                     <CalendarTodayIcon sx={{ color: '#94a3b8', mr: 1, fontSize: '0.875rem' }} />
@@ -1103,7 +1111,7 @@ const PatientHome = () => {
                                                     </Grid>
                                                             */}
 
-                                                            <Grid item xs={6} sm={3}>
+                              <Grid item xs={6} sm={3}>
                                 <Typography
                                   variant="caption"
                                   color="text.secondary"
@@ -1113,8 +1121,8 @@ const PatientHome = () => {
                                     fontSize: "0.75rem",
                                   }}
                                 >
-                                                                    PATIENT
-                                                                </Typography>
+                                  PATIENT
+                                </Typography>
                                 <Typography
                                   variant="body2"
                                   sx={{
@@ -1123,11 +1131,11 @@ const PatientHome = () => {
                                     fontSize: "0.95rem",
                                   }}
                                 >
-                                                                    {appointment?.patient_name}
-                                                                </Typography>
-                                                            </Grid>
-                                                            
-                                                            <Grid item xs={6} sm={3}>
+                                  {appointment?.patient_name}
+                                </Typography>
+                              </Grid>
+
+                              <Grid item xs={6} sm={3}>
                                 <Typography
                                   variant="caption"
                                   color="text.secondary"
@@ -1137,8 +1145,8 @@ const PatientHome = () => {
                                     fontSize: "0.75rem",
                                   }}
                                 >
-                                                                    PATIENT ID
-                                                                </Typography>
+                                  PATIENT ID
+                                </Typography>
                                 <Typography
                                   variant="body2"
                                   sx={{
@@ -1147,11 +1155,11 @@ const PatientHome = () => {
                                     fontSize: "0.95rem",
                                   }}
                                 >
-                                                                    {appointment?.pid || "—"}
-                                                                </Typography>
-                                                            </Grid>
-                                                            
-                                                            {/* <Grid item xs={6} sm={3}>
+                                  {appointment?.pid || "—"}
+                                </Typography>
+                              </Grid>
+
+                              {/* <Grid item xs={6} sm={3}>
                                                                 <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 500, display: 'block', fontSize: '0.6rem' }}>
                                                                     PHONE
                                                                 </Typography>
@@ -1159,8 +1167,8 @@ const PatientHome = () => {
                                                                     {appointment?.phone_number || "—"}
                                                                 </Typography>
                                                             </Grid> */}
-                                                            
-                                                            <Grid item xs={6} sm={3}>
+
+                              <Grid item xs={6} sm={3}>
                                 <Typography
                                   variant="caption"
                                   color="text.secondary"
@@ -1170,29 +1178,32 @@ const PatientHome = () => {
                                     fontSize: "0.75rem",
                                   }}
                                 >
-                                                                    TOKEN
-                                                                </Typography>
+                                  TOKEN
+                                </Typography>
                                 <Typography
                                   variant="body2"
                                   fontWeight="700"
-                                  sx={{ color: "text.primary", fontSize: "0.95rem" }}
+                                  sx={{
+                                    color: "text.primary",
+                                    fontSize: "0.95rem",
+                                  }}
                                 >
-                                                                    {appointment?.token}
-                                                                </Typography>
-                                                            </Grid>
-                                                        </Grid>
-                                                    </Grid>
-                                                </Box>
+                                  {appointment?.token}
+                                </Typography>
+                              </Grid>
+                            </Grid>
+                          </Grid>
+                        </Box>
 
-                                                {/* Action Button */}
-                                                <Box sx={{ p: 1.5 }}>
-                                                    <Button 
-                                                        variant="contained" 
-                                                        fullWidth 
-                                                        sx={{
-                                                            borderRadius: 2,
-                                                            py: 1,
-                                                            fontWeight: 600,
+                        {/* Action Button */}
+                        <Box sx={{ p: 1.5 }}>
+                          <Button
+                            variant="contained"
+                            fullWidth
+                            sx={{
+                              borderRadius: 2,
+                              py: 1,
+                              fontWeight: 600,
                               textTransform: "none",
                               transition: "all 0.2s",
                               boxShadow: "0 4px 12px rgba(25, 118, 210, 0.2)",
@@ -1204,19 +1215,19 @@ const PatientHome = () => {
                             onClick={() =>
                               handleViewDetails(appointment.appointment_id)
                             }
-                                                    >
-                                                            View Details
-                                                        </Button>
-                                                </Box>
-                                            </CardContent>
-                                        </Card>
-                                    </Box>
-                                </SwiperSlide>
-                            ))}
-                        </Swiper>
+                          >
+                            View Details
+                          </Button>
+                        </Box>
+                      </CardContent>
+                    </Card>
+                  </Box>
+                </SwiperSlide>
+              ))}
+            </Swiper>
 
-                        <style>
-                            {`
+            <style>
+              {`
                             .swiper-pagination {
                                 position: relative !important;
                                 margin-top: 0 !important;
@@ -1230,16 +1241,28 @@ const PatientHome = () => {
                             .swiper-pagination-bullet-active {
                                 background: #1976d2;
                             }
+                            .swiper-container {
+                                overflow: hidden;
+                                touch-action: pan-x pan-y;
+                            }
+                            .swiper-wrapper {
+                                height: auto;
+                                touch-action: pan-x pan-y;
+                            }
+                            .swiper-slide {
+                                height: auto;
+                                overflow: visible;
+                            }
                             `}
-                        </style>
-                    </Box>
-                ) : (
+            </style>
+          </Box>
+        ) : (
           <Card
             elevation={1}
             sx={{
-                        borderRadius: 3,
-                        mb: 4,
-                        p: 3,
+              borderRadius: 3,
+              mb: 4,
+              p: 3,
               bgcolor: "#fafafa",
               transition: "transform 0.3s, box-shadow 0.3s",
               "&:hover": {
@@ -1249,17 +1272,17 @@ const PatientHome = () => {
           >
             <Box sx={{ textAlign: "center", py: 4 }}>
               <EventBusyIcon sx={{ fontSize: 48, color: "#9ca3af", mb: 2 }} />
-                            <Typography variant="h6" gutterBottom>
-                                No Appointments Scheduled
-                            </Typography>
-                            <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-                                You don't have any scheduled appointments currently.
-                            </Typography>
+              <Typography variant="h6" gutterBottom>
+                No Appointments Scheduled
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+                You don't have any scheduled appointments currently.
+              </Typography>
               <Button
                 variant="contained"
                 onClick={() => navigate("/doctor/2")}
-                            sx={{
-                                borderRadius: 2,
+                sx={{
+                  borderRadius: 2,
                   transition: "transform 0.2s, box-shadow 0.2s",
                   "&:hover": {
                     transform: "translateY(-2px)",
@@ -1270,15 +1293,15 @@ const PatientHome = () => {
                   },
                 }}
               >
-                                Book appointment
-                            </Button>
-                        </Box>
-                    </Card>
-                )}
+                Book appointment
+              </Button>
             </Box>
+          </Card>
+        )}
+      </Box>
 
-            {/* Popular Specialties */}
-            {/* <Typography variant="h6" fontWeight="600" gutterBottom>
+      {/* Popular Specialties */}
+      {/* <Typography variant="h6" fontWeight="600" gutterBottom>
                 Popular Specialties
             </Typography>
             <Grid container spacing={2} sx={{ mb: 8 }}>
@@ -1307,16 +1330,16 @@ const PatientHome = () => {
                 ))}
             </Grid> */}
 
-            {/* Appointment Details Slide-up Panel */}
-            <Dialog 
-                open={showAppointmentDetails} 
-                onClose={handleCloseAppointmentDetails} 
-                fullScreen
-                TransitionComponent={Transition}
-                PaperProps={{
-                    sx: {
-                        borderTopLeftRadius: 0,
-                        borderTopRightRadius: 0,
+      {/* Appointment Details Slide-up Panel */}
+      <Dialog
+        open={showAppointmentDetails}
+        onClose={handleCloseAppointmentDetails}
+        fullScreen
+        TransitionComponent={Transition}
+        PaperProps={{
+          sx: {
+            borderTopLeftRadius: 0,
+            borderTopRightRadius: 0,
             overflow: "hidden",
             boxShadow: "0 -8px 40px rgba(0,0,0,0.12)",
           },
@@ -1326,11 +1349,11 @@ const PatientHome = () => {
           sx={{
             bgcolor: "primary.main",
             color: "white",
-                    py: 2, 
-                    px: 2.5, 
+            py: 2,
+            px: 2.5,
             position: "sticky",
-                    top: 0,
-                    zIndex: 10,
+            top: 0,
+            zIndex: 10,
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
@@ -1338,52 +1361,52 @@ const PatientHome = () => {
           }}
         >
           <Box sx={{ display: "flex", alignItems: "center" }}>
-                        <IconButton 
-                            aria-label="back" 
-                            onClick={handleCloseAppointmentDetails} 
-                            sx={{ 
+            <IconButton
+              aria-label="back"
+              onClick={handleCloseAppointmentDetails}
+              sx={{
                 color: "white",
-                                mr: 1.5,
+                mr: 1.5,
                 bgcolor: "rgba(255,255,255,0.12)",
                 "&:hover": {
                   bgcolor: "rgba(255,255,255,0.2)",
                 },
-                            }}
-                        >
-                            <ArrowBackIcon />
-                    </IconButton>
-                        <Typography variant="h6" fontWeight="600">
-                        Appointment Details
-                        </Typography>
-                </Box>
-                </Box>
+              }}
+            >
+              <ArrowBackIcon />
+            </IconButton>
+            <Typography variant="h6" fontWeight="600">
+              Appointment Details
+            </Typography>
+          </Box>
+        </Box>
 
         <DialogContent
           sx={{
-                    py: 3, 
-                    px: 3,
+            py: 3,
+            px: 3,
             bgcolor: "#f8fafc",
             background: "linear-gradient(to bottom, #f1f5f9 0%, #f8fafc 100%)",
           }}
         >
-                    {/* Appointment Progress Status */}
-                    <Typography variant="h6" fontWeight="600" sx={{ mb: 2, px: 0.5 }}>
-                        Appointment Status
-                                        </Typography>
+          {/* Appointment Progress Status */}
+          <Typography variant="h6" fontWeight="600" sx={{ mb: 2, px: 0.5 }}>
+            Appointment Status
+          </Typography>
           <Card
             elevation={0}
             sx={{
-                        borderRadius: 3,
+              borderRadius: 3,
               border: "1px solid #e5e7eb",
               bgcolor: "white",
               boxShadow: "0 4px 20px rgba(0,0,0,0.05)",
               mb: 3,
             }}
           >
-                        <CardContent sx={{ p: 2 }}>
-                            <Grid container spacing={2}>
-                                {/* Payment Status - Now Step 1 */}
-                                <Grid item xs={12} sm={6}>
+            <CardContent sx={{ p: 2 }}>
+              <Grid container spacing={2}>
+                {/* Payment Status - Now Step 1 */}
+                <Grid item xs={12} sm={6}>
                   <Box
                     sx={{
                       display: "flex",
@@ -1393,8 +1416,8 @@ const PatientHome = () => {
                   >
                     <Box
                       sx={{
-                                            width: 36, 
-                                            height: 36, 
+                        width: 36,
+                        height: 36,
                         borderRadius: "50%",
                         display: "flex",
                         alignItems: "center",
@@ -1402,24 +1425,24 @@ const PatientHome = () => {
                         bgcolor: selectedAppointment?.queobj?.paid
                           ? "rgba(21, 128, 61, 0.1)"
                           : "rgba(234, 179, 8, 0.1)",
-                                            mr: 2,
+                        mr: 2,
                         flexShrink: 0,
                       }}
                     >
-                                            {selectedAppointment?.queobj?.paid ? (
+                      {selectedAppointment?.queobj?.paid ? (
                         <ReceiptIcon sx={{ color: "#15803d" }} />
-                                            ) : (
+                      ) : (
                         <PaymentIcon sx={{ color: "#eab308" }} />
-                                            )}
-                                        </Box>
-                                        <Box>
+                      )}
+                    </Box>
+                    <Box>
                       <Typography
                         variant="body2"
                         color="text.secondary"
                         sx={{ fontWeight: 500 }}
                       >
-                                                Step 1: Payment
-                                    </Typography>
+                        Step 1: Payment
+                      </Typography>
                       <Typography
                         variant="subtitle1"
                         sx={{
@@ -1433,13 +1456,13 @@ const PatientHome = () => {
                         {selectedAppointment?.queobj?.paid
                           ? "Completed"
                           : "Action Required"}
-                                        </Typography>
-                                            {!selectedAppointment?.queobj?.paid ? (
+                      </Typography>
+                      {!selectedAppointment?.queobj?.paid ? (
                         <Box
                           sx={{
-                                                    mt: 1,
-                                                    p: 1,
-                                                    borderRadius: 2,
+                            mt: 1,
+                            p: 1,
+                            borderRadius: 2,
                             bgcolor: "rgba(234, 179, 8, 0.08)",
                             border: "1px solid",
                             borderColor: "rgba(234, 179, 8, 0.3)",
@@ -1452,29 +1475,29 @@ const PatientHome = () => {
                             {selectedAppointment?.fees_paid > 0
                               ? `Please pay ₹${selectedAppointment.fees_paid} at the reception desk`
                               : "Please complete payment at the reception desk"}
-                                        </Typography>
-                                                </Box>
-                                            ) : (
-                                                selectedAppointment?.fees_paid > 0 && (
+                          </Typography>
+                        </Box>
+                      ) : (
+                        selectedAppointment?.fees_paid > 0 && (
                           <Typography
                             variant="body2"
                             sx={{
                               display: "block",
-                                                        mt: 1,
-                                                        fontWeight: 500,
+                              mt: 1,
+                              fontWeight: 500,
                               color: "#15803d",
                             }}
                           >
-                                                        Amount Paid: ₹{selectedAppointment.fees_paid}
-                                        </Typography>
-                                                )
-                                    )}
-                                </Box>
-                            </Box>
-                        </Grid>
+                            Amount Paid: ₹{selectedAppointment.fees_paid}
+                          </Typography>
+                        )
+                      )}
+                    </Box>
+                  </Box>
+                </Grid>
 
-                                {/* Check-in Status - Now Step 2 */}
-                                <Grid item xs={12} sm={6}>
+                {/* Check-in Status - Now Step 2 */}
+                <Grid item xs={12} sm={6}>
                   <Box
                     sx={{
                       display: "flex",
@@ -1484,8 +1507,8 @@ const PatientHome = () => {
                   >
                     <Box
                       sx={{
-                                            width: 36, 
-                                            height: 36, 
+                        width: 36,
+                        height: 36,
                         borderRadius: "50%",
                         display: "flex",
                         alignItems: "center",
@@ -1493,24 +1516,24 @@ const PatientHome = () => {
                         bgcolor: selectedAppointment?.queobj?.checkin
                           ? "rgba(21, 128, 61, 0.1)"
                           : "rgba(234, 179, 8, 0.1)",
-                                            mr: 2,
+                        mr: 2,
                         flexShrink: 0,
                       }}
                     >
-                                            {selectedAppointment?.queobj?.checkin ? (
+                      {selectedAppointment?.queobj?.checkin ? (
                         <CheckCircleIcon sx={{ color: "#15803d" }} />
-                                            ) : (
+                      ) : (
                         <WarningIcon sx={{ color: "#eab308" }} />
-                                            )}
-                                        </Box>
-                                <Box>
+                      )}
+                    </Box>
+                    <Box>
                       <Typography
                         variant="body2"
                         color="text.secondary"
                         sx={{ fontWeight: 500 }}
                       >
-                                                Step 2: Check-in
-                                            </Typography>
+                        Step 2: Check-in
+                      </Typography>
                       <Typography
                         variant="subtitle1"
                         sx={{
@@ -1524,13 +1547,13 @@ const PatientHome = () => {
                         {selectedAppointment?.queobj?.checkin
                           ? "Completed"
                           : "Action Required"}
-                                            </Typography>
-                                            {!selectedAppointment?.queobj?.checkin && (
+                      </Typography>
+                      {!selectedAppointment?.queobj?.checkin && (
                         <Box
                           sx={{
-                                                    mt: 1,
-                                                    p: 1,
-                                                    borderRadius: 2,
+                            mt: 1,
+                            p: 1,
+                            borderRadius: 2,
                             bgcolor: "rgba(234, 179, 8, 0.08)",
                             border: "1px solid",
                             borderColor: "rgba(234, 179, 8, 0.3)",
@@ -1542,20 +1565,20 @@ const PatientHome = () => {
                           >
                             Please visit the reception desk to check in for your
                             appointment
-                                    </Typography>
-                                                </Box>
-                                            )}
-                                </Box>
-                            </Box>
-                        </Grid>
+                          </Typography>
+                        </Box>
+                      )}
+                    </Box>
+                  </Box>
+                </Grid>
 
-                                {/* Divider */}
-                                <Grid item xs={12}>
-                                    <Divider sx={{ my: 0.5 }} />
-                                </Grid>
+                {/* Divider */}
+                <Grid item xs={12}>
+                  <Divider sx={{ my: 0.5 }} />
+                </Grid>
 
-                                {/* Waiting Position & Time Combined - Smaller size now */}
-                                <Grid item xs={12}>
+                {/* Waiting Position & Time Combined - Smaller size now */}
+                <Grid item xs={12}>
                   <Box
                     sx={{
                       display: "flex",
@@ -1574,18 +1597,18 @@ const PatientHome = () => {
                       selectedAppointment?.queobj?.paid
                         ? ""
                         : "Complete the steps above to join the queue"}
-                                        </Typography>
-                                        
+                    </Typography>
+
                     <Box
                       sx={{
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "center",
-                                            gap: 4,
+                        gap: 4,
                         width: "100%",
                       }}
                     >
-                                            {selectedAppointment?.queobj?.late ? (
+                      {selectedAppointment?.queobj?.late ? (
                         <Box
                           sx={{
                             display: "flex",
@@ -1593,8 +1616,8 @@ const PatientHome = () => {
                             alignItems: "center",
                             bgcolor: "#fff7ed",
                             border: "1px solid #fdba74",
-                                                    borderRadius: 2,
-                                                    p: 2,
+                            borderRadius: 2,
+                            p: 2,
                             width: "100%",
                             maxWidth: 300,
                           }}
@@ -1618,9 +1641,9 @@ const PatientHome = () => {
                                 color: "#ea580c",
                               }}
                             >
-                                                            LATE
-                                                        </Typography>
-                                                    </Box>
+                              LATE
+                            </Typography>
+                          </Box>
                           <Typography
                             variant="body1"
                             sx={{
@@ -1629,10 +1652,10 @@ const PatientHome = () => {
                               mt: 1,
                             }}
                           >
-                                                        Please visit reception after reaching the hospital
-                                                    </Typography>
-                                                </Box>
-                                            ) : selectedAppointment?.queobj?.waiting === 0 ? (
+                            Please visit reception after reaching the hospital
+                          </Typography>
+                        </Box>
+                      ) : selectedAppointment?.queobj?.waiting === 0 ? (
                         <Box
                           sx={{
                             display: "flex",
@@ -1640,8 +1663,8 @@ const PatientHome = () => {
                             alignItems: "center",
                             bgcolor: "#ecfdf5",
                             border: "1px solid #86efac",
-                                                    borderRadius: 2,
-                                                    p: 2,
+                            borderRadius: 2,
+                            p: 2,
                             width: "100%",
                             maxWidth: 300,
                           }}
@@ -1657,8 +1680,8 @@ const PatientHome = () => {
                               mt: 1,
                             }}
                           >
-                                                        YOUR TURN
-                                                    </Typography>
+                            YOUR TURN
+                          </Typography>
                           <Typography
                             variant="body1"
                             sx={{
@@ -1667,11 +1690,11 @@ const PatientHome = () => {
                               mt: 1,
                             }}
                           >
-                                                        Please proceed to the doctor's room
-                                    </Typography>
-                                </Box>
-                                            ) : (
-                                                <>
+                            Please proceed to the doctor's room
+                          </Typography>
+                        </Box>
+                      ) : (
+                        <>
                           <Box
                             sx={{
                               display: "flex",
@@ -1683,8 +1706,8 @@ const PatientHome = () => {
                               variant="overline"
                               sx={{ color: "primary.main", fontWeight: 600 }}
                             >
-                                                            Waiting
-                                                        </Typography>
+                              Waiting
+                            </Typography>
                             <Typography
                               variant="h5"
                               sx={{
@@ -1696,10 +1719,10 @@ const PatientHome = () => {
                               undefined
                                 ? selectedAppointment?.queobj?.waiting
                                 : "-"}
-                                                        </Typography>
-                            </Box>
-                                                    
-                          <Box
+                            </Typography>
+                          </Box>
+
+                          {/* <Box
                             sx={{
                               display: "flex",
                               flexDirection: "column",
@@ -1735,31 +1758,31 @@ const PatientHome = () => {
                                 (Estimated)
                               </Typography>
                                     </Typography>
-                                </Box>
-                                                </>
-                                            )}
-                                        </Box>
+                                </Box> */}
+                        </>
+                      )}
+                    </Box>
 
-                                        {/* Urgency Message in Details View */}
-                                        {!selectedAppointment?.queobj?.checkin && 
-                                          selectedAppointment?.queobj?.waiting <= 10 && 
-                                          selectedAppointment?.buffer && 
-                                          selectedAppointment?.queobj?.waiting > 0 &&
-                                          !selectedAppointment?.queobj?.late && (
+                    {/* Urgency Message in Details View */}
+                    {!selectedAppointment?.queobj?.checkin &&
+                      selectedAppointment?.queobj?.waiting <= 10 &&
+                      selectedAppointment?.buffer &&
+                      selectedAppointment?.queobj?.waiting > 0 &&
+                      !selectedAppointment?.queobj?.late && (
                         <Box
                           sx={{
                             bgcolor: "rgba(249, 115, 22, 0.1)",
-                                                borderRadius: 1.5,
-                                                p: 1,
-                                                mt: 1,
+                            borderRadius: 1.5,
+                            p: 1,
+                            mt: 1,
                             display: "flex",
                             alignItems: "center",
                           }}
                         >
                           <WarningIcon
                             sx={{
-                                                    fontSize: 18, 
-                                                    mr: 1,
+                              fontSize: 18,
+                              mr: 1,
                               color: "#f97316",
                             }}
                           />
@@ -1767,7 +1790,7 @@ const PatientHome = () => {
                             variant="body2"
                             sx={{
                               color: "#f97316",
-                                                    fontWeight: 600,
+                              fontWeight: 600,
                               lineHeight: 1.3,
                             }}
                           >
@@ -1792,133 +1815,133 @@ const PatientHome = () => {
                                 ? "s"
                                 : ""}
                               )
-                                                    </Typography>
-                                                </Typography>
-                                            </Box>
-                                        )}
-                            </Box>
-                        </Grid>
-                            </Grid>
-                        </CardContent>
-                    </Card>
+                            </Typography>
+                          </Typography>
+                        </Box>
+                      )}
+                  </Box>
+                </Grid>
+              </Grid>
+            </CardContent>
+          </Card>
 
-                    {/* Primary Appointment Information */}
-                    <Typography variant="h6" fontWeight="600" sx={{ mb: 2, px: 0.5 }}>
-                        Appointment Details
-                    </Typography>
+          {/* Primary Appointment Information */}
+          <Typography variant="h6" fontWeight="600" sx={{ mb: 2, px: 0.5 }}>
+            Appointment Details
+          </Typography>
           <Card
             elevation={0}
             sx={{
-                        borderRadius: 3, 
+              borderRadius: 3,
               bgcolor: "white",
               border: "1px solid #e5e7eb",
               boxShadow: "0 4px 20px rgba(0,0,0,0.05)",
-                        p: 2.5,
+              p: 2.5,
               mb: 3,
             }}
           >
-                        <Grid container spacing={3}>
-                        <Grid item xs={12}>
+            <Grid container spacing={3}>
+              <Grid item xs={12}>
                 <Typography
                   variant="body2"
                   color="text.secondary"
                   sx={{ fontWeight: 500 }}
                 >
-                                    Slot
-                                    </Typography>
-                                <Typography variant="body1" fontWeight="600" sx={{ mt: 0.5 }}>
+                  Slot
+                </Typography>
+                <Typography variant="body1" fontWeight="600" sx={{ mt: 0.5 }}>
                   {selectedAppointment?.cabinslot?.slot &&
                     formatDate(selectedAppointment?.cabinslot?.slot)}
-                                </Typography>
-                            </Grid>
+                </Typography>
+              </Grid>
 
-                            {selectedAppointment?.token && (
-                                <Grid item xs={6}>
+              {selectedAppointment?.token && (
+                <Grid item xs={6}>
                   <Typography
                     variant="body2"
                     color="text.secondary"
                     sx={{ fontWeight: 500 }}
                   >
-                                        Token Number
-                                    </Typography>
-                                    <Typography variant="body1" fontWeight="600" sx={{ mt: 0.5 }}>
-                                        #{selectedAppointment?.token}
-                                    </Typography>
-                                </Grid>
-                            )}
+                    Token Number
+                  </Typography>
+                  <Typography variant="body1" fontWeight="600" sx={{ mt: 0.5 }}>
+                    #{selectedAppointment?.token}
+                  </Typography>
+                </Grid>
+              )}
 
-                                    {selectedAppointment?.appointmentType && (
-                                <Grid item xs={6}>
+              {selectedAppointment?.appointmentType && (
+                <Grid item xs={6}>
                   <Typography
                     variant="body2"
                     color="text.secondary"
                     sx={{ fontWeight: 500 }}
                   >
-                                        Appointment Type
-                                        </Typography>
-                                    <Typography variant="body1" fontWeight="600" sx={{ mt: 0.5 }}>
-                                        {selectedAppointment.appointmentType}
-                                    </Typography>
-                                </Grid>
-                                    )}
-                            
+                    Appointment Type
+                  </Typography>
+                  <Typography variant="body1" fontWeight="600" sx={{ mt: 0.5 }}>
+                    {selectedAppointment.appointmentType}
+                  </Typography>
+                </Grid>
+              )}
+
               {selectedAppointment?.disease &&
                 selectedAppointment?.disease !== "Not specified" && (
-                                <Grid item xs={6}>
+                  <Grid item xs={6}>
                     <Typography
                       variant="body2"
                       color="text.secondary"
                       sx={{ fontWeight: 500 }}
                     >
-                                        Health Issue
-                                        </Typography>
+                      Health Issue
+                    </Typography>
                     <Typography
                       variant="body1"
                       fontWeight="600"
                       sx={{ mt: 0.5 }}
                     >
-                                        {selectedAppointment.disease}
-                                    </Typography>
-                                </Grid>
-                                    )}
-                            
-                                    {selectedAppointment?.queobj?.status && (
-                                <Grid item xs={6}>
-                  <Typography
-                    variant="body2"
-                    color="text.secondary"
-                    sx={{ fontWeight: 500 }}
-                  >
-                                        Status
-                                        </Typography>
-                                    <Typography variant="body1" fontWeight="600" sx={{ mt: 0.5 }}>
-                                        {selectedAppointment?.queobj?.status}
-                                    </Typography>
-                                </Grid>
-                            )}
-                            
-                            {selectedAppointment?.mode && (
-                                <Grid item xs={6}>
-                  <Typography
-                    variant="body2"
-                    color="text.secondary"
-                    sx={{ fontWeight: 500 }}
-                  >
-                                        Payment Mode
-                                            </Typography>
-                                    <Typography variant="body1" fontWeight="600" sx={{ mt: 0.5 }}>
-                                        {selectedAppointment.mode}
-                                                </Typography>
-                                </Grid>
-                                            )}
-                        </Grid>
-                    </Card>
+                      {selectedAppointment.disease}
+                    </Typography>
+                  </Grid>
+                )}
 
-                    {/* Accordion Sections for Patient and Doctor Info */}
+              {selectedAppointment?.queobj?.status && (
+                <Grid item xs={6}>
+                  <Typography
+                    variant="body2"
+                    color="text.secondary"
+                    sx={{ fontWeight: 500 }}
+                  >
+                    Status
+                  </Typography>
+                  <Typography variant="body1" fontWeight="600" sx={{ mt: 0.5 }}>
+                    {selectedAppointment?.queobj?.status}
+                  </Typography>
+                </Grid>
+              )}
+
+              {selectedAppointment?.mode && (
+                <Grid item xs={6}>
+                  <Typography
+                    variant="body2"
+                    color="text.secondary"
+                    sx={{ fontWeight: 500 }}
+                  >
+                    Payment Mode
+                  </Typography>
+                  <Typography variant="body1" fontWeight="600" sx={{ mt: 0.5 }}>
+                    {selectedAppointment.mode}
+                  </Typography>
+                </Grid>
+              )}
+            </Grid>
+          </Card>
+
+          {/* Accordion Sections for Patient and Doctor Info */}
           <Card
             elevation={0}
             sx={{
-                        borderRadius: 3, 
+              borderRadius: 3,
               bgcolor: "white",
               border: "1px solid #e5e7eb",
               boxShadow: "0 4px 20px rgba(0,0,0,0.05)",
@@ -1926,209 +1949,209 @@ const PatientHome = () => {
               mb: 3,
             }}
           >
-                        {/* Patient Information Section */}
+            {/* Patient Information Section */}
             <Box sx={{ p: 2.5, borderBottom: "1px solid #e5e7eb" }}>
               <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
                 <Avatar
                   sx={{
                     bgcolor: "primary.main",
-                                    width: 40, 
-                                    height: 40,
+                    width: 40,
+                    height: 40,
                     mr: 2,
                   }}
                 >
-                                    <PersonIcon />
-                                </Avatar>
-                                <Typography variant="subtitle1" fontWeight="600">
-                                    Patient Information
-                                </Typography>
-                                            </Box>
-                            
-                            <Grid container spacing={2}>
-                                <Grid item xs={6}>
-                  <Typography
-                    variant="body2"
-                    color="text.secondary"
-                    sx={{ fontWeight: 500 }}
-                  >
-                                        Name
-                                        </Typography>
-                                    <Typography variant="body1" fontWeight="500" sx={{ mt: 0.5 }}>
-                                        {selectedAppointment?.name}
-                                        </Typography>
-                                </Grid>
+                  <PersonIcon />
+                </Avatar>
+                <Typography variant="subtitle1" fontWeight="600">
+                  Patient Information
+                </Typography>
+              </Box>
 
-                                <Grid item xs={6}>
+              <Grid container spacing={2}>
+                <Grid item xs={6}>
                   <Typography
                     variant="body2"
                     color="text.secondary"
                     sx={{ fontWeight: 500 }}
                   >
-                                        Phone
-                                        </Typography>
-                                    <Typography variant="body1" fontWeight="500" sx={{ mt: 0.5 }}>
+                    Name
+                  </Typography>
+                  <Typography variant="body1" fontWeight="500" sx={{ mt: 0.5 }}>
+                    {selectedAppointment?.name}
+                  </Typography>
+                </Grid>
+
+                <Grid item xs={6}>
+                  <Typography
+                    variant="body2"
+                    color="text.secondary"
+                    sx={{ fontWeight: 500 }}
+                  >
+                    Phone
+                  </Typography>
+                  <Typography variant="body1" fontWeight="500" sx={{ mt: 0.5 }}>
                     {selectedAppointment?.patient?.phone_number ||
                       "Not provided"}
-                                    </Typography>
-                        </Grid>
+                  </Typography>
+                </Grid>
 
-                                <Grid item xs={6}>
+                <Grid item xs={6}>
                   <Typography
                     variant="body2"
                     color="text.secondary"
                     sx={{ fontWeight: 500 }}
                   >
-                                        Patient ID
-                                    </Typography>
-                                    <Typography variant="body1" fontWeight="500" sx={{ mt: 0.5 }}>
-                                        {selectedAppointment?.patient?.patient_id}
-                                    </Typography>
-                        </Grid>
+                    Patient ID
+                  </Typography>
+                  <Typography variant="body1" fontWeight="500" sx={{ mt: 0.5 }}>
+                    {selectedAppointment?.patient?.patient_id}
+                  </Typography>
+                </Grid>
 
-                                <Grid item xs={6}>
+                <Grid item xs={6}>
                   <Typography
                     variant="body2"
                     color="text.secondary"
                     sx={{ fontWeight: 500 }}
                   >
-                                        Age
-                                    </Typography>
-                                    <Typography variant="body1" fontWeight="500" sx={{ mt: 0.5 }}>
-                                        {selectedAppointment?.patient?.age}
-                                    </Typography>
-                                </Grid>
+                    Age
+                  </Typography>
+                  <Typography variant="body1" fontWeight="500" sx={{ mt: 0.5 }}>
+                    {selectedAppointment?.patient?.age}
+                  </Typography>
+                </Grid>
 
-                                <Grid item xs={6}>
+                <Grid item xs={6}>
                   <Typography
                     variant="body2"
                     color="text.secondary"
                     sx={{ fontWeight: 500 }}
                   >
-                                        Gender
-                                    </Typography>
-                                    <Typography variant="body1" fontWeight="500" sx={{ mt: 0.5 }}>
+                    Gender
+                  </Typography>
+                  <Typography variant="body1" fontWeight="500" sx={{ mt: 0.5 }}>
                     {selectedAppointment?.patient?.gender === "M"
                       ? "Male"
                       : selectedAppointment?.patient?.gender === "F"
                       ? "Female"
                       : selectedAppointment?.patient?.gender}
-                                    </Typography>
-                                </Grid>
-                                
-                                {selectedAppointment?.patient?.allergies && (
-                        <Grid item xs={12}>
+                  </Typography>
+                </Grid>
+
+                {selectedAppointment?.patient?.allergies && (
+                  <Grid item xs={12}>
                     <Typography
                       variant="body2"
                       color="text.secondary"
                       sx={{ fontWeight: 500 }}
                     >
-                                            Allergies
-                                        </Typography>
+                      Allergies
+                    </Typography>
                     <Typography
                       variant="body1"
                       fontWeight="500"
                       sx={{ mt: 0.5 }}
                     >
-                                            {selectedAppointment.patient.allergies}
-                                        </Typography>
-                                    </Grid>
-                                )}
-                            </Grid>
-                                    </Box>
+                      {selectedAppointment.patient.allergies}
+                    </Typography>
+                  </Grid>
+                )}
+              </Grid>
+            </Box>
 
-                        {/* Doctor Information Section */}
-                        <Box sx={{ p: 2.5 }}>
+            {/* Doctor Information Section */}
+            <Box sx={{ p: 2.5 }}>
               <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
                 <Avatar
                   sx={{
                     bgcolor: "primary.main",
-                                    width: 40, 
-                                    height: 40,
+                    width: 40,
+                    height: 40,
                     mr: 2,
                   }}
                 >
-                                    <MedicalServicesIcon />
-                                </Avatar>
-                                <Typography variant="subtitle1" fontWeight="600">
-                                    Clinic & Doctor
-                                </Typography>
-                                </Box>
-                            
+                  <MedicalServicesIcon />
+                </Avatar>
+                <Typography variant="subtitle1" fontWeight="600">
+                  Clinic & Doctor
+                </Typography>
+              </Box>
+
               <Typography
                 variant="body2"
                 color="text.secondary"
                 sx={{ fontWeight: 500 }}
               >
-                                Clinic
-                            </Typography>
-                            <Typography variant="body1" fontWeight="500" sx={{ mb: 2 }}>
-                                {selectedAppointment?.cabin?.hospital?.hospital_name}
-                            </Typography>
-                            
+                Clinic
+              </Typography>
+              <Typography variant="body1" fontWeight="500" sx={{ mb: 2 }}>
+                {selectedAppointment?.cabin?.hospital?.hospital_name}
+              </Typography>
+
               <Typography
                 variant="body2"
                 color="text.secondary"
                 sx={{ fontWeight: 500 }}
               >
-                                Doctor
-                            </Typography>
-                            <Typography variant="body1" fontWeight="500" sx={{ mb: 2 }}>
-                                Dr. {selectedAppointment?.cabin?.doctor?.name}
-                            </Typography>
-                            
+                Doctor
+              </Typography>
+              <Typography variant="body1" fontWeight="500" sx={{ mb: 2 }}>
+                Dr. {selectedAppointment?.cabin?.doctor?.name}
+              </Typography>
+
               <Box
                 sx={{
                   display: "flex",
                   mt: 2,
                 }}
               >
-                                <Button
-                                    variant="outlined"
-                                    startIcon={<DirectionsIcon />}
-                                    onClick={() => {
-                                        if (selectedAppointment?.cabin?.hospital?.location) {
+                <Button
+                  variant="outlined"
+                  startIcon={<DirectionsIcon />}
+                  onClick={() => {
+                    if (selectedAppointment?.cabin?.hospital?.location) {
                       handleDirections(
                         selectedAppointment.cabin.hospital.location
                       );
-                                        }
-                                    }}
-                                    size="small"
-                                    sx={{
-                                        borderRadius: 2,
-                                        mr: 2,
+                    }
+                  }}
+                  size="small"
+                  sx={{
+                    borderRadius: 2,
+                    mr: 2,
                     textTransform: "none",
-                                    }}
-                                >
-                                    Get Directions
-                                </Button>
-                                <Button
-                                    variant="outlined"
-                                    startIcon={<PhoneIcon />}
-                                    onClick={handleCall}
-                                    size="small"
-                                    sx={{
-                                        borderRadius: 2,
+                  }}
+                >
+                  Get Directions
+                </Button>
+                <Button
+                  variant="outlined"
+                  startIcon={<PhoneIcon />}
+                  onClick={handleCall}
+                  size="small"
+                  sx={{
+                    borderRadius: 2,
                     textTransform: "none",
-                                    }}
-                                >
-                                    Call Clinic
-                                </Button>
-                            </Box>
-                        </Box>
-                    </Card>
+                  }}
+                >
+                  Call Clinic
+                </Button>
+              </Box>
+            </Box>
+          </Card>
 
-                    <Box sx={{ mt: 2 }}>
-                        <Button 
-                            onClick={() => {
-                        setShowAppointmentDetails(false);
-                        navigate("/doctor/2");
-                            }} 
-                            variant="contained" 
-                            fullWidth
-                            sx={{ 
-                                borderRadius: 3, 
-                                py: 1.5, 
-                                fontWeight: 600,
+          <Box sx={{ mt: 2 }}>
+            <Button
+              onClick={() => {
+                setShowAppointmentDetails(false);
+                navigate("/doctor/2");
+              }}
+              variant="contained"
+              fullWidth
+              sx={{
+                borderRadius: 3,
+                py: 1.5,
+                fontWeight: 600,
                 textTransform: "none",
                 fontSize: "1rem",
                 boxShadow: "0 4px 12px rgba(25, 118, 210, 0.2)",
@@ -2138,114 +2161,114 @@ const PatientHome = () => {
                 },
                 transition: "all 0.2s",
                 mb: 2,
-                            }}
-                        >
-                            View Doctor Profile
-                    </Button>
-                        
-                        <Button
-                            onClick={handleCancelAppointment}
-                            fullWidth
-                            variant="outlined"
-                            color="error"
-                            startIcon={<CancelIcon />}
-                            sx={{
-                                borderRadius: 3,
-                                py: 1.5,
-                                fontWeight: 600,
+              }}
+            >
+              View Doctor Profile
+            </Button>
+
+            <Button
+              onClick={handleCancelAppointment}
+              fullWidth
+              variant="outlined"
+              color="error"
+              startIcon={<CancelIcon />}
+              sx={{
+                borderRadius: 3,
+                py: 1.5,
+                fontWeight: 600,
                 textTransform: "none",
                 fontSize: "1rem",
-                                mb: 2,
+                mb: 2,
                 borderColor: "error.main",
                 "&:hover": {
                   backgroundColor: "error.50",
                   borderColor: "error.dark",
                 },
-                            }}
-                        >
-                            Cancel Appointment
-                        </Button>
-                        
-                        <Button
-                            onClick={handleCloseAppointmentDetails}
-                            fullWidth
-                            variant="outlined"
-                            sx={{
-                                borderRadius: 3,
-                                py: 1.5,
-                                fontWeight: 600,
+              }}
+            >
+              Cancel Appointment
+            </Button>
+
+            <Button
+              onClick={handleCloseAppointmentDetails}
+              fullWidth
+              variant="outlined"
+              sx={{
+                borderRadius: 3,
+                py: 1.5,
+                fontWeight: 600,
                 textTransform: "none",
                 fontSize: "1rem",
-                            }}
-                        >
-                            Close
-                        </Button>
-                    </Box>
-                </DialogContent>
-            </Dialog>
-            
-            {/* Cancel Appointment Confirmation Dialog */}
-            <Dialog
-                open={showCancelDialog}
-                onClose={() => setShowCancelDialog(false)}
-                PaperProps={{
-                    sx: {
-                        borderRadius: 3,
+              }}
+            >
+              Close
+            </Button>
+          </Box>
+        </DialogContent>
+      </Dialog>
+
+      {/* Cancel Appointment Confirmation Dialog */}
+      <Dialog
+        open={showCancelDialog}
+        onClose={() => setShowCancelDialog(false)}
+        PaperProps={{
+          sx: {
+            borderRadius: 3,
             maxWidth: 400,
           },
-                }}
-            >
+        }}
+      >
         <DialogTitle sx={{ pb: 1 }}>Cancel Appointment</DialogTitle>
-                <DialogContent>
-                    <DialogContentText>
+        <DialogContent>
+          <DialogContentText>
             Are you sure you want to cancel this appointment? This action cannot
             be undone.
-                    </DialogContentText>
-                </DialogContent>
-                <DialogActions sx={{ px: 3, pb: 3 }}>
-                    <Button 
-                        onClick={() => setShowCancelDialog(false)}
-                        variant="outlined"
-                        sx={{ borderRadius: 2 }}
-                    >
-                        No, Keep It
-                    </Button>
-                    <Button
-                        onClick={confirmCancelAppointment}
-                        color="error"
-                        variant="contained"
-                        disabled={isCanceling}
-                        sx={{ 
-                            borderRadius: 2,
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 3 }}>
+          <Button
+            onClick={() => setShowCancelDialog(false)}
+            variant="outlined"
+            sx={{ borderRadius: 2 }}
+          >
+            No, Keep It
+          </Button>
+          <Button
+            onClick={confirmCancelAppointment}
+            color="error"
+            variant="contained"
+            disabled={isCanceling}
+            sx={{
+              borderRadius: 2,
               minWidth: 100,
-                        }}
-                    >
-                        {isCanceling ? (
-                            <CircularProgress size={24} color="inherit" />
-                        ) : (
-                            "Yes, Cancel"
-                        )}
-                    </Button>
-                </DialogActions>
-            </Dialog>
-            
-            {/* Snackbar for notifications */}
-            <Snackbar
-                open={snackbar.open}
-                autoHideDuration={5000}
-                onClose={handleCloseSnackbar}
-                anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
-            >
-                <Alert
-                    onClose={handleCloseSnackbar}
-                    severity={snackbar.severity}
+            }}
+          >
+            {isCanceling ? (
+              <CircularProgress size={24} color="inherit" />
+            ) : (
+              "Yes, Cancel"
+            )}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Snackbar for notifications */}
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={5000}
+        onClose={handleCloseSnackbar}
+        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+      >
+        <Alert
+          onClose={handleCloseSnackbar}
+          severity={snackbar.severity}
           sx={{ width: "100%" }}
-                >
-                    {snackbar.message}
-                </Alert>
-            </Snackbar>
-        </Box>
-    );
+        >
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
+    </Box>
+  );
 };
 
 export default PatientHome;
