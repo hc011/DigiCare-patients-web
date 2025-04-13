@@ -980,67 +980,6 @@ const PatientHome = () => {
                                             (Estimated)
                                           </Typography> */}
                                         </Typography>
-
-                                        {/* Urgency Message - Show if waiting <= 10 and not checked in */}
-                                        {!appointment?.queobj?.checkin &&
-                                          appointment?.queobj?.waiting <= 10 &&
-                                          appointment?.buffer && (
-                                            <Box
-                                              sx={{
-                                                bgcolor:
-                                                  "rgba(249, 115, 22, 0.1)",
-                                                borderRadius: 1.5,
-                                                p: 1,
-                                                mt: 1,
-                                                display: "flex",
-                                                alignItems: "center",
-                                              }}
-                                            >
-                                              <WarningIcon
-                                                sx={{
-                                                  fontSize: 18,
-                                                  mr: 1,
-                                                  color: "#f97316",
-                                                }}
-                                              />
-                                              <Typography
-                                                variant="body2"
-                                                sx={{
-                                                  color: "#f97316",
-                                                  fontWeight: 600,
-                                                  lineHeight: 1.3,
-                                                }}
-                                              >
-                                                Please reach clinic and check-in
-                                                at reception{" "}
-                                                <Typography
-                                                  component="span"
-                                                  variant="caption"
-                                                  sx={{ fontWeight: 400 }}
-                                                >
-                                                  (within{" "}
-                                                  {Math.max(
-                                                    0,
-                                                    appointment.queobj.waiting -
-                                                      parseInt(
-                                                        appointment.buffer
-                                                      )
-                                                  )}{" "}
-                                                  patient
-                                                  {Math.max(
-                                                    0,
-                                                    appointment.queobj.waiting -
-                                                      parseInt(
-                                                        appointment.buffer
-                                                      )
-                                                  ) !== 1
-                                                    ? "s"
-                                                    : ""}
-                                                  )
-                                                </Typography>
-                                              </Typography>
-                                            </Box>
-                                          )}
                                       </Box>
                                     </Box>
                                   </>
@@ -1064,6 +1003,43 @@ const PatientHome = () => {
                                 </Typography>
                               )}
                             </Grid>
+
+                            {/* Payment Reminder Message - Moved outside the waiting card */}
+                            {!appointment?.queobj?.paid &&
+                              appointment?.queobj?.waiting !== 0 &&
+                              !appointment?.queobj?.late &&
+                              appointment?.queobj?.waiting >
+                                parseInt(appointment?.buffer) && (
+                                <Grid item xs={12}>
+                                  <Box
+                                    sx={{
+                                      display: "flex",
+                                      alignItems: "center",
+                                      mb: 2,
+                                      pl: 1,
+                                      mt: -3,
+                                    }}
+                                  >
+                                    <PaymentIcon
+                                      sx={{
+                                        fontSize: 18,
+                                        mr: 1,
+                                        color: "#eab308",
+                                      }}
+                                    />
+                                    <Typography
+                                      variant="body2"
+                                      sx={{
+                                        color: "#854d0e",
+                                        fontWeight: 500,
+                                      }}
+                                    >
+                                      Please pay at the clinic before your
+                                      waiting becomes {appointment?.buffer}
+                                    </Typography>
+                                  </Box>
+                                </Grid>
+                              )}
 
                             {/* Secondary Information - Reduced prominence */}
                             <Grid
@@ -1687,104 +1663,9 @@ const PatientHome = () => {
                                 : "-"}
                             </Typography>
                           </Box>
-
-                          {/* <Box
-                            sx={{
-                              display: "flex",
-                              flexDirection: "column",
-                              alignItems: "center",
-                            }}
-                          >
-                            <Typography
-                              variant="overline"
-                              sx={{ color: "primary.main", fontWeight: 600 }}
-                            >
-                                                            Waiting Time
-                                                        </Typography>
-                            <Typography
-                              variant="h5"
-                              sx={{
-                                fontWeight: "bold",
-                                color: "primary.main",
-                              }}
-                            >
-                              ~
-                              {formatSecondsToHoursMinutes(
-                                selectedAppointment?.queobj?.wait_time
-                              )}{" "}
-                              <Typography
-                                component="span"
-                                variant="caption"
-                                sx={{
-                                  color: "#64748b",
-                                  fontStyle: "italic",
-                                  fontSize: "0.7rem",
-                                }}
-                              >
-                                (Estimated)
-                              </Typography>
-                                    </Typography>
-                                </Box> */}
                         </>
                       )}
                     </Box>
-
-                    {/* Urgency Message in Details View */}
-                    {!selectedAppointment?.queobj?.checkin &&
-                      selectedAppointment?.queobj?.waiting <= 10 &&
-                      selectedAppointment?.buffer &&
-                      selectedAppointment?.queobj?.waiting > 0 &&
-                      !selectedAppointment?.queobj?.late && (
-                        <Box
-                          sx={{
-                            bgcolor: "rgba(249, 115, 22, 0.1)",
-                            borderRadius: 1.5,
-                            p: 1,
-                            mt: 1,
-                            display: "flex",
-                            alignItems: "center",
-                          }}
-                        >
-                          <WarningIcon
-                            sx={{
-                              fontSize: 18,
-                              mr: 1,
-                              color: "#f97316",
-                            }}
-                          />
-                          <Typography
-                            variant="body2"
-                            sx={{
-                              color: "#f97316",
-                              fontWeight: 600,
-                              lineHeight: 1.3,
-                            }}
-                          >
-                            Please reach clinic and check-in at reception{" "}
-                            <Typography
-                              component="span"
-                              variant="caption"
-                              sx={{ fontWeight: 400 }}
-                            >
-                              (within{" "}
-                              {Math.max(
-                                0,
-                                selectedAppointment.queobj.waiting -
-                                  parseInt(selectedAppointment.buffer)
-                              )}{" "}
-                              patient
-                              {Math.max(
-                                0,
-                                selectedAppointment.queobj.waiting -
-                                  parseInt(selectedAppointment.buffer)
-                              ) !== 1
-                                ? "s"
-                                : ""}
-                              )
-                            </Typography>
-                          </Typography>
-                        </Box>
-                      )}
                   </Box>
                 </Grid>
               </Grid>
