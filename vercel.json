@@ -9,7 +9,7 @@
         },
         {
           "key": "Access-Control-Allow-Origin",
-          "value": "https://digicare-patient-git-2c39c7-himanshu-chauhans-projects-4d3627d7.vercel.app"
+          "value": "https://digicare-patients-production-i89qzbv74.vercel.app"
         },
         {
           "key": "Access-Control-Allow-Methods",
@@ -35,5 +35,8 @@
       ]
     }
   ],
-  "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }]
+  "rewrites": [
+    { "source": "/manifest.json", "destination": "/manifest.json" },
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
 }
