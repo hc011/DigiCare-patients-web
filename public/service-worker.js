@@ -1,38 +1,46 @@
-const CACHE_NAME = "digicare-cache-v1";
+const CACHE_NAME = "digicare-minimal-cache-v1";
 const urlsToCache = [
-  "/",
-  "/index.html",
-  "/static/js/main.chunk.js",
-  "/static/js/0.chunk.js",
-  "/static/js/bundle.js",
   "/manifest.json",
   "/logo192.png",
   "/logo512.png",
   "/favicon.ico",
 ];
 
+// Install a minimal cache for PWA icons and metadata only
 self.addEventListener("install", (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => cache.addAll(urlsToCache))
   );
+  // Immediately take control to ensure the minimal caching behavior is active
+  self.skipWaiting();
 });
 
+// Handle fetch events - only serve cached PWA assets, don't cache API responses
 self.addEventListener("fetch", (event) => {
-  event.respondWith(
-    caches.match(event.request).then((response) => {
-      if (response) {
-        return response;
-      }
-      return fetch(event.request).then((response) => {
-        if (!response || response.status !== 200 || response.type !== "basic") {
-          return response;
-        }
-        const responseToCache = response.clone();
-        caches.open(CACHE_NAME).then((cache) => {
-          cache.put(event.request, responseToCache);
-        });
-        return response;
-      });
+  // Only use cache for specific PWA assets
+  if (urlsToCache.some((url) => event.request.url.includes(url))) {
+    event.respondWith(
+      caches.match(event.request).then((response) => {
+        return response || fetch(event.request);
+      })
+    );
+  } else {
+    // For all other requests, always go to network and don't cache
+    event.respondWith(fetch(event.request));
+  }
+});
+
+// Clean up any old caches
+self.addEventListener("activate", (event) => {
+  event.waitUntil(
+    caches.keys().then((cacheNames) => {
+      return Promise.all(
+        cacheNames.map((cacheName) => {
+          if (cacheName !== CACHE_NAME) {
+            return caches.delete(cacheName);
+          }
+        })
+      );
     })
   );
 });
