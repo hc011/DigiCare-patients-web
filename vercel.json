@@ -9,7 +9,7 @@
         },
         {
           "key": "Access-Control-Allow-Origin",
-          "value": "https://digicare-patients-production-i89qzbv74.vercel.app"
+          "value": "https://digicaredemo.vercel.app"
         },
         {
           "key": "Access-Control-Allow-Methods",
@@ -31,6 +31,10 @@
         {
           "key": "Access-Control-Allow-Origin",
           "value": "*"
+        },
+        {
+          "key": "Content-Type",
+          "value": "application/json"
         }
       ]
     }
