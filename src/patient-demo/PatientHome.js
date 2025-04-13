@@ -721,9 +721,9 @@ const PatientHome = () => {
                               </Typography>
                             </Box>
                           </Box>
-                          <IconButton
+                          <Button
                             size="small"
-                            aria-label="Get directions"
+                            variant="contained"
                             onClick={(e) => {
                               e.stopPropagation();
                               handleDirections(appointment.hospital_location);
@@ -734,10 +734,17 @@ const PatientHome = () => {
                               "&:hover": {
                                 bgcolor: "rgba(255,255,255,0.25)",
                               },
+                              textTransform: "none",
+                              fontSize: "0.75rem",
+                              px: 1.5,
+                              py: 0.5,
                             }}
+                            startIcon={
+                              <DirectionsIcon sx={{ fontSize: "0.9rem" }} />
+                            }
                           >
-                            <DirectionsIcon fontSize="small" />
-                          </IconButton>
+                            Map
+                          </Button>
                         </Box>
                       </Box>
 
@@ -895,40 +902,60 @@ const PatientHome = () => {
                                               ? appointment?.queobj?.waiting
                                               : "-"}
                                           </Typography>
-                                          <IconButton
-                                            size="small"
-                                            onClick={(e) => {
-                                              e.stopPropagation();
-                                              handleWaitingReload();
-                                            }}
-                                            disabled={isWaitingRefreshing}
+                                          <Box
                                             sx={{
-                                              bgcolor: "#e0f2fe",
-                                              width: 36,
-                                              height: 36,
-                                              "&:hover": {
-                                                bgcolor: "#bae6fd",
-                                              },
+                                              display: "flex",
+                                              flexDirection: "column",
+                                              alignItems: "center",
                                             }}
                                           >
-                                            <RefreshIcon
+                                            <IconButton
+                                              size="small"
+                                              onClick={(e) => {
+                                                e.stopPropagation();
+                                                handleWaitingReload();
+                                              }}
+                                              disabled={isWaitingRefreshing}
                                               sx={{
-                                                fontSize: "1.2rem",
-                                                color: "#0284c7",
-                                                animation: isWaitingRefreshing
-                                                  ? "spin 1s linear infinite"
-                                                  : "none",
-                                                "@keyframes spin": {
-                                                  "0%": {
-                                                    transform: "rotate(0deg)",
-                                                  },
-                                                  "100%": {
-                                                    transform: "rotate(360deg)",
-                                                  },
+                                                bgcolor: "#e0f2fe",
+                                                width: 36,
+                                                height: 36,
+                                                mb: 0.5,
+                                                "&:hover": {
+                                                  bgcolor: "#bae6fd",
                                                 },
                                               }}
-                                            />
-                                          </IconButton>
+                                            >
+                                              <RefreshIcon
+                                                sx={{
+                                                  fontSize: "1.2rem",
+                                                  color: "#0284c7",
+                                                  animation: isWaitingRefreshing
+                                                    ? "spin 1s linear infinite"
+                                                    : "none",
+                                                  "@keyframes spin": {
+                                                    "0%": {
+                                                      transform: "rotate(0deg)",
+                                                    },
+                                                    "100%": {
+                                                      transform:
+                                                        "rotate(360deg)",
+                                                    },
+                                                  },
+                                                }}
+                                              />
+                                            </IconButton>
+                                            <Typography
+                                              variant="caption"
+                                              sx={{
+                                                fontSize: "0.6rem",
+                                                color: "#64748b",
+                                                lineHeight: 1,
+                                              }}
+                                            >
+                                              Refresh
+                                            </Typography>
+                                          </Box>
                                         </Box>
                                         <Typography
                                           variant="subtitle1"
