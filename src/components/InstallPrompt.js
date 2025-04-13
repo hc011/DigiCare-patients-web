@@ -7,6 +7,10 @@ const InstallPrompt = ({ isLoggedIn }) => {
   const [isStandalone, setIsStandalone] = useState(false);
   const [hasPromptEventFired, setHasPromptEventFired] = useState(false);
   const [userDismissed, setUserDismissed] = useState(false);
+  // Track the nextPromptTime in state to trigger re-renders
+  const [nextPromptTime, setNextPromptTime] = useState(() => {
+    return parseInt(localStorage.getItem("nextPromptTime") || "0");
+  });
 
   // Check for standalone mode
   useEffect(() => {
@@ -46,6 +50,7 @@ const InstallPrompt = ({ isLoggedIn }) => {
     if (isStandalone) return;
 
     const handler = (e) => {
+      console.log("beforeinstallprompt event fired!");
       e.preventDefault();
       setDeferredPrompt(e);
       setHasPromptEventFired(true);
@@ -53,6 +58,7 @@ const InstallPrompt = ({ isLoggedIn }) => {
     };
 
     const handleAppInstalled = () => {
+      console.log("appinstalled event fired!");
       setShowPrompt(false);
       setDeferredPrompt(null);
       // When app is installed, permanently dismiss
@@ -81,16 +87,63 @@ const InstallPrompt = ({ isLoggedIn }) => {
     }
 
     // Check if there's a next prompt time stored
-    const nextPromptTime = localStorage.getItem("nextPromptTime");
-    if (nextPromptTime && Date.now() > parseInt(nextPromptTime)) {
-      // Time has passed, we can show the prompt again
-      localStorage.removeItem("nextPromptTime");
+    const storedNextPromptTime = localStorage.getItem("nextPromptTime");
+    if (storedNextPromptTime) {
+      setNextPromptTime(parseInt(storedNextPromptTime));
     }
   }, []);
+
+  // Use an interval to periodically check if it's time to show the prompt
+  useEffect(() => {
+    // Don't set up interval if permanently dismissed or already showing
+    if (userDismissed || showPrompt || !hasPromptEventFired || !isLoggedIn) {
+      return;
+    }
+
+    console.log("Setting up interval to check next prompt time");
+    const checkTime = setInterval(() => {
+      const now = Date.now();
+      const storedTime = parseInt(
+        localStorage.getItem("nextPromptTime") || "0"
+      );
+
+      console.log(
+        `Checking time: current=${now}, nextPrompt=${storedTime}, diff=${
+          now - storedTime
+        }ms`
+      );
+
+      if (storedTime > 0 && now >= storedTime) {
+        console.log("Time to show prompt again!");
+        localStorage.removeItem("nextPromptTime");
+        setNextPromptTime(0);
+        setShowPrompt(true);
+        clearInterval(checkTime);
+      }
+    }, 1000); // Check every second
+
+    return () => clearInterval(checkTime);
+  }, [userDismissed, showPrompt, hasPromptEventFired, isLoggedIn]);
 
   // Show prompt after login with delay or based on dismissal timing
   useEffect(() => {
     let timer;
+
+    // Add debugging to identify why prompt isn't showing
+    console.log("InstallPrompt conditions:", {
+      isLoggedIn,
+      hasPromptEventFired,
+      isStandalone,
+      showPrompt,
+      userDismissed,
+      nextPromptTime: localStorage.getItem("nextPromptTime"),
+      isPastNextPromptTime:
+        !localStorage.getItem("nextPromptTime") ||
+        Date.now() > parseInt(localStorage.getItem("nextPromptTime") || "0"),
+      installPromptDismissed:
+        localStorage.getItem("installPromptDismissed") === "true",
+      dismissCount: localStorage.getItem("dismissCount") || "0",
+    });
 
     // Only show the prompt if:
     // 1. The user is logged in
@@ -99,18 +152,20 @@ const InstallPrompt = ({ isLoggedIn }) => {
     // 4. The prompt is not already showing
     // 5. The user hasn't permanently dismissed the prompt
     // 6. There's no next prompt time set, or the time has passed
-    const nextPromptTime = localStorage.getItem("nextPromptTime");
+    const storedNextPromptTime = localStorage.getItem("nextPromptTime");
     const canShowPrompt =
       isLoggedIn &&
       hasPromptEventFired &&
       !isStandalone &&
       !showPrompt &&
       !userDismissed &&
-      (!nextPromptTime || Date.now() > parseInt(nextPromptTime));
+      (!storedNextPromptTime || Date.now() > parseInt(storedNextPromptTime));
 
     if (canShowPrompt) {
+      console.log("Setting timer to show prompt after delay");
       // Delay showing the prompt (3 seconds)
       timer = setTimeout(() => {
+        console.log("Timer expired, showing prompt");
         setShowPrompt(true);
       }, 3000); // 3 second delay
     }
@@ -124,6 +179,7 @@ const InstallPrompt = ({ isLoggedIn }) => {
     isStandalone,
     showPrompt,
     userDismissed,
+    nextPromptTime,
   ]);
 
   const handleInstallClick = async () => {
@@ -146,6 +202,7 @@ const InstallPrompt = ({ isLoggedIn }) => {
   };
 
   const handleClosePrompt = () => {
+    console.log("User dismissed the prompt");
     setShowPrompt(false);
 
     // Get current dismissal count
@@ -157,20 +214,30 @@ const InstallPrompt = ({ isLoggedIn }) => {
     // Set next delay based on dismissal count
     if (dismissCount === 1) {
       nextDelay = 10 * 1000; // 10 seconds
+      console.log("First dismissal - will show again in 10 seconds");
     } else if (dismissCount === 2) {
       nextDelay = 20 * 1000; // 20 seconds
+      console.log("Second dismissal - will show again in 20 seconds");
     } else if (dismissCount === 3) {
       nextDelay = 60 * 1000; // 1 minute
+      console.log("Third dismissal - will show again in 1 minute");
     } else {
       // After 3 dismissals, permanently dismiss
+      console.log("Fourth dismissal - permanently dismissing");
       setUserDismissed(true);
       localStorage.setItem("installPromptDismissed", "true");
       return;
     }
 
     // Set the next time to show the prompt
-    const nextPromptTime = Date.now() + nextDelay;
-    localStorage.setItem("nextPromptTime", nextPromptTime);
+    const newNextPromptTime = Date.now() + nextDelay;
+    console.log(
+      `Setting next prompt time: ${new Date(
+        newNextPromptTime
+      ).toLocaleTimeString()}`
+    );
+    localStorage.setItem("nextPromptTime", newNextPromptTime);
+    setNextPromptTime(newNextPromptTime);
   };
 
   // Don't render anything if conditions aren't met
