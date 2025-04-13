@@ -6,6 +6,7 @@ const InstallPrompt = ({ isLoggedIn }) => {
   const [showPrompt, setShowPrompt] = useState(false);
   const [isStandalone, setIsStandalone] = useState(false);
   const [hasPromptEventFired, setHasPromptEventFired] = useState(false);
+  const [userDismissed, setUserDismissed] = useState(false);
 
   // Check for standalone mode
   useEffect(() => {
@@ -18,6 +19,26 @@ const InstallPrompt = ({ isLoggedIn }) => {
     };
 
     setIsStandalone(checkStandalone());
+  }, []);
+
+  // Check if the app is already installed using getInstalledRelatedApps if available
+  useEffect(() => {
+    async function checkInstalledApps() {
+      if ("getInstalledRelatedApps" in navigator) {
+        try {
+          const relatedApps = await navigator.getInstalledRelatedApps();
+          if (relatedApps.length > 0) {
+            // PWA is installed, permanently dismiss prompt
+            setUserDismissed(true);
+            localStorage.setItem("installPromptDismissed", "true");
+          }
+        } catch (error) {
+          console.error("Error checking installed apps:", error);
+        }
+      }
+    }
+
+    checkInstalledApps();
   }, []);
 
   // Listen for beforeinstallprompt event
@@ -34,6 +55,9 @@ const InstallPrompt = ({ isLoggedIn }) => {
     const handleAppInstalled = () => {
       setShowPrompt(false);
       setDeferredPrompt(null);
+      // When app is installed, permanently dismiss
+      setUserDismissed(true);
+      localStorage.setItem("installPromptDismissed", "true");
       console.log("PWA was successfully installed");
     };
 
@@ -46,16 +70,45 @@ const InstallPrompt = ({ isLoggedIn }) => {
     };
   }, [isStandalone]);
 
-  // Show prompt after login with delay
+  // Check on component mount if we need to show the prompt based on prior dismissals
+  useEffect(() => {
+    // Check if user permanently dismissed the prompt
+    const permanentlyDismissed =
+      localStorage.getItem("installPromptDismissed") === "true";
+    if (permanentlyDismissed) {
+      setUserDismissed(true);
+      return;
+    }
+
+    // Check if there's a next prompt time stored
+    const nextPromptTime = localStorage.getItem("nextPromptTime");
+    if (nextPromptTime && Date.now() > parseInt(nextPromptTime)) {
+      // Time has passed, we can show the prompt again
+      localStorage.removeItem("nextPromptTime");
+    }
+  }, []);
+
+  // Show prompt after login with delay or based on dismissal timing
   useEffect(() => {
     let timer;
 
     // Only show the prompt if:
     // 1. The user is logged in
     // 2. The beforeinstallprompt event has fired (meaning the app is installable)
-    // 3. Not in standalone mode
+    // 3. Not in standalone mode (not already installed)
     // 4. The prompt is not already showing
-    if (isLoggedIn && hasPromptEventFired && !isStandalone && !showPrompt) {
+    // 5. The user hasn't permanently dismissed the prompt
+    // 6. There's no next prompt time set, or the time has passed
+    const nextPromptTime = localStorage.getItem("nextPromptTime");
+    const canShowPrompt =
+      isLoggedIn &&
+      hasPromptEventFired &&
+      !isStandalone &&
+      !showPrompt &&
+      !userDismissed &&
+      (!nextPromptTime || Date.now() > parseInt(nextPromptTime));
+
+    if (canShowPrompt) {
       // Delay showing the prompt (3 seconds)
       timer = setTimeout(() => {
         setShowPrompt(true);
@@ -65,7 +118,13 @@ const InstallPrompt = ({ isLoggedIn }) => {
     return () => {
       if (timer) clearTimeout(timer);
     };
-  }, [isLoggedIn, hasPromptEventFired, isStandalone, showPrompt]);
+  }, [
+    isLoggedIn,
+    hasPromptEventFired,
+    isStandalone,
+    showPrompt,
+    userDismissed,
+  ]);
 
   const handleInstallClick = async () => {
     if (deferredPrompt) {
@@ -75,12 +134,43 @@ const InstallPrompt = ({ isLoggedIn }) => {
       if (outcome === "accepted") {
         setDeferredPrompt(null);
         setShowPrompt(false);
+        // Permanently dismiss on successful installation
+        setUserDismissed(true);
+        localStorage.setItem("installPromptDismissed", "true");
       }
     } else {
       alert(
         "This is test mode. In a real environment, the browser would show the installation prompt."
       );
     }
+  };
+
+  const handleClosePrompt = () => {
+    setShowPrompt(false);
+
+    // Get current dismissal count
+    const dismissCount =
+      parseInt(localStorage.getItem("dismissCount") || "0") + 1;
+    localStorage.setItem("dismissCount", dismissCount);
+
+    let nextDelay;
+    // Set next delay based on dismissal count
+    if (dismissCount === 1) {
+      nextDelay = 10 * 1000; // 10 seconds
+    } else if (dismissCount === 2) {
+      nextDelay = 20 * 1000; // 20 seconds
+    } else if (dismissCount === 3) {
+      nextDelay = 60 * 1000; // 1 minute
+    } else {
+      // After 3 dismissals, permanently dismiss
+      setUserDismissed(true);
+      localStorage.setItem("installPromptDismissed", "true");
+      return;
+    }
+
+    // Set the next time to show the prompt
+    const nextPromptTime = Date.now() + nextDelay;
+    localStorage.setItem("nextPromptTime", nextPromptTime);
   };
 
   // Don't render anything if conditions aren't met
@@ -90,7 +180,7 @@ const InstallPrompt = ({ isLoggedIn }) => {
     <div className="install-prompt">
       <button
         className="close-button"
-        onClick={() => setShowPrompt(false)}
+        onClick={handleClosePrompt}
         aria-label="Close"
       >
         ×
