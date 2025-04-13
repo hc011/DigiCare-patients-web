@@ -216,16 +216,6 @@ const App = () => {
     ]);
   }, []);
 
-  // useEffect(() => {
-  //   const getAppointments = async () => {
-  //     const response = await fetchAppointments(1, "2025-03-18T12:01:00Z");
-  //     let maxtoken = 0;
-  //     maxtoken = Math.max(0, ...response.map(item => item.token || 0));
-  //     setMaxToken(maxtoken+1);
-  //   };
-  //   getAppointments();
-  // }, [refreshToken]);
-
   return (
     <Router>
       <div className="App" style={{ height: "100vh", overflow: "hidden" }}>
