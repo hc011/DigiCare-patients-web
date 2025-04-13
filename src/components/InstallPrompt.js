@@ -6,11 +6,12 @@ const InstallPrompt = ({ isLoggedIn }) => {
   const [showPrompt, setShowPrompt] = useState(false);
   const [isStandalone, setIsStandalone] = useState(false);
   const [hasPromptEventFired, setHasPromptEventFired] = useState(false);
-  const [userDismissed, setUserDismissed] = useState(false);
+  const [tempDismissed, setTempDismissed] = useState(false);
   // Track the nextPromptTime in state to trigger re-renders
   const [nextPromptTime, setNextPromptTime] = useState(() => {
     return parseInt(localStorage.getItem("nextPromptTime") || "0");
   });
+  const [isAlreadyInstalled, setIsAlreadyInstalled] = useState(false);
 
   // Check for standalone mode
   useEffect(() => {
@@ -28,13 +29,18 @@ const InstallPrompt = ({ isLoggedIn }) => {
   // Check if the app is already installed using getInstalledRelatedApps if available
   useEffect(() => {
     async function checkInstalledApps() {
+      // First check standalone mode
+      if (isStandalone) {
+        setIsAlreadyInstalled(true);
+        return;
+      }
+
+      // Then check getInstalledRelatedApps if available
       if ("getInstalledRelatedApps" in navigator) {
         try {
           const relatedApps = await navigator.getInstalledRelatedApps();
           if (relatedApps.length > 0) {
-            // PWA is installed, permanently dismiss prompt
-            setUserDismissed(true);
-            localStorage.setItem("installPromptDismissed", "true");
+            setIsAlreadyInstalled(true);
           }
         } catch (error) {
           console.error("Error checking installed apps:", error);
@@ -43,12 +49,10 @@ const InstallPrompt = ({ isLoggedIn }) => {
     }
 
     checkInstalledApps();
-  }, []);
+  }, [isStandalone]);
 
   // Listen for beforeinstallprompt event
   useEffect(() => {
-    if (isStandalone) return;
-
     const handler = (e) => {
       e.preventDefault();
       setDeferredPrompt(e);
@@ -59,9 +63,7 @@ const InstallPrompt = ({ isLoggedIn }) => {
     const handleAppInstalled = () => {
       setShowPrompt(false);
       setDeferredPrompt(null);
-      // When app is installed, permanently dismiss
-      setUserDismissed(true);
-      localStorage.setItem("installPromptDismissed", "true");
+      setIsAlreadyInstalled(true);
     };
 
     window.addEventListener("beforeinstallprompt", handler);
@@ -71,29 +73,30 @@ const InstallPrompt = ({ isLoggedIn }) => {
       window.removeEventListener("beforeinstallprompt", handler);
       window.removeEventListener("appinstalled", handleAppInstalled);
     };
-  }, [isStandalone]);
+  }, []);
 
-  // Check on component mount if we need to show the prompt based on prior dismissals
+  // Check if there's a next prompt time stored
   useEffect(() => {
-    // Check if user permanently dismissed the prompt
-    const permanentlyDismissed =
-      localStorage.getItem("installPromptDismissed") === "true";
-    if (permanentlyDismissed) {
-      setUserDismissed(true);
-      return;
-    }
-
-    // Check if there's a next prompt time stored
     const storedNextPromptTime = localStorage.getItem("nextPromptTime");
     if (storedNextPromptTime) {
       setNextPromptTime(parseInt(storedNextPromptTime));
+
+      // Check if we're still in the temporary dismissal period
+      if (Date.now() < parseInt(storedNextPromptTime)) {
+        setTempDismissed(true);
+      }
     }
   }, []);
 
   // Use an interval to periodically check if it's time to show the prompt
   useEffect(() => {
-    // Don't set up interval if permanently dismissed or already showing
-    if (userDismissed || showPrompt || !hasPromptEventFired || !isLoggedIn) {
+    // Don't set up interval if already showing, already installed, or no prompt event
+    if (
+      showPrompt ||
+      isAlreadyInstalled ||
+      !hasPromptEventFired ||
+      !isLoggedIn
+    ) {
       return;
     }
 
@@ -106,13 +109,14 @@ const InstallPrompt = ({ isLoggedIn }) => {
       if (storedTime > 0 && now >= storedTime) {
         localStorage.removeItem("nextPromptTime");
         setNextPromptTime(0);
+        setTempDismissed(false);
         setShowPrompt(true);
         clearInterval(checkTime);
       }
     }, 1000); // Check every second
 
     return () => clearInterval(checkTime);
-  }, [userDismissed, showPrompt, hasPromptEventFired, isLoggedIn]);
+  }, [showPrompt, isAlreadyInstalled, hasPromptEventFired, isLoggedIn]);
 
   // Show prompt after login with delay or based on dismissal timing
   useEffect(() => {
@@ -121,17 +125,18 @@ const InstallPrompt = ({ isLoggedIn }) => {
     // Only show the prompt if:
     // 1. The user is logged in
     // 2. The beforeinstallprompt event has fired (meaning the app is installable)
-    // 3. Not in standalone mode (not already installed)
+    // 3. Not already installed
     // 4. The prompt is not already showing
-    // 5. The user hasn't permanently dismissed the prompt
+    // 5. Not temporarily dismissed
     // 6. There's no next prompt time set, or the time has passed
     const storedNextPromptTime = localStorage.getItem("nextPromptTime");
     const canShowPrompt =
       isLoggedIn &&
       hasPromptEventFired &&
+      !isAlreadyInstalled &&
       !isStandalone &&
       !showPrompt &&
-      !userDismissed &&
+      !tempDismissed &&
       (!storedNextPromptTime || Date.now() > parseInt(storedNextPromptTime));
 
     if (canShowPrompt) {
@@ -147,13 +152,38 @@ const InstallPrompt = ({ isLoggedIn }) => {
   }, [
     isLoggedIn,
     hasPromptEventFired,
+    isAlreadyInstalled,
     isStandalone,
     showPrompt,
-    userDismissed,
+    tempDismissed,
     nextPromptTime,
   ]);
 
   const handleInstallClick = async () => {
+    // Check again if already installed
+    const isStandaloneMode =
+      window.navigator.standalone === true ||
+      window.matchMedia("(display-mode: standalone)").matches;
+
+    let isDetectedAsInstalled = isStandaloneMode;
+    if (!isDetectedAsInstalled && "getInstalledRelatedApps" in navigator) {
+      try {
+        const relatedApps = await navigator.getInstalledRelatedApps();
+        isDetectedAsInstalled = relatedApps.length > 0;
+      } catch (error) {
+        console.error("Error checking installed apps:", error);
+      }
+    }
+
+    if (isDetectedAsInstalled) {
+      alert(
+        "DigiCare is already installed on your device. You can access it from your home screen or app drawer."
+      );
+      setShowPrompt(false);
+      setIsAlreadyInstalled(true);
+      return;
+    }
+
     if (deferredPrompt) {
       deferredPrompt.prompt();
       const { outcome } = await deferredPrompt.userChoice;
@@ -161,9 +191,7 @@ const InstallPrompt = ({ isLoggedIn }) => {
       if (outcome === "accepted") {
         setDeferredPrompt(null);
         setShowPrompt(false);
-        // Permanently dismiss on successful installation
-        setUserDismissed(true);
-        localStorage.setItem("installPromptDismissed", "true");
+        setIsAlreadyInstalled(true);
       }
     } else {
       alert(
@@ -174,6 +202,7 @@ const InstallPrompt = ({ isLoggedIn }) => {
 
   const handleClosePrompt = () => {
     setShowPrompt(false);
+    setTempDismissed(true);
 
     // Set next prompt time to 24 hours from now
     const newNextPromptTime = Date.now() + 24 * 60 * 60 * 1000; // 24 hours
@@ -182,7 +211,7 @@ const InstallPrompt = ({ isLoggedIn }) => {
   };
 
   // Don't render anything if conditions aren't met
-  if (!showPrompt || isStandalone) return null;
+  if (!showPrompt) return null;
 
   return (
     <div className="install-prompt">

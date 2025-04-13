@@ -25,31 +25,7 @@ function Header({ closeEventSource }) {
   const navigate = useNavigate();
   const [deferredPrompt, setDeferredPrompt] = useState(null);
   const [isStandalone, setIsStandalone] = useState(false);
-  const [appDismissed, setAppDismissed] = useState(false);
-
-  // Check if app was previously installed or dismissed
-  useEffect(() => {
-    const dismissed = localStorage.getItem("installPromptDismissed") === "true";
-    setAppDismissed(dismissed);
-
-    // Check if the app is already installed using getInstalledRelatedApps if available
-    async function checkInstalledApps() {
-      if ("getInstalledRelatedApps" in navigator) {
-        try {
-          const relatedApps = await navigator.getInstalledRelatedApps();
-          if (relatedApps.length > 0) {
-            // PWA is installed, hide the Get App button
-            setAppDismissed(true);
-            localStorage.setItem("installPromptDismissed", "true");
-          }
-        } catch (error) {
-          console.error("Error checking installed apps:", error);
-        }
-      }
-    }
-
-    checkInstalledApps();
-  }, []);
+  const [showAppInstallDialog, setShowAppInstallDialog] = useState(false);
 
   // Check for standalone mode
   useEffect(() => {
@@ -66,8 +42,6 @@ function Header({ closeEventSource }) {
 
   // Listen for beforeinstallprompt event
   useEffect(() => {
-    if (isStandalone) return;
-
     const handler = (e) => {
       e.preventDefault();
       setDeferredPrompt(e);
@@ -78,17 +52,22 @@ function Header({ closeEventSource }) {
     return () => {
       window.removeEventListener("beforeinstallprompt", handler);
     };
-  }, [isStandalone]);
+  }, []);
 
   const handleLogoClick = () => {
     navigate("/patient");
   };
+
   const handleClickOpen = () => {
     setOpen(true);
   };
 
   const handleClose = () => {
     setOpen(false);
+  };
+
+  const handleAppInstallDialogClose = () => {
+    setShowAppInstallDialog(false);
   };
 
   const handleLogout = async () => {
@@ -105,16 +84,32 @@ function Header({ closeEventSource }) {
   };
 
   const handleInstallClick = async () => {
-    if (deferredPrompt) {
+    // First check if app is in standalone mode
+    const isStandaloneMode =
+      window.matchMedia("(display-mode: standalone)").matches ||
+      window.navigator.standalone === true;
+
+    // Then try getInstalledRelatedApps if available
+    let isDetectedAsInstalled = isStandaloneMode;
+    if (!isDetectedAsInstalled && "getInstalledRelatedApps" in navigator) {
+      try {
+        const relatedApps = await navigator.getInstalledRelatedApps();
+        isDetectedAsInstalled = relatedApps.length > 0;
+      } catch (error) {
+        console.error("Error checking installed apps:", error);
+      }
+    }
+
+    if (isDetectedAsInstalled) {
+      // Show "Already installed" dialog
+      setShowAppInstallDialog(true);
+    } else if (deferredPrompt) {
+      // Normal installation flow
       deferredPrompt.prompt();
       const { outcome } = await deferredPrompt.userChoice;
 
       if (outcome === "accepted") {
         setDeferredPrompt(null);
-        // Store in localStorage that app was installed
-        localStorage.setItem("installPromptDismissed", "true");
-        // Update state to hide the button immediately
-        setAppDismissed(true);
       }
     } else {
       alert("Installation not available right now. Please try again later.");
@@ -131,8 +126,8 @@ function Header({ closeEventSource }) {
       />
 
       <div className="header-buttons">
-        {/* Get App Button - Only show if not standalone, user hasn't installed the app, and the user is logged in */}
-        {!isStandalone && !appDismissed && user && (
+        {/* Get App Button - Always show for logged in users */}
+        {user && (
           <button
             onClick={handleInstallClick}
             className="install-button header-install-button"
@@ -189,6 +184,33 @@ function Header({ closeEventSource }) {
             autoFocus
           >
             {isLoggingOut ? <CircularProgress size={24} /> : "Logout"}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* App Already Installed Dialog */}
+      <Dialog
+        open={showAppInstallDialog}
+        onClose={handleAppInstallDialogClose}
+        aria-labelledby="install-dialog-title"
+        aria-describedby="install-dialog-description"
+      >
+        <DialogTitle id="install-dialog-title">
+          {"App Already Installed"}
+        </DialogTitle>
+        <DialogContent>
+          <DialogContentText id="install-dialog-description">
+            DigiCare is already installed on your device. You can access it from
+            your home screen or app drawer.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button
+            onClick={handleAppInstallDialogClose}
+            color="primary"
+            autoFocus
+          >
+            OK
           </Button>
         </DialogActions>
       </Dialog>
