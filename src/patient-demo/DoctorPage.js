@@ -449,11 +449,21 @@ const DoctorPage = () => {
       console.error("Error booking appointment:", error);
       setBookingLoading(false);
       setBookingStage(0); // Reset to initial stage on error
-      setSnackbar({
-        open: true,
-        message: "Failed to book appointment. Please try again.",
-        severity: "error",
-      });
+
+      // Check if this is the maximum appointments error (429 status code)
+      if (error.response && error.response.status === 429) {
+        setSnackbar({
+          open: true,
+          message: error.response.data.detail,
+          severity: "error",
+        });
+      } else {
+        setSnackbar({
+          open: true,
+          message: "Failed to book appointment. Please try again.",
+          severity: "error",
+        });
+      }
     }
   };
 
