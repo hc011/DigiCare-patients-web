@@ -9,7 +9,7 @@
         },
         {
           "key": "Access-Control-Allow-Origin",
-          "value": "*"
+          "value": "https://digicare-patient-git-2c39c7-himanshu-chauhans-projects-4d3627d7.vercel.app"
         },
         {
           "key": "Access-Control-Allow-Methods",
