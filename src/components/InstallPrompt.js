@@ -105,7 +105,7 @@ const InstallPrompt = ({ isLoggedIn }) => {
         </p>
         <div className="install-prompt-buttons">
           <button onClick={handleInstallClick} className="install-button">
-            <span className="btn-text">Get DigiCare App</span>
+            <span className="btn-text">Get App</span>
             <span className="btn-icon">↓</span>
           </button>
         </div>
