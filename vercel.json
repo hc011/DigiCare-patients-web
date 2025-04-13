@@ -20,23 +20,20 @@
           "value": "X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, Authorization"
         }
       ]
+    }
+  ],
+  "routes": [
+    {
+      "src": "/manifest.json",
+      "headers": {
+        "Cache-Control": "public, max-age=3600",
+        "Access-Control-Allow-Origin": "*"
+      },
+      "continue": true
     },
     {
-      "source": "/manifest.json",
-      "headers": [
-        {
-          "key": "Access-Control-Allow-Origin",
-          "value": "*"
-        },
-        {
-          "key": "Access-Control-Allow-Methods",
-          "value": "GET"
-        },
-        {
-          "key": "Cache-Control",
-          "value": "public, max-age=3600"
-        }
-      ]
+      "src": "/(.*)",
+      "dest": "/index.html"
     }
   ]
 }
