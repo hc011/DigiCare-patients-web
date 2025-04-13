@@ -1641,7 +1641,7 @@ const PatientHome = () => {
                                 color: "#ea580c",
                               }}
                             >
-                              LATE
+                              Running Late
                             </Typography>
                           </Box>
                           <Typography
