@@ -43,6 +43,28 @@ axiosInstance.interceptors.response.use(
       activeRequests.delete(originalRequest.cancelToken);
     }
 
+    // Handle 403 Forbidden errors
+    if (error.response?.status === 403) {
+      // Clear localStorage
+      localStorage.clear();
+
+      // Clear all cookies by setting expiry to past date
+      const cookies = document.cookie.split(";");
+      for (let i = 0; i < cookies.length; i++) {
+        const cookie = cookies[i];
+        const eqPos = cookie.indexOf("=");
+        const name =
+          eqPos > -1 ? cookie.substr(0, eqPos).trim() : cookie.trim();
+        document.cookie =
+          name + "=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/";
+      }
+
+      // Redirect to login page
+      window.location.replace("/login");
+
+      return Promise.reject(error);
+    }
+
     // Handle timeouts
     if (
       error.code === "ECONNABORTED" ||
@@ -118,7 +140,7 @@ export const cancelAllRequests = () => {
 // Auto logout handler
 const handleAutoLogout = (message) => {
   if (!window.location.pathname.includes("/login")) {
-    localStorage.removeItem("user");
+    localStorage.clear();
     cancelAllRequests();
     window.location.replace("/login");
   }
