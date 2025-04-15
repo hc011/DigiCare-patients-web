@@ -374,13 +374,35 @@ const Login = () => {
     <div className="login-page-background">
       <Fade in={true} timeout={800}>
         <div className="desktop-content">
-          <Box className="logo-container">
+          <Box className="logo-container" sx={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
             <img
               src={DigiCareLogo}
               alt="DigiCare Logo"
               className="logo"
-              style={{ height: "72px", marginBottom: "24px" }}
+              style={{ height: "72px", marginBottom: "8px" }}
             />
+            <Typography
+              variant="h6"
+              sx={{
+                color: "#1976d2",
+                fontWeight: 600,
+                fontSize: "1.1rem",
+                marginBottom: "4px"
+              }}
+            >
+              Book and Track Appointments
+            </Typography>
+            <Typography
+              variant="body1"
+              sx={{
+                color: "#1976d2",
+                fontWeight: 500,
+                fontSize: "0.9rem",
+                marginBottom: "16px"
+              }}
+            >
+              Check your waiting number
+            </Typography>
           </Box>
         </div>
       </Fade>
