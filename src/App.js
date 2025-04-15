@@ -10,6 +10,7 @@ import Login from "./Pages/Login";
 import Header from "./components/Header";
 import PrivateRoute from "./components/PrivateRoute";
 import { AuthContext } from "./context/AuthContext";
+import { InstallPromptProvider } from "./context/InstallPromptContext";
 import AppointmentBooking from "./patient-demo/AppointmentBooking";
 import AppointmentsList from "./patient-demo/AppointmentsList";
 import BottomNavigator from "./patient-demo/BottomNavigator";
@@ -217,95 +218,96 @@ const App = () => {
   }, []);
 
   return (
-    <Router>
-      <div className="App" style={{ height: "100vh", overflow: "hidden" }}>
-        {user !== null && <Header />}
-        <Box sx={{ display: "flex", height: "100%" }}>
-          <Box
-            component="main"
-            sx={{ flexGrow: 1, height: "100%", width: "100%" }}
-          >
-            <Routes>
-              <Route
-                path="/login"
-                element={user ? <Navigate to="/patient" replace /> : <Login />}
-              />
-              <Route path="/register" element={<Register />} />
-              <Route path="/privacy-policy" element={<PrivacyPolicy />} />
-              <Route
-                path="/terms-and-conditions"
-                element={<TermsAndConditions />}
-              />
+    <InstallPromptProvider>
+      <Router>
+        <div className="App" style={{ height: "100vh", overflow: "hidden" }}>
+          {user !== null && <Header />}
+          <Box sx={{ display: "flex", height: "100%" }}>
+            <Box
+              component="main"
+              sx={{ flexGrow: 1, height: "100%", width: "100%" }}
+            >
+              <Routes>
+                <Route
+                  path="/login"
+                  element={user ? <Navigate to="/patient" replace /> : <Login />}
+                />
+                <Route path="/register" element={<Register />} />
+                <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+                <Route
+                  path="/terms-and-conditions"
+                  element={<TermsAndConditions />}
+                />
 
-              {/* Patient Routes */}
-              <Route
-                path="/patient"
-                element={
-                  <PrivateRoute>
-                    <PatientHome appointments={appointments} />
-                  </PrivateRoute>
-                }
-              />
+                {/* Patient Routes */}
+                <Route
+                  path="/patient"
+                  element={
+                    <PrivateRoute>
+                      <PatientHome appointments={appointments} />
+                    </PrivateRoute>
+                  }
+                />
 
-              <Route
-                path="/search"
-                element={
-                  <PrivateRoute>
-                    <SearchDoctors doctors={doctors} />
-                  </PrivateRoute>
-                }
-              />
+                <Route
+                  path="/search"
+                  element={
+                    <PrivateRoute>
+                      <SearchDoctors doctors={doctors} />
+                    </PrivateRoute>
+                  }
+                />
 
-              <Route
-                path="/doctor/:doctorId"
-                element={
-                  <PrivateRoute>
-                    <DoctorPage
-                      doctors={doctors}
-                      maxToken={maxToken}
-                      refreshTokenFn={setRefreshToken}
-                    />
-                  </PrivateRoute>
-                }
-              />
+                <Route
+                  path="/doctor/:doctorId"
+                  element={
+                    <PrivateRoute>
+                      <DoctorPage
+                        doctors={doctors}
+                        maxToken={maxToken}
+                        refreshTokenFn={setRefreshToken}
+                      />
+                    </PrivateRoute>
+                  }
+                />
 
-              <Route
-                path="/book-appointment/:doctorId"
-                element={
-                  <PrivateRoute>
-                    <AppointmentBooking
-                      appointments={appointments}
-                      setAppointments={setAppointments}
-                    />
-                  </PrivateRoute>
-                }
-              />
+                <Route
+                  path="/book-appointment/:doctorId"
+                  element={
+                    <PrivateRoute>
+                      <AppointmentBooking
+                        appointments={appointments}
+                        setAppointments={setAppointments}
+                      />
+                    </PrivateRoute>
+                  }
+                />
 
-              <Route
-                path="/appointments"
-                element={
-                  <PrivateRoute>
-                    <AppointmentsList appointments={appointments} />
-                  </PrivateRoute>
-                }
-              />
-              <Route
-                path="/profile"
-                element={
-                  <PrivateRoute>
-                    <ProfilePage />
-                  </PrivateRoute>
-                }
-              />
+                <Route
+                  path="/appointments"
+                  element={
+                    <PrivateRoute>
+                      <AppointmentsList appointments={appointments} />
+                    </PrivateRoute>
+                  }
+                />
+                <Route
+                  path="/profile"
+                  element={
+                    <PrivateRoute>
+                      <ProfilePage />
+                    </PrivateRoute>
+                  }
+                />
 
-              <Route path="*" element={<Navigate to="/login" replace />} />
-            </Routes>
+                <Route path="*" element={<Navigate to="/login" replace />} />
+              </Routes>
+            </Box>
           </Box>
-        </Box>
-        {/* {user !== null && isMobile && <BottomNavigator />} */}
-        <InstallPrompt isLoggedIn={user !== null} />
-      </div>
-    </Router>
+          <InstallPrompt isLoggedIn={user !== null} />
+        </div>
+      </Router>
+    </InstallPromptProvider>
   );
 };
 

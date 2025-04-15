@@ -387,7 +387,7 @@ const AppointmentsList = () => {
                                                                 <Typography variant="subtitle1" fontWeight="600">
                                                                     Dr. {appointment?.doctor}
                                                                 </Typography>
-                                                                <Chip 
+                                                                {/* <Chip 
                                                                     label={getRelativeTimeDescription(appointment?.slot)}
                                                                     size="small"
                                                                     color={section.key === 'today' ? 'primary' : 'default'}
@@ -397,7 +397,7 @@ const AppointmentsList = () => {
                                                                         borderRadius: '12px',
                                                                         height: '24px'
                                                                     }}
-                                                                />
+                                                                /> */}
                                                             </Box>
                                                         }
                                                         secondary={

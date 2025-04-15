@@ -1,13 +1,12 @@
 import React, { useState, useEffect } from "react";
+import { useInstallPrompt } from "../context/InstallPromptContext";
 import "./InstallPrompt.css";
 
 const InstallPrompt = ({ isLoggedIn }) => {
-  const [deferredPrompt, setDeferredPrompt] = useState(null);
+  const { deferredPrompt, setDeferredPrompt, hasPromptEventFired } = useInstallPrompt();
   const [showPrompt, setShowPrompt] = useState(false);
   const [isStandalone, setIsStandalone] = useState(false);
-  const [hasPromptEventFired, setHasPromptEventFired] = useState(false);
   const [tempDismissed, setTempDismissed] = useState(false);
-  // Track the nextPromptTime in state to trigger re-renders
   const [nextPromptTime, setNextPromptTime] = useState(() => {
     return parseInt(localStorage.getItem("nextPromptTime") || "0");
   });
@@ -29,13 +28,11 @@ const InstallPrompt = ({ isLoggedIn }) => {
   // Check if the app is already installed using getInstalledRelatedApps if available
   useEffect(() => {
     async function checkInstalledApps() {
-      // First check standalone mode
       if (isStandalone) {
         setIsAlreadyInstalled(true);
         return;
       }
 
-      // Then check getInstalledRelatedApps if available
       if ("getInstalledRelatedApps" in navigator) {
         try {
           const relatedApps = await navigator.getInstalledRelatedApps();
@@ -50,30 +47,6 @@ const InstallPrompt = ({ isLoggedIn }) => {
 
     checkInstalledApps();
   }, [isStandalone]);
-
-  // Listen for beforeinstallprompt event
-  useEffect(() => {
-    const handler = (e) => {
-      e.preventDefault();
-      setDeferredPrompt(e);
-      setHasPromptEventFired(true);
-      // Don't automatically show the prompt here
-    };
-
-    const handleAppInstalled = () => {
-      setShowPrompt(false);
-      setDeferredPrompt(null);
-      setIsAlreadyInstalled(true);
-    };
-
-    window.addEventListener("beforeinstallprompt", handler);
-    window.addEventListener("appinstalled", handleAppInstalled);
-
-    return () => {
-      window.removeEventListener("beforeinstallprompt", handler);
-      window.removeEventListener("appinstalled", handleAppInstalled);
-    };
-  }, []);
 
   // Check if there's a next prompt time stored
   useEffect(() => {
