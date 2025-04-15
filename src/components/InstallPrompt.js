@@ -143,7 +143,7 @@ const InstallPrompt = ({ isLoggedIn }) => {
       // Delay showing the prompt (2 minutes)
       timer = setTimeout(() => {
         setShowPrompt(true);
-      }, 120000); // 2 minute delay
+      }, 15000); // 15sec delay
     }
 
     return () => {
