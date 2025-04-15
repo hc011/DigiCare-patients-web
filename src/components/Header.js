@@ -14,6 +14,7 @@ import React, { useContext, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import logo from "../assets/DigiCare__logo.png";
 import { AuthContext } from "../context/AuthContext";
+import { useInstallPrompt } from "../context/InstallPromptContext";
 import { logout } from "../services/authService";
 import "./Header.module.css";
 
@@ -23,7 +24,7 @@ function Header({ closeEventSource }) {
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const { setUser, user } = useContext(AuthContext);
   const navigate = useNavigate();
-  const [deferredPrompt, setDeferredPrompt] = useState(null);
+  const { deferredPrompt } = useInstallPrompt();
   const [isStandalone, setIsStandalone] = useState(false);
   const [showAppInstallDialog, setShowAppInstallDialog] = useState(false);
 
@@ -38,20 +39,6 @@ function Header({ closeEventSource }) {
     };
 
     setIsStandalone(checkStandalone());
-  }, []);
-
-  // Listen for beforeinstallprompt event
-  useEffect(() => {
-    const handler = (e) => {
-      e.preventDefault();
-      setDeferredPrompt(e);
-    };
-
-    window.addEventListener("beforeinstallprompt", handler);
-
-    return () => {
-      window.removeEventListener("beforeinstallprompt", handler);
-    };
   }, []);
 
   const handleLogoClick = () => {
@@ -107,10 +94,6 @@ function Header({ closeEventSource }) {
       // Normal installation flow
       deferredPrompt.prompt();
       const { outcome } = await deferredPrompt.userChoice;
-
-      if (outcome === "accepted") {
-        setDeferredPrompt(null);
-      }
     } else {
       alert("Installation not available right now. Please try again later.");
     }
