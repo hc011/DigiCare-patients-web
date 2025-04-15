@@ -7,7 +7,7 @@ import {
   Routes,
 } from "react-router-dom";
 import Login from "./Pages/Login";
-import Header from "./components/Header";
+import HeaderWrapper from "./components/HeaderWrapper";
 import PrivateRoute from "./components/PrivateRoute";
 import { AuthContext } from "./context/AuthContext";
 import AppointmentBooking from "./patient-demo/AppointmentBooking";
@@ -219,7 +219,7 @@ const App = () => {
   return (
     <Router>
       <div className="App" style={{ height: "100vh", overflow: "hidden" }}>
-        {user !== null && <Header />}
+        {user !== null && <HeaderWrapper />}
         <Box sx={{ display: "flex", height: "100%" }}>
           <Box
             component="main"

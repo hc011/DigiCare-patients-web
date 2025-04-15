@@ -37,6 +37,87 @@
       Only files inside the `public`
     -->
     <title>DigiCare</title>
+    
+    <!-- Enhanced Global script to handle PWA installation prompt -->
+    <script>
+      (function() {
+        // Global variable to store the deferred prompt event
+        window.deferredPrompt = null;
+        
+        // Flag to track if a prompt has already been captured in this session
+        window.promptCaptured = sessionStorage.getItem('promptCaptured') === 'true';
+        
+        // Custom event to notify components when the prompt becomes available
+        window.dispatchPromptAvailable = function() {
+          document.dispatchEvent(new CustomEvent('promptAvailable'));
+        };
+        
+        // Listen for beforeinstallprompt event
+        window.addEventListener('beforeinstallprompt', function(e) {
+          // Prevent Chrome 76+ from automatically showing the prompt
+          e.preventDefault();
+          
+          console.log('Install prompt captured globally');
+          
+          // Store the event for later use
+          window.deferredPrompt = e;
+          
+          // Mark that we've captured a prompt
+          window.promptCaptured = true;
+          sessionStorage.setItem('promptCaptured', 'true');
+          
+          // Notify components that a prompt is available
+          window.dispatchPromptAvailable();
+        });
+        
+        // Listen for app installed event
+        window.addEventListener('appinstalled', function() {
+          // Clear the deferred prompt variable
+          window.deferredPrompt = null;
+          window.promptCaptured = false;
+          sessionStorage.removeItem('promptCaptured');
+          console.log('App was installed');
+          
+          // Store in localStorage that the app is installed
+          localStorage.setItem('appInstalled', 'true');
+        });
+        
+        // Expose a global function to handle installation
+        window.triggerAppInstall = function() {
+          return new Promise(function(resolve, reject) {
+            var prompt = window.deferredPrompt;
+            
+            if (!prompt) {
+              reject({ 
+                success: false, 
+                message: window.promptCaptured ? 
+                  'prompt_unavailable_refresh' : 
+                  'no_installation_prompt' 
+              });
+              return;
+            }
+            
+            prompt.prompt();
+            prompt.userChoice
+              .then(function(choiceResult) {
+                window.deferredPrompt = null;
+                
+                if (choiceResult.outcome === 'accepted') {
+                  console.log('User accepted the install prompt');
+                  resolve({ success: true, message: 'app_installed' });
+                } else {
+                  console.log('User dismissed the install prompt');
+                  resolve({ success: false, message: 'installation_dismissed' });
+                }
+              })
+              .catch(function(error) {
+                console.error('Installation error:', error);
+                reject({ success: false, message: 'installation_error', error: error });
+              });
+          });
+        };
+      })();
+    </script>
   </head>
   <body>
     <noscript>You need to enable JavaScript to run this app.</noscript>
