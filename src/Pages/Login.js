@@ -141,39 +141,25 @@ const Login = () => {
       return;
     }
 
+    // Show OTP screen immediately after validation
+    setIsMobNum(true);
+    // Reset timer
+    setTimer(120);
+    setCanResend(false);
+    
+    // Add haptic feedback if available
+    if (navigator.vibrate) {
+      navigator.vibrate(50);
+    }
+
+    // Make API call in the background
+    setLoading(true);
     try {
-      setLoading(true);
-      // Call the sendOtp API
+      // Call the sendOtp API (now in the background)
       await sendOtp({ phone_number: credential.mobileNumber });
-
-      // Add haptic feedback if available
-      if (navigator.vibrate) {
-        navigator.vibrate(50);
-      }
-
-      setIsMobNum(true);
-      // Reset timer when OTP is sent
-      setTimer(120);
-      setCanResend(false);
     } catch (error) {
-      console.error("Error in sending OTP:", error);
-      let errorMessage =
-        "Failed to send OTP. Please try again after a few minutes.";
-
-      // If there's a specific error message from the server
-      if (
-        error.response &&
-        error.response.data &&
-        error.response.data.message
-      ) {
-        errorMessage = `${error.response.data.message}. Please try again after a few minutes.`;
-      }
-
-      setSnackbar({
-        open: true,
-        message: errorMessage,
-        severity: "error",
-      });
+      // Silent failure - industry standard is to not disrupt user experience
+      // Users can use resend option if they don't receive the OTP
     } finally {
       setLoading(false);
     }
@@ -516,18 +502,6 @@ const Login = () => {
                     width: "100%",
                   }}
                 >
-                  <IconButton
-                    onClick={handleGoBack}
-                    sx={{
-                      mr: 2,
-                      color: "#1976d2",
-                      ml: -1, // Move button slightly left
-                    }}
-                    aria-label="Go back to mobile number input"
-                  >
-                    <ArrowBackIcon />
-                  </IconButton>
-
                   <Box
                     sx={{ display: "flex", alignItems: "center", flexGrow: 1 }}
                   >
@@ -604,13 +578,22 @@ const Login = () => {
                       seconds
                     </Typography>
                   ) : (
-                    <Typography
-                      className="resend-link"
-                      variant="body2"
-                      onClick={handleResendOtp}
-                    >
-                      Resend OTP
-                    </Typography>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
+                      <Typography
+                        className="resend-link"
+                        variant="body2"
+                        onClick={handleResendOtp}
+                      >
+                        Resend OTP
+                      </Typography>
+                      <Typography
+                        className="resend-link"
+                        variant="body2"
+                        onClick={handleGoBack}
+                      >
+                        Change Mobile Number
+                      </Typography>
+                    </Box>
                   )}
                 </Box>
 
