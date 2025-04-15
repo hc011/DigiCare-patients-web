@@ -196,3 +196,13 @@ export const getAppointmentDetails = async(appointment_id) => {
         throw error;
     }
 }
+
+export const sendOtp = async(payload) => {
+    try {
+        const response = await axiosInstance.post("/patientinfo/otp/send", payload, { withCredentials: true });
+        return response.data;
+    } catch (error) {
+        console.error("Error sending OTP:", error);
+        throw error;
+    }
+}
