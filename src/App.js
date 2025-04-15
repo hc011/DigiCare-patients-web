@@ -304,7 +304,6 @@ const App = () => {
               </Routes>
             </Box>
           </Box>
-          {user !== null && isMobile && <BottomNavigator />}
           <InstallPrompt isLoggedIn={user !== null} />
         </div>
       </Router>
