@@ -100,7 +100,8 @@ const SearchDoctors = () => {
                         },
                         fees: `₹${item.fees} Consultation`,
                         currentToken: 15, // Default value since not in API
-                        phone: item.doctor.phone_number,
+                        phone: item.hospital.phone_number,
+                        nextAvailable: item.next_available,
                     }));
 
                     setDoctors(transformedDoctors);
@@ -116,6 +117,48 @@ const SearchDoctors = () => {
 
         fetchDoctors();
     }, []);
+
+    // Format next available date
+    const formatNextAvailable = (nextAvailable) => {
+        if (!nextAvailable) return "Not available";
+        
+        // Parse the date string format: "2025-04-19 15:00:00 - 20:00:00"
+        const [datePart, timePart] = nextAvailable.split(' ');
+        const [year, month, day] = datePart.split('-');
+        
+        // Extract time range
+        const timeRange = nextAvailable.split(' - ');
+        const startTime = timeRange[0].split(' ')[1].split(':');
+        const endTime = timeRange[1].split(':');
+        
+        // Convert to 12-hour format
+        const formatHour = (hour) => {
+            const h = parseInt(hour);
+            return h > 12 ? `${h-12}pm` : (h === 12 ? '12pm' : (h === 0 ? '12am' : `${h}am`));
+        };
+        
+        const startHour = formatHour(startTime[0]);
+        const endHour = formatHour(endTime[0]);
+        
+        // Get ordinal suffix for day
+        const getOrdinalSuffix = (day) => {
+            const d = parseInt(day);
+            if (d > 3 && d < 21) return 'th';
+            switch (d % 10) {
+                case 1: return 'st';
+                case 2: return 'nd';
+                case 3: return 'rd';
+                default: return 'th';
+            }
+        };
+        
+        // Month names
+        const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 
+                          'July', 'August', 'September', 'October', 'November', 'December'];
+        
+        // Format as "13th April, 1pm-7pm"
+        return `${parseInt(day)}${getOrdinalSuffix(day)} ${monthNames[parseInt(month)-1]}, ${startHour}-${endHour}`;
+    };
 
     // Filter by tab and search term with null checks
     const filteredDoctors = doctors.filter(
@@ -220,7 +263,7 @@ const SearchDoctors = () => {
             </Box>
 
             {/* Specialty tabs */}
-            <Box sx={{ display: 'flex', overflowX: 'auto', mb: 2, pb: 1 }}>
+            {/* <Box sx={{ display: 'flex', overflowX: 'auto', mb: 2, pb: 1 }}>
                 {specialtyTabs.map((tab, index) => (
                     <Chip
                         key={index}
@@ -236,7 +279,7 @@ const SearchDoctors = () => {
                         }}
                     />
                 ))}
-            </Box>
+            </Box> */}
 
             {/* Doctor list */}
             <Box sx={{ flex: 1, overflowY: "auto", pr: 1, pb: 5 }}>
@@ -381,7 +424,7 @@ const SearchDoctors = () => {
                                         {/* Additional info */}
                                         <Box sx={{ p: 2, bgcolor: '#fafafa' }}>
                                             <Grid container>
-                                                <Grid item xs={4}>
+                                                <Grid item xs={6}>
                                                     <Box sx={{ textAlign: 'center' }}>
                                                         <Typography
                                                             variant="caption"
@@ -393,27 +436,11 @@ const SearchDoctors = () => {
                                                             variant="body2"
                                                             fontWeight="medium"
                                                             color="primary">
-                                                            Today
+                                                            {formatNextAvailable(doctor.nextAvailable)}
                                                         </Typography>
                                                     </Box>
                                                 </Grid>
-                                                <Grid item xs={4}>
-                                                    <Box sx={{ textAlign: 'center' }}>
-                                                        <Typography
-                                                            variant="caption"
-                                                            color="text.secondary"
-                                                            display="block">
-                                                            Wait Time
-                                                        </Typography>
-                                                        <Typography
-                                                            variant="body2"
-                                                            fontWeight="medium"
-                                                            color="primary">
-                                                            {getWaitTime(doctor.currentToken)}
-                                                        </Typography>
-                                                    </Box>
-                                                </Grid>
-                                                <Grid item xs={4}>
+                                                <Grid item xs={6}>
                                                     <Box sx={{ textAlign: 'center' }}>
                                                         <Typography
                                                             variant="caption"

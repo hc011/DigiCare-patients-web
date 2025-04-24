@@ -98,6 +98,8 @@ const DoctorPage = () => {
 
   const { user, setUser } = useContext(AuthContext);
   const [appointmentResponse, setAppointmentResponse] = useState(null);
+  const [redirectTimer, setRedirectTimer] = useState(10);
+  const [timerActive, setTimerActive] = useState(false);
 
   // Function to format the next_active date
   const formatNextAvailable = (dateTimeString) => {
@@ -149,6 +151,48 @@ const DoctorPage = () => {
     )} ${month}, ${formattedHours}:${minutes} ${ampm}`;
   };
 
+  // Format next available time range
+  const formatNextAvailableRange = (nextAvailable) => {
+    if (!nextAvailable) return "Not available";
+    
+    // Parse the date string format: "2025-04-19 15:00:00 - 20:00:00"
+    const [datePart, timePart] = nextAvailable.split(' ');
+    const [year, month, day] = datePart.split('-');
+    
+    // Extract time range
+    const timeRange = nextAvailable.split(' - ');
+    const startTime = timeRange[0].split(' ')[1].split(':');
+    const endTime = timeRange[1].split(':');
+    
+    // Convert to 12-hour format
+    const formatHour = (hour) => {
+      const h = parseInt(hour);
+      return h > 12 ? `${h-12}pm` : (h === 12 ? '12pm' : (h === 0 ? '12am' : `${h}am`));
+    };
+    
+    const startHour = formatHour(startTime[0]);
+    const endHour = formatHour(endTime[0]);
+    
+    // Get ordinal suffix for day
+    const getOrdinalSuffix = (day) => {
+      const d = parseInt(day);
+      if (d > 3 && d < 21) return 'th';
+      switch (d % 10) {
+        case 1: return 'st';
+        case 2: return 'nd';
+        case 3: return 'rd';
+        default: return 'th';
+      }
+    };
+    
+    // Month names
+    const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 
+                      'July', 'August', 'September', 'October', 'November', 'December'];
+    
+    // Format as "13th April, 1pm-7pm"
+    return `${parseInt(day)}${getOrdinalSuffix(day)} ${monthNames[parseInt(month)-1]}, ${startHour}-${endHour}`;
+  };
+
   useEffect(() => {
     const fetchCabinInfo = async () => {
       try {
@@ -198,7 +242,7 @@ const DoctorPage = () => {
     currentToken: 8, // Fallback since not in API
     yourToken: 15, // Fallback since not in API
     estimatedWaitTime: "25 mins", // Fallback since not in API
-    phone: cabinInfo?.doctor?.phone_number || "---",
+    phone: cabinInfo?.hospital?.phone_number || "---",
     currentStatus: cabinInfo?.is_active
       ? "Available"
       : "Currently Not Available",
@@ -467,9 +511,36 @@ const DoctorPage = () => {
     }
   };
 
+  // Function to cancel the automatic redirect
+  const cancelRedirect = () => {
+    setTimerActive(false);
+  };
+
+  // Timer effect for auto redirect
+  useEffect(() => {
+    if (timerActive && redirectTimer > 0) {
+      const intervalId = setInterval(() => {
+        setRedirectTimer((prev) => prev - 1);
+      }, 1000);
+      
+      return () => clearInterval(intervalId);
+    } else if (timerActive && redirectTimer === 0) {
+      handleNavigateToHome();
+    }
+  }, [timerActive, redirectTimer]);
+
+  // Activate timer when appointment is confirmed
+  useEffect(() => {
+    if (bookingStage === 2 && appointmentResponse) {
+      setRedirectTimer(10);
+      setTimerActive(true);
+    }
+  }, [bookingStage, appointmentResponse]);
+
   const handleNavigateToHome = () => {
     setShowBookingDialog(false);
     setBookingStage(0);
+    setTimerActive(false);
     navigate("/patient-home?appointmentBooked=true");
   };
 
@@ -783,17 +854,13 @@ const DoctorPage = () => {
                   fontWeight="medium"
                   sx={{
                     color:
-                      doctor.currentStatus === "Available"
-                        ? "success.main"
-                        : cabinInfo?.next_active
-                        ? "success.main"
-                        : "text.secondary",
+                      cabinInfo?.next_available
+                      ? "success.main"
+                      : "text.secondary",
                   }}
                 >
-                  {doctor.currentStatus === "Available"
-                    ? "Now"
-                    : cabinInfo?.next_active
-                    ? formatNextAvailable(cabinInfo?.next_active)
+                  {cabinInfo?.next_available
+                    ? formatNextAvailableRange(cabinInfo?.next_available)
                     : "-"}
                 </Typography>
               </Box>
@@ -973,7 +1040,7 @@ const DoctorPage = () => {
 
             <Divider sx={{ my: 2 }} />
 
-            <Typography variant="h6" gutterBottom>
+            {/* <Typography variant="h6" gutterBottom>
               Clinic Timings
             </Typography>
             <TableContainer
@@ -1027,7 +1094,7 @@ const DoctorPage = () => {
                   </TableRow>
                 </TableBody>
               </Table>
-            </TableContainer>
+            </TableContainer> */}
           </Box>
         )}
 
@@ -1546,6 +1613,12 @@ const DoctorPage = () => {
                       Please complete the payment at the reception desk when you
                       arrive at the clinic.
                     </Typography>
+                    <Typography 
+                      variant="body2" 
+                      sx={{ mt: 1, fontStyle: 'italic' }}
+                    >
+                      कृपया क्लिनिक पहुंचने पर रिसेप्शन डेस्क पर भुगतान पूरा करें।
+                    </Typography>
                   </Alert>
                 </Box>
               )}
@@ -1618,6 +1691,29 @@ const DoctorPage = () => {
                       </Grid>
 
                       <Grid item xs={12} sm={6}>
+                        <Box sx={{ display: "flex", alignItems: "flex-start" }}>
+                          <PersonIcon
+                            sx={{ color: "primary.main", mr: 1.5, mt: 0.3 }}
+                          />
+                          <Box>
+                            <Typography
+                              variant="caption"
+                              color="text.secondary"
+                              sx={{ display: "block", mb: 0.3 }}
+                            >
+                              CURRENT WAITING
+                            </Typography>
+                            <Typography
+                              variant="body1"
+                              sx={{ fontWeight: 500 }}
+                            >
+                              {appointmentResponse.queobj.waiting || 0}
+                            </Typography>
+                          </Box>
+                        </Box>
+                      </Grid>
+
+                      <Grid item xs={12}>
                         <Box sx={{ display: "flex", alignItems: "flex-start" }}>
                           <MedicalServicesIcon
                             sx={{ color: "primary.main", mr: 1.5, mt: 0.3 }}
@@ -1763,6 +1859,25 @@ const DoctorPage = () => {
           {bookingStage === 2 && (
             <Grid container spacing={2}>
               <Grid item xs={12}>
+                {timerActive && (
+                  <Box sx={{ 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    justifyContent: 'center',
+                    mb: 2 
+                  }}>
+                    <Typography variant="body2" sx={{ fontStyle: 'italic' }}>
+                      Redirecting to home page in {redirectTimer} seconds
+                    </Typography>
+                    <Button 
+                      size="small"
+                      onClick={cancelRedirect}
+                      sx={{ ml: 1, fontSize: '0.7rem', py: 0 }}
+                    >
+                      Cancel
+                    </Button>
+                  </Box>
+                )}
                 <Button
                   variant="contained"
                   fullWidth

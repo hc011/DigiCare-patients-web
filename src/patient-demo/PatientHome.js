@@ -552,7 +552,7 @@ const PatientHome = () => {
                 transform: "translateY(-2px)",
               },
             }}
-            onClick={() => navigate("/doctor/2")}
+            onClick={() => navigate("/search")}
           >
             <CardContent sx={{ textAlign: "center", p: 2 }}>
               <Avatar sx={{ bgcolor: "#4f46e5", mx: "auto", mb: 1 }}>
@@ -1020,23 +1020,35 @@ const PatientHome = () => {
                                       mt: -3,
                                     }}
                                   >
-                                    <PaymentIcon
+                                    {/* <PaymentIcon
                                       sx={{
                                         fontSize: 18,
                                         mr: 1,
                                         color: "#eab308",
                                       }}
-                                    />
-                                    <Typography
-                                      variant="body2"
-                                      sx={{
-                                        color: "#854d0e",
-                                        fontWeight: 500,
-                                      }}
-                                    >
-                                      Please pay at the clinic before your
-                                      waiting becomes {appointment?.buffer}
-                                    </Typography>
+                                    /> */}
+                                    <Box>
+                                      <Typography
+                                        variant="body2"
+                                        sx={{
+                                          color: "#854d0e",
+                                          fontWeight: 500,
+                                        }}
+                                      >
+                                        Please reach clinic and complete payment before the waiting number becomes {appointment?.buffer}
+                                      </Typography>
+                                      <Typography
+                                        variant="body2"
+                                        sx={{
+                                          color: "#854d0e",
+                                          fontWeight: 500,
+                                          fontStyle: "italic",
+                                          mt: 0.5,
+                                        }}
+                                      >
+                                        कृपया क्लिनिक पहुंचें और वेटिंग नंबर {appointment?.buffer} होने से पहले भुगतान पूरा करें।
+                                      </Typography>
+                                    </Box>
                                   </Box>
                                 </Grid>
                               )}
@@ -1432,6 +1444,12 @@ const PatientHome = () => {
                               ? `Please pay ₹${selectedAppointment.fees_paid} at the reception desk`
                               : "Please complete payment at the reception desk"}
                           </Typography>
+                          <Typography
+                            variant="body2"
+                            sx={{ color: "#854d0e", fontWeight: 500, fontStyle: "italic", mt: 0.5 }}
+                          >
+                            कृपया रिसेप्शन डेस्क पर भुगतान पूरा करें
+                          </Typography>
                         </Box>
                       ) : (
                         selectedAppointment?.fees_paid > 0 && (
@@ -1521,6 +1539,12 @@ const PatientHome = () => {
                           >
                             Please visit the reception desk to check in for your
                             appointment
+                          </Typography>
+                          <Typography
+                            variant="body2"
+                            sx={{ color: "#854d0e", fontWeight: 500, fontStyle: "italic", mt: 0.5 }}
+                          >
+                            कृपया अपनी अपॉइंटमेंट के लिए चेक-इन करने हेतु रिसेप्शन डेस्क पर जाएं
                           </Typography>
                         </Box>
                       )}
@@ -2051,7 +2075,7 @@ const PatientHome = () => {
             <Button
               onClick={() => {
                 setShowAppointmentDetails(false);
-                navigate("/doctor/2");
+                navigate(`/doctor/${selectedAppointment?.cabin?.id}`);
               }}
               variant="contained"
               fullWidth
