@@ -120,7 +120,7 @@ function Header({ closeEventSource }) {
         )}
 
         {/* Mobile Logout Button */}
-        {isMobile && (
+        {/* {isMobile && (
           <IconButton
             color="primary"
             onClick={handleClickOpen}
@@ -128,7 +128,7 @@ function Header({ closeEventSource }) {
           >
             <LogoutIcon />
           </IconButton>
-        )}
+        )} */}
 
         {/* Desktop Logout Button */}
         {/* {!isMobile && (
