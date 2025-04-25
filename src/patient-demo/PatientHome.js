@@ -812,6 +812,17 @@ const PatientHome = () => {
                                         Don't worry, just pay at the clinic when
                                         you arrive to join the queue
                                       </Typography>
+                                      <Typography
+                                        variant="body1"
+                                        sx={{
+                                          color: "#c2410c",
+                                          textAlign: "center",
+                                          mt: 1,
+                                          fontStyle: "italic",
+                                        }}
+                                      >
+                                        चिंता न करें, क्लिनिक पहुंचने पर भुगतान करें और कतार में शामिल हों
+                                      </Typography>
                                     </Box>
                                   </>
                                 ) : appointment?.queobj?.waiting === 0 ? (
@@ -846,7 +857,18 @@ const PatientHome = () => {
                                             display: "block",
                                           }}
                                         >
-                                          Ready to see doctor
+                                          Please proceed to the doctor's room
+                                        </Typography>
+                                        <Typography
+                                          variant="body2"
+                                          sx={{
+                                            color: "#059669",
+                                            display: "block",
+                                            fontStyle: "italic",
+                                            mt: 0.5,
+                                          }}
+                                        >
+                                          कृपया डॉक्टर के कमरे में जाएं
                                         </Typography>
                                       </Box>
                                     </Box>
@@ -1035,7 +1057,7 @@ const PatientHome = () => {
                                           fontWeight: 500,
                                         }}
                                       >
-                                        Please reach clinic and complete payment before the waiting number becomes {appointment?.buffer}
+                                        Please reach clinic and complete payment before the waiting number becomes {appointment?.buffer}, else you will be marked late
                                       </Typography>
                                       <Typography
                                         variant="body2"
@@ -1046,7 +1068,7 @@ const PatientHome = () => {
                                           mt: 0.5,
                                         }}
                                       >
-                                        कृपया क्लिनिक पहुंचें और वेटिंग नंबर {appointment?.buffer} होने से पहले भुगतान पूरा करें।
+                                        कृपया क्लिनिक पहुंचें और वेटिंग नंबर {appointment?.buffer} होने से पहले भुगतान पूरा करें, अन्यथा आपको लेट माना जाएगा |
                                       </Typography>
                                     </Box>
                                   </Box>
@@ -1617,8 +1639,18 @@ const PatientHome = () => {
                               mt: 1,
                             }}
                           >
-                            Don't worry, just pay at the clinic when you arrive
-                            to join the queue
+                            Don't worry, just pay at the clinic when you arrive 
+                          </Typography>
+                          <Typography
+                            variant="body1"
+                            sx={{
+                              color: "#c2410c",
+                              textAlign: "center",
+                              mt: 1,
+                              fontStyle: "italic",
+                            }}
+                          >
+                            चिंता न करें, क्लिनिक पहुंचने पर भुगतान करें और कतार में शामिल हों
                           </Typography>
                         </Box>
                       ) : selectedAppointment?.queobj?.waiting === 0 ? (
@@ -1657,6 +1689,17 @@ const PatientHome = () => {
                             }}
                           >
                             Please proceed to the doctor's room
+                          </Typography>
+                          <Typography
+                            variant="body1"
+                            sx={{
+                              color: "#047857",
+                              textAlign: "center",
+                              mt: 1,
+                              fontStyle: "italic",
+                            }}
+                          >
+                            कृपया डॉक्टर के कमरे में जाएं
                           </Typography>
                         </Box>
                       ) : (
